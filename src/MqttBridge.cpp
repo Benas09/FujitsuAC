@@ -35,8 +35,6 @@ bool MqttBridge::setup() {
     deviceConfig += "\"name\": \"" + this->name + "\"";
     deviceConfig += "}";
 
-    String topic = "homeassistant/climate/" + this->uniqueId + "_climate/config";
-
     String p = "{";
     p += "\"name\": \"climate\",";
     p += "\"unique_id\": \"" + this->uniqueId + "_climate\",";
@@ -61,6 +59,8 @@ bool MqttBridge::setup() {
     p += deviceConfig;
     p += "}";
 
+    String topic = "homeassistant/climate/" + this->uniqueId + "_climate/config";
+
     this->mqttClient.publish(topic.c_str(), p.c_str(), true);
 
     static constexpr Address switches[] = {
@@ -74,12 +74,6 @@ bool MqttBridge::setup() {
 
     for (const auto& switch_ : switches) {
         String propertyName = String(this->addressToString(switch_));
-
-        if (Address::VerticalAirflow == switch_) {
-            topic = "homeassistant/select/" + this->uniqueId + "_" + propertyName + "/config";
-        } else {
-            topic = "homeassistant/switch/" + this->uniqueId + "_" + propertyName + "/config";
-        }
 
         p = "{";
         p += "\"name\": \"" + propertyName + "\",";
@@ -97,8 +91,25 @@ bool MqttBridge::setup() {
         p += deviceConfig;
         p += "}";
 
+        if (Address::VerticalAirflow == switch_) {
+            topic = "homeassistant/select/" + this->uniqueId + "_" + propertyName + "/config";
+        } else {
+            topic = "homeassistant/switch/" + this->uniqueId + "_" + propertyName + "/config";
+        }
+
         this->mqttClient.publish(topic.c_str(), p.c_str(), true);
     }
+
+    p = "{";
+    p += "\"name\": \"restart\",";
+    p += "\"unique_id\": \"" + this->uniqueId + "_restart\",";
+    p += "\"command_topic\": \"fujitsu/" + this->uniqueId + "/set/restart\",";
+    p += "\"payload_press\": \"restart\",";
+    p += deviceConfig;
+    p += "}";
+
+    topic = "homeassistant/button/" + this->uniqueId + "_restart/config";
+    this->mqttClient.publish(topic.c_str(), p.c_str(), true);
 
     this->mqttClient.subscribe("fujitsu/" + this->uniqueId + "/#", [this](const String &topic, const String &payload) {
         this->onMqtt(topic, payload);
@@ -133,6 +144,12 @@ void MqttBridge::onMqtt(const String &topic, const String &payload) {
     String property = topic.substring(lastSlash + 1);
 
     if (command == "set") {
+        if (property == "restart") {
+            ESP.restart();
+            
+            return;
+        }
+
         if (property == this->addressToString(Address::Power)) {
             this->controller.setPower(this->stringToEnum(Enums::Power::Off, payload));
 
