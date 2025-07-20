@@ -8,9 +8,9 @@
 #include "MqttBridge.h"
 
 MqttBridge::MqttBridge(
-	EspMQTTClient &mqttClient, 
-	FujitsuController &controller,
-	const char* uniqueId,
+    EspMQTTClient &mqttClient, 
+    FujitsuController &controller,
+    const char* uniqueId,
     const char* name
 ) : mqttClient(mqttClient), 
 	controller(controller), 
@@ -146,7 +146,7 @@ void MqttBridge::onMqtt(const String &topic, const String &payload) {
     if (command == "set") {
         if (property == "restart") {
             ESP.restart();
-            
+
             return;
         }
 
