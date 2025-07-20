@@ -90,7 +90,6 @@ bool MqttBridge::setup() {
         } else {
             p += "\"payload_on\": \"on\",";
             p += "\"payload_off\": \"off\",";
-            p += "\"payload_off\": \"off\",";
         }
         
         p += "\"device\": {";
@@ -107,18 +106,6 @@ bool MqttBridge::setup() {
     this->mqttClient.subscribe("fujitsu/" + this->uniqueId + "/#", [this](const String &topic, const String &payload) {
         this->onMqtt(topic, payload);
     });
-
-    // this->publishState(this->registryTable.getRegister(Address::Power));
-    // this->publishState(this->registryTable.getRegister(Address::SetpointTemp));
-    // this->publishState(this->registryTable.getRegister(Address::ActualTemp));
-    // this->publishState(this->registryTable.getRegister(Address::Mode));
-    // this->publishState(this->registryTable.getRegister(Address::Fan));
-    // this->publishState(this->registryTable.getRegister(Address::VerticalAirflow));
-    // this->publishState(this->registryTable.getRegister(Address::VerticalSwing));
-    // this->publishState(this->registryTable.getRegister(Address::Powerful));
-    // this->publishState(this->registryTable.getRegister(Address::EconomyMode));
-    // this->publishState(this->registryTable.getRegister(Address::EnergySavingFan));
-    // this->publishState(this->registryTable.getRegister(Address::OutdoorUnitLowNoise));
 
     this->controller.setup();
 
