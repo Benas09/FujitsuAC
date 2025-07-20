@@ -1,0 +1,464 @@
+/*
+  FujitsuAC - ESP32 libary for controlling FujitsuAC through MQTT
+  Copyright (c) 2025 Benas Ragauskas. All rights reserved.
+  
+  Project home: https://github.com/Benas09/FujitsuAC
+*/
+
+#include "MqttBridge.h"
+
+MqttBridge::MqttBridge(
+	EspMQTTClient &mqttClient, 
+	FujitsuController &controller,
+	const char* uniqueId,
+    const char* name
+) : mqttClient(mqttClient), 
+	controller(controller), 
+	uniqueId(uniqueId),
+    name(name) {}
+
+bool MqttBridge::setup() {
+	this->controller.setOnRegisterChangeCallback([this](Register* reg) {
+	    this->onRegisterChange(reg);
+	});
+
+	this->controller.setDebugCallback([this](const char* name, const char* message) {
+	    this->debug(name, message);
+	});
+
+    this->mqttClient.publish("fujitsu/" + this->uniqueId + "/status", "online", true);
+
+    String topic = "homeassistant/climate/" + this->uniqueId + "_climate/config";
+
+    String p = "{";
+    p += "\"name\": \"climate\",";
+    p += "\"unique_id\": \"" + this->uniqueId + "_climate\",";
+    p += "\"icon\": \"mdi:air-conditioner\",";
+
+    p += "\"mode_command_topic\": \"fujitsu/" + this->uniqueId + "/set/mode\",";
+    p += "\"mode_state_topic\": \"fujitsu/" + this->uniqueId + "/state/mode\",";
+
+    p += "\"temperature_command_topic\": \"fujitsu/" + this->uniqueId + "/set/temp\",";
+    p += "\"temperature_state_topic\": \"fujitsu/" + this->uniqueId + "/state/temp\",";
+
+    p += "\"fan_mode_command_topic\": \"fujitsu/" + this->uniqueId + "/set/fan\",";
+    p += "\"fan_mode_state_topic\": \"fujitsu/" + this->uniqueId + "/state/fan\",";
+
+    p += "\"current_temperature_topic\": \"fujitsu/" + this->uniqueId + "/state/actual_temp\",";
+
+    p += "\"min_temp\": 18,";
+    p += "\"max_temp\": 30,";
+    p += "\"temp_step\": 0.5,";
+    p += "\"modes\": [\"off\", \"auto\", \"cool\", \"dry\", \"fan_only\", \"heat\"],";
+    p += "\"fan_modes\": [\"auto\", \"quiet\", \"low\", \"medium\", \"high\"],",
+    p += "\"device\": {";
+    p += "\"identifiers\": [\"" + this->uniqueId + "\"],";
+    p += "\"manufacturer\": \"https://github.com/Benas09/FujitsuAC\",";
+    p += "\"model\": \"Fujitsu AC\",";
+    p += "\"name\": \"" + this->name + "\"";
+    p += "}";
+    p += "}";
+
+    this->mqttClient.publish(topic.c_str(), p.c_str(), true);
+
+    static constexpr Address switches[] = {
+        Address::VerticalAirflow,
+        Address::VerticalSwing,
+        Address::Powerful,
+        Address::EconomyMode,
+        Address::EnergySavingFan,
+        Address::OutdoorUnitLowNoise
+    };
+
+    for (const auto& switch_ : switches) {
+        String propertyName = String(this->addressToString(switch_));
+
+        if (Address::VerticalAirflow == switch_) {
+            topic = "homeassistant/select/" + this->uniqueId + "_" + propertyName + "/config";
+        } else {
+            topic = "homeassistant/switch/" + this->uniqueId + "_" + propertyName + "/config";
+        }
+
+        p = "{";
+        p += "\"name\": \"" + propertyName + "\",";
+        p += "\"unique_id\": \"" + this->uniqueId + "_" + propertyName + "\",";
+        p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/" + propertyName + "\",";
+        p += "\"command_topic\": \"fujitsu/" + this->uniqueId + "/set/" + propertyName + " \",";
+
+        if (Address::VerticalAirflow == switch_) {
+            p += "\"options\": [\"1\", \"2\", \"3\", \"4\", \"5\", \"6\"],";
+        } else {
+            p += "\"payload_on\": \"on\",";
+            p += "\"payload_off\": \"off\",";
+            p += "\"payload_off\": \"off\",";
+        }
+        
+        p += "\"device\": {";
+        p += "\"identifiers\": [\"" + this->uniqueId + "\"],";
+        p += "\"manufacturer\": \"https://github.com/Benas09/FujitsuAC\",";
+        p += "\"model\": \"Fujitsu AC\",";
+        p += "\"name\": \"" + this->name + "\"";
+        p += "}";
+        p += "}";
+
+        this->mqttClient.publish(topic.c_str(), p.c_str(), true);
+    }
+
+    this->mqttClient.subscribe("fujitsu/" + this->uniqueId + "/#", [this](const String &topic, const String &payload) {
+        this->onMqtt(topic, payload);
+    });
+
+    // this->publishState(this->registryTable.getRegister(Address::Power));
+    // this->publishState(this->registryTable.getRegister(Address::SetpointTemp));
+    // this->publishState(this->registryTable.getRegister(Address::ActualTemp));
+    // this->publishState(this->registryTable.getRegister(Address::Mode));
+    // this->publishState(this->registryTable.getRegister(Address::Fan));
+    // this->publishState(this->registryTable.getRegister(Address::VerticalAirflow));
+    // this->publishState(this->registryTable.getRegister(Address::VerticalSwing));
+    // this->publishState(this->registryTable.getRegister(Address::Powerful));
+    // this->publishState(this->registryTable.getRegister(Address::EconomyMode));
+    // this->publishState(this->registryTable.getRegister(Address::EnergySavingFan));
+    // this->publishState(this->registryTable.getRegister(Address::OutdoorUnitLowNoise));
+
+    this->controller.setup();
+
+    return true;
+}
+
+bool MqttBridge::loop() {
+    if (this->waitingPowerOnFrom > 0) {
+        uint32_t now = millis();
+
+        if ((now - this->waitingPowerOnFrom) >= 2000) {
+            if (this->controller.isPowerOn()) {
+                this->controller.setMode(this->modeAfterPowering);
+            } else {
+                this->debug("error", "Power on not succeded");
+            }
+
+            this->waitingPowerOnFrom = 0;
+        }
+    }
+}
+
+void MqttBridge::onMqtt(const String &topic, const String &payload) {
+    int lastSlash = topic.lastIndexOf('/');
+    int secondLastSlash = topic.lastIndexOf('/', lastSlash - 1);
+
+    String command = topic.substring(secondLastSlash + 1, lastSlash);
+    String property = topic.substring(lastSlash + 1);
+
+    if (command == "set") {
+        if (property == this->addressToString(Address::Power)) {
+            this->controller.setPower(this->stringToEnum(Enums::Power::Off, payload));
+
+            return;
+        }
+
+        if (property == this->addressToString(Address::Mode)) {
+            if (payload == "off") {
+                this->controller.setPower(Enums::Power::Off);
+
+                return;
+            }
+
+            if (!this->controller.isPowerOn()) {
+                this->controller.setPower(Enums::Power::On);
+
+                this->waitingPowerOnFrom = millis();
+                this->modeAfterPowering = this->stringToEnum(Enums::Mode::Auto, payload);
+
+                return;
+            }
+
+        	this->controller.setMode(this->stringToEnum(Enums::Mode::Auto, payload));
+
+        	return;
+        }
+
+        if (property == this->addressToString(Address::SetpointTemp)) {
+            this->controller.setTemp(payload.c_str());
+
+            return;
+        }
+
+        if (property == this->addressToString(Address::Fan)) {
+        	this->controller.setFanSpeed(this->stringToEnum(Enums::FanSpeed::Auto, payload));
+
+        	return;
+        }
+
+        if (property == this->addressToString(Address::VerticalAirflow)) {
+        	this->controller.setVerticalAirflow(this->stringToEnum(Enums::VerticalAirflow::Position1, payload));
+
+        	return;
+        }
+
+        if (property == this->addressToString(Address::VerticalSwing)) {
+            this->controller.setVerticalSwing(this->stringToEnum(Enums::VerticalSwing::Off, payload));
+
+            return;
+        }
+
+        if (property == this->addressToString(Address::Powerful)) {
+            this->controller.setPowerful(this->stringToEnum(Enums::Powerful::Off, payload));
+
+            return;
+        }
+
+        if (property == this->addressToString(Address::EconomyMode)) {
+            this->controller.setEconomy(this->stringToEnum(Enums::Economy::Off, payload));
+
+            return;
+        }
+
+        if (property == this->addressToString(Address::EnergySavingFan)) {
+            this->controller.setEnergySavingFan(this->stringToEnum(Enums::EnergySavingFan::Off, payload));
+
+            return;
+        }
+
+        if (property == this->addressToString(Address::OutdoorUnitLowNoise)) {
+            this->controller.setOutdoorUnitLowNoise(this->stringToEnum(Enums::OutdoorUnitLowNoise::Off, payload));
+
+            return;
+        }
+    }
+}
+
+void MqttBridge::onRegisterChange(Register *reg) {
+    this->mqttClient.publish(
+        "fujitsu/" + this->uniqueId + "/state/" + this->addressToString(reg->address), 
+        this->valueToString(reg), 
+        true
+    );
+}
+
+const char* MqttBridge::addressToString(Address address) {
+    switch (address) {
+        case Address::Power: return "power";
+        case Address::Mode: return "mode";
+        case Address::Fan: return "fan";
+        case Address::VerticalSwing: return "vertical_swing";
+        case Address::VerticalAirflow: return "vertical_airflow";
+        case Address::Powerful: return "powerful";
+        case Address::EconomyMode: return "economy_mode";
+        case Address::EnergySavingFan: return "energy_saving_fan";
+        case Address::OutdoorUnitLowNoise: return "outdoor_unit_low_noise";
+        case Address::SetpointTemp: return "temp";
+        case Address::ActualTemp: return "actual_temp";
+        default: {
+            static char buffer[20];
+            snprintf(buffer, sizeof(buffer), "address_%04X", static_cast<uint16_t>(address));
+
+            return buffer;
+        }
+    }
+}
+
+const char* MqttBridge::valueToString(Register *reg) {
+    switch (reg->address) {
+        case Address::Power:
+            switch (static_cast<Enums::Power>(reg->value)) {
+                case Enums::Power::On: return "on";
+                case Enums::Power::Off: return "off";
+                default: return "unknown";
+            }
+
+            break;
+        case Address::Mode:
+            switch (static_cast<Enums::Mode>(reg->value)) {
+                case Enums::Mode::Auto: return "auto";
+                case Enums::Mode::Cool: return "cool";
+                case Enums::Mode::Dry: return "dry";
+                case Enums::Mode::Fan: return "fan_only";
+                case Enums::Mode::Heat: return "heat";
+                default: return "unknown";
+            }
+
+            break;
+        case Address::Fan:
+            switch (static_cast<Enums::FanSpeed>(reg->value)) {
+                case Enums::FanSpeed::Auto: return "auto";
+                case Enums::FanSpeed::Quiet: return "quiet";
+                case Enums::FanSpeed::Low: return "low";
+                case Enums::FanSpeed::Medium: return "medium";
+                case Enums::FanSpeed::High: return "high";
+                default: return "unknown";
+            }
+
+            break;
+        case Address::VerticalSwing:
+            switch (static_cast<Enums::VerticalSwing>(reg->value)) {
+                case Enums::VerticalSwing::On: return "on";
+                case Enums::VerticalSwing::Off: return "off";
+                default: return "unknown";
+            }
+
+            break;
+        case Address::VerticalAirflow:
+            switch (static_cast<Enums::VerticalAirflow>(reg->value)) {
+                case Enums::VerticalAirflow::Position1: return "1";
+                case Enums::VerticalAirflow::Position2: return "2";
+                case Enums::VerticalAirflow::Position3: return "3";
+                case Enums::VerticalAirflow::Position4: return "4";
+                case Enums::VerticalAirflow::Position5: return "5";
+                case Enums::VerticalAirflow::Position6: return "6";
+                default: return "unknown";
+            }
+
+            break;
+        case Address::Powerful:
+            switch (static_cast<Enums::Powerful>(reg->value)) {
+                case Enums::Powerful::On: return "on";
+                case Enums::Powerful::Off: return "off";
+                default: return "unknown";
+            }
+
+            break;
+        case Address::EconomyMode:
+            switch (static_cast<Enums::Economy>(reg->value)) {
+                case Enums::Economy::On: return "on";
+                case Enums::Economy::Off: return "off";
+                default: return "unknown";
+            }
+
+            break;
+        case Address::EnergySavingFan:
+            switch (static_cast<Enums::EnergySavingFan>(reg->value)) {
+                case Enums::EnergySavingFan::On: return "on";
+                case Enums::EnergySavingFan::Off: return "off";
+                default: return "unknown";
+            }
+
+            break;
+        case Address::OutdoorUnitLowNoise:
+            switch (static_cast<Enums::OutdoorUnitLowNoise>(reg->value)) {
+                case Enums::OutdoorUnitLowNoise::On: return "on";
+                case Enums::OutdoorUnitLowNoise::Off: return "off";
+                default: return "unknown";
+            }
+
+            break;
+        case Address::SetpointTemp: {
+            char str[8];
+            snprintf(str, sizeof(str), "%u.%u", reg->value / 10, reg->value % 10);
+
+            return str;
+        }
+            
+        case Address::ActualTemp: {
+            char str[8];
+            snprintf(str, sizeof(str), "%u.%u", (reg->value - 5025) / 100, (reg->value - 5025) % 100);
+
+            return str;
+        }
+
+        default: {
+            static char buffer[20];
+            snprintf(buffer, sizeof(buffer), "%04X", static_cast<uint16_t>(reg->address));
+
+            return buffer;
+        }
+    }
+}
+
+const Enums::Power MqttBridge::stringToEnum(Enums::Power def, const String &value) {
+	if (value == "on") {
+		return Enums::Power::On;
+	}
+
+	return def;
+}
+
+const Enums::Mode MqttBridge::stringToEnum(Enums::Mode def, const String &value) {
+	if (value == "cool") {
+		return Enums::Mode::Cool;
+	} else if (value == "dry") {
+		return Enums::Mode::Dry;
+	} else if (value == "fan_only") {
+		return Enums::Mode::Fan;
+	} else if (value == "heat") {
+		return Enums::Mode::Heat;
+	}
+
+	return def;
+}
+
+const Enums::FanSpeed MqttBridge::stringToEnum(Enums::FanSpeed def, const String &value) {
+	if (value == "auto") {
+		return Enums::FanSpeed::Auto;
+	} else if (value == "quiet") {
+		return Enums::FanSpeed::Quiet;
+	} else if (value == "low") {
+		return Enums::FanSpeed::Low;
+	} else if (value == "medium") {
+		return Enums::FanSpeed::Medium;
+	} else if (value == "high") {
+		return Enums::FanSpeed::High;
+	}
+
+	return def;
+}
+
+const Enums::VerticalAirflow MqttBridge::stringToEnum(Enums::VerticalAirflow def, const String &value) {
+	if (value == "1") {
+		return Enums::VerticalAirflow::Position1;
+	} else if (value == "2") {
+		return Enums::VerticalAirflow::Position2;
+	} else if (value == "3") {
+		return Enums::VerticalAirflow::Position3;
+	} else if (value == "4") {
+		return Enums::VerticalAirflow::Position4;
+	} else if (value == "5") {
+		return Enums::VerticalAirflow::Position5;
+	} else if (value == "6") {
+		return Enums::VerticalAirflow::Position6;
+	}
+
+	return def;
+}
+
+const Enums::VerticalSwing MqttBridge::stringToEnum(Enums::VerticalSwing def, const String &value) {
+	if (value == "on") {
+		return Enums::VerticalSwing::On;
+	}
+
+	return def;
+}
+
+const Enums::Powerful MqttBridge::stringToEnum(Enums::Powerful def, const String &value) {
+	if (value == "on") {
+		return Enums::Powerful::On;
+	}
+
+	return def;
+}
+
+const Enums::Economy MqttBridge::stringToEnum(Enums::Economy def, const String &value) {
+	if (value == "on") {
+		return Enums::Economy::On;
+	}
+
+	return def;
+}
+
+const Enums::EnergySavingFan MqttBridge::stringToEnum(Enums::EnergySavingFan def, const String &value) {
+	if (value == "on") {
+		return Enums::EnergySavingFan::On;
+	}
+
+	return def;
+}
+
+const Enums::OutdoorUnitLowNoise MqttBridge::stringToEnum(Enums::OutdoorUnitLowNoise def, const String &value) {
+	if (value == "on") {
+		return Enums::OutdoorUnitLowNoise::On;
+	}
+
+	return def;
+}
+
+void MqttBridge::debug(const char* name, const char* message) {
+	this->mqttClient.publish("fujitsu/" + this->name + "/debug/" + name, message);
+}
