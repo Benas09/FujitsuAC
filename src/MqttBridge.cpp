@@ -28,6 +28,13 @@ bool MqttBridge::setup() {
 
     this->mqttClient.publish("fujitsu/" + this->uniqueId + "/status", "online", true);
 
+    String deviceConfig = "\"device\": {";
+    deviceConfig += "\"identifiers\": [\"" + this->uniqueId + "\"],";
+    deviceConfig += "\"manufacturer\": \"https://github.com/Benas09/FujitsuAC\",";
+    deviceConfig += "\"model\": \"Fujitsu AC\",";
+    deviceConfig += "\"name\": \"" + this->name + "\"";
+    deviceConfig += "}";
+
     String topic = "homeassistant/climate/" + this->uniqueId + "_climate/config";
 
     String p = "{";
@@ -51,12 +58,7 @@ bool MqttBridge::setup() {
     p += "\"temp_step\": 0.5,";
     p += "\"modes\": [\"off\", \"auto\", \"cool\", \"dry\", \"fan_only\", \"heat\"],";
     p += "\"fan_modes\": [\"auto\", \"quiet\", \"low\", \"medium\", \"high\"],",
-    p += "\"device\": {";
-    p += "\"identifiers\": [\"" + this->uniqueId + "\"],";
-    p += "\"manufacturer\": \"https://github.com/Benas09/FujitsuAC\",";
-    p += "\"model\": \"Fujitsu AC\",";
-    p += "\"name\": \"" + this->name + "\"";
-    p += "}";
+    p += deviceConfig;
     p += "}";
 
     this->mqttClient.publish(topic.c_str(), p.c_str(), true);
@@ -92,12 +94,7 @@ bool MqttBridge::setup() {
             p += "\"payload_off\": \"off\",";
         }
         
-        p += "\"device\": {";
-        p += "\"identifiers\": [\"" + this->uniqueId + "\"],";
-        p += "\"manufacturer\": \"https://github.com/Benas09/FujitsuAC\",";
-        p += "\"model\": \"Fujitsu AC\",";
-        p += "\"name\": \"" + this->name + "\"";
-        p += "}";
+        p += deviceConfig;
         p += "}";
 
         this->mqttClient.publish(topic.c_str(), p.c_str(), true);
