@@ -4,57 +4,86 @@
   
   Project home: https://github.com/Benas09/FujitsuAC
 */
+#include <WiFi.h>
+
+#include <PubSubClient.h>
 
 #include <SoftwareSerial.h>
-#include "EspMQTTClient.h"
 #include <FujitsuController.h>
 #include <MqttBridge.h>
 
-String getUniqueId() {
-    String mac = WiFi.macAddress();
 
-    mac.replace(":", "");
-    mac.toLowerCase();
+#define WIFI_SSID "your-ssid"
+#define WIFI_PASSWORD "your-password"
+#define DEVICE_NAME "OfficeAC"
 
-    return mac;
-}
+#define MQTT_SERVER "192.168.1.100"
+#define MQTT_PORT 1883
 
-const char* name = "OfficeAC";
+#define RXD2 16
+#define TXD2 17
 
-EspMQTTClient client = EspMQTTClient(
-    "your-ssid",
-    "your-password",
-    "192.168.1.100",
-    "",
-    "",
-    name,
-    1883
-);
-
-SoftwareSerial uart(16, 17, true); //RX, TX
+SoftwareSerial uart(RXD2, TXD2, true); //RX, TX
 FujitsuController controller = FujitsuController(uart);
-MqttBridge bridge = MqttBridge(client, controller, getUniqueId().c_str(), name);
+MqttBridge* bridge = nullptr;
+
+WiFiClient espClient;
+PubSubClient mqttClient = PubSubClient(espClient);
+String uniqueId = "000000000000";
 
 void setup() {
-    pinMode(17, LOW);
-    Serial.begin(9600);
+    Serial.begin(115200);
 
-    while (!Serial) {}
+    Serial.print("Connecting to ");
+    Serial.println(WIFI_SSID);
 
-    client.enableOTA();
-    client.setMaxPacketSize(1024);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-    String topic = "fujitsu/" + getUniqueId() + "/status";
-    client.enableLastWillMessage(topic.c_str(), "offline", true);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
+
+    uniqueId = WiFi.macAddress();
+    uniqueId.replace(":", "");
+    uniqueId.toLowerCase();
+
+    Serial.print("UniqueId: "); 
+    Serial.println(uniqueId);
+
+    mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
+    mqttClient.setBufferSize(1024);
 }
 
-void onConnectionEstablished()
-{
-    uart.begin(9600);
-    bridge.setup();
+void reconnect() {
+    while (!mqttClient.connected()) {
+        Serial.print("Connecting to MQTT...");
+
+        char topic[64];
+        snprintf(topic, sizeof(topic), "fujitsu/%s/status", uniqueId);
+
+        if (mqttClient.connect(DEVICE_NAME, topic, 0, true, "offline")) {
+            if (nullptr == bridge) {
+                bridge = new MqttBridge(mqttClient, controller, uniqueId.c_str(), DEVICE_NAME);
+            }
+
+            bridge->setup();
+        } else {
+            Serial.print("failed, rc=");
+            Serial.print(mqttClient.state());
+            delay(5000);
+        }
+    }
 }
 
 void loop() {
-    client.loop();
-    controller.loop();
+    if (!mqttClient.connected()) {
+        reconnect();
+    }
+
+    mqttClient.loop();
 }

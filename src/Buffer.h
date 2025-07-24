@@ -17,7 +17,7 @@ class Buffer {
     private:
         Stream &uart;
 
-        long lastMillis = 0;
+        uint32_t lastMillis = 0;
         uint8_t buffer[128];
         int currentIndex = 0;
 

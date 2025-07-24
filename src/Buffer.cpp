@@ -18,12 +18,15 @@ bool Buffer::setup() {
 
 bool Buffer::loop(std::function<void(uint8_t buffer[128], int size, bool isValid)> callback) {
     while (this->uart.available()) {
-        if (millis() - this->lastMillis > 100) {
+        uint8_t b = uart.read();
+        uint32_t now = millis();
+
+        if ((now - this->lastMillis) >= 20) {
             this->currentIndex = 0;
-            this->lastMillis = millis();
         }
 
-        uint8_t b = uart.read();
+        this->lastMillis = now;
+
         this->buffer[this->currentIndex] = b;
 
         if (this->currentIndex > 4 && this->currentIndex + 1 == (int) this->buffer[4] + 7) {

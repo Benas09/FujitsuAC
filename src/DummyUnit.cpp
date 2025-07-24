@@ -8,9 +8,8 @@
 #include "DummyUnit.h"
 #include <Arduino.h>
 
-DummyUnit::DummyUnit(Stream &uart, EspMQTTClient &mqttClient)
+DummyUnit::DummyUnit(Stream &uart)
     : uart(uart),
-      mqttClient(mqttClient),
       registryTable(),
       buffer(uart)
 {}
@@ -18,7 +17,7 @@ DummyUnit::DummyUnit(Stream &uart, EspMQTTClient &mqttClient)
 bool DummyUnit::setup() {
     this->createDefaultRegistryValues();
     
-    this->mqttClient.publish("fujitsu/dummy/info", "Setup complete");
+    Serial.println("DummyUnit setup done");
 
     return true;
 }
@@ -34,7 +33,7 @@ bool DummyUnit::loop() {
 void DummyUnit::onFrame(uint8_t buffer[128], int size, bool isValid) {
     switch (buffer[0]) {
         case 0x00: {
-            this->mqttClient.publish("fujitsu/dummy/info", "Controller initialized connection");
+            Serial.println("Controller initialized connection");
 
             uint8_t response[8] = {0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0xFF, 0xFD};
             uart.write(response, 8);
@@ -44,7 +43,7 @@ void DummyUnit::onFrame(uint8_t buffer[128], int size, bool isValid) {
         case 0x01: {
             uint8_t response[8] = {0x01, 0x00, 0x00, 0x00, 0x01, 0x01, 0xFF, 0xFC};
 
-            this->mqttClient.publish("fujitsu/dummy/info", "Controller connected");
+            Serial.println("Controller connected");
 
             uart.write(response, 8);
             break;
@@ -72,7 +71,7 @@ bool DummyUnit::setRegistryValues(uint8_t buffer[128], int size) {
 
     hexStr.toUpperCase();
 
-    this->mqttClient.publish("fujitsu/dummy/debug/set-registry", hexStr);
+    Serial.println(hexStr);
 
     int registriesCount = buffer[4] / 4;
 

@@ -5,14 +5,14 @@
   Project home: https://github.com/Benas09/FujitsuAC
 */
 
-#include "EspMQTTClient.h"
+#include "PubSubClient.h"
 #include "FujitsuController.h"
 #include "Enums.h"
 
 class MqttBridge {
     public:
         MqttBridge(
-            EspMQTTClient &mqttClient,
+            PubSubClient &mqttClient,
             FujitsuController &controller,
             const char* uniqueId,
             const char* name
@@ -22,7 +22,7 @@ class MqttBridge {
         bool loop();
 
     private:
-        EspMQTTClient &mqttClient;
+        PubSubClient &mqttClient;
         FujitsuController &controller;
 
         String uniqueId;
@@ -32,19 +32,19 @@ class MqttBridge {
         Enums::Mode modeAfterPowering = Enums::Mode::Auto;
 
         void onRegisterChange(Register *reg);
-        void onMqtt(const String &topic, const String &payload);
+        void onMqtt(char* topic, char* payload);
         void debug(const char* name, const char* message);
         
         static const char* addressToString(Address address);
         static const char* valueToString(Register *reg);
 
-        const Enums::Power stringToEnum(Enums::Power def, const String &value);
-        const Enums::Mode stringToEnum(Enums::Mode def, const String &value);
-        const Enums::FanSpeed stringToEnum(Enums::FanSpeed def, const String &value);
-        const Enums::VerticalAirflow stringToEnum(Enums::VerticalAirflow def, const String &value);
-        const Enums::VerticalSwing stringToEnum(Enums::VerticalSwing def, const String &value);
-        const Enums::Powerful stringToEnum(Enums::Powerful def, const String &value);
-        const Enums::Economy stringToEnum(Enums::Economy def, const String &value);
-        const Enums::EnergySavingFan stringToEnum(Enums::EnergySavingFan def, const String &value);
-        const Enums::OutdoorUnitLowNoise stringToEnum(Enums::OutdoorUnitLowNoise def, const String &value);
+        const Enums::Power stringToEnum(Enums::Power def, const char *value);
+        const Enums::Mode stringToEnum(Enums::Mode def, const char *value);
+        const Enums::FanSpeed stringToEnum(Enums::FanSpeed def, const char *value);
+        const Enums::VerticalAirflow stringToEnum(Enums::VerticalAirflow def, const char *value);
+        const Enums::VerticalSwing stringToEnum(Enums::VerticalSwing def, const char *value);
+        const Enums::Powerful stringToEnum(Enums::Powerful def, const char *value);
+        const Enums::Economy stringToEnum(Enums::Economy def, const char *value);
+        const Enums::EnergySavingFan stringToEnum(Enums::EnergySavingFan def, const char *value);
+        const Enums::OutdoorUnitLowNoise stringToEnum(Enums::OutdoorUnitLowNoise def, const char *value);
 };

@@ -5,20 +5,18 @@
   Project home: https://github.com/Benas09/FujitsuAC
 */
 
-#include "EspMQTTClient.h"
 #include "RegistryTable.h"
 #include "Buffer.h"
 
 class DummyUnit {
     public:
-        DummyUnit(Stream &uart, EspMQTTClient &mqttClient);
+        DummyUnit(Stream &uart);
 
         bool setup();
         bool loop();
 
     private:
         Stream &uart;
-        EspMQTTClient &mqttClient;
         RegistryTable registryTable;
         Buffer buffer;
 

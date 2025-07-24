@@ -4,42 +4,25 @@
   
   Project home: https://github.com/Benas09/FujitsuAC
 */
-
 #include <SoftwareSerial.h>
-#include "EspMQTTClient.h"
 #include <DummyUnit.h>
 
-//mosquitto_sub -h 192.168.1.100 -t fujitsu/dummy/#
+#define RXD2 16
+#define TXD2 17
 
-EspMQTTClient client = EspMQTTClient(
-    "your-ssid",
-    "your-password",
-    "192.168.1.100",
-    "",
-    "",
-    "FujitsuDummy",
-    1883
-);
+SoftwareSerial controllerUart(RXD2, TXD2, true); //RX, TX
+DummyUnit dummyUnit = DummyUnit(controllerUart);
 
-SoftwareSerial controllerUart(16, 17, true); //RX, TX
-DummyUnit dummyUnit = DummyUnit(controllerUart, client);
+void onConnectionEstablished() {}
 
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
+    Serial.println("Dummy start");
 
-    while (!Serial) {}
-
-    client.enableOTA();
-}
-
-void onConnectionEstablished()
-{
     controllerUart.begin(9600);
     dummyUnit.setup();
 }
 
 void loop() {
-    client.loop();
-
     dummyUnit.loop();
 }

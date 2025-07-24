@@ -8,7 +8,7 @@
 #include "MqttBridge.h"
 
 MqttBridge::MqttBridge(
-    EspMQTTClient &mqttClient, 
+    PubSubClient &mqttClient, 
     FujitsuController &controller,
     const char* uniqueId,
     const char* name
@@ -26,7 +26,11 @@ bool MqttBridge::setup() {
         this->debug(name, message);
     });
 
-    this->mqttClient.publish("fujitsu/" + this->uniqueId + "/status", "online", true);
+    Serial.println("MQTT Connected");
+
+    char topic[128];
+    snprintf(topic, sizeof(topic), "fujitsu/%s/status", this->uniqueId);
+    this->mqttClient.publish(topic, "online", true);
 
     String deviceConfig = "\"device\": {";
     deviceConfig += "\"identifiers\": [\"" + this->uniqueId + "\"],";
@@ -59,9 +63,8 @@ bool MqttBridge::setup() {
     p += deviceConfig;
     p += "}";
 
-    String topic = "homeassistant/climate/" + this->uniqueId + "_climate/config";
-
-    this->mqttClient.publish(topic.c_str(), p.c_str(), true);
+    snprintf(topic, sizeof(topic), "homeassistant/climate/%s_climate/config", this->uniqueId);
+    this->mqttClient.publish(topic, p.c_str(), true);
 
     static constexpr Address switches[] = {
         Address::VerticalAirflow,
@@ -74,6 +77,7 @@ bool MqttBridge::setup() {
 
     for (const auto& switch_ : switches) {
         String propertyName = String(this->addressToString(switch_));
+        String t = "";
 
         p = "{";
         p += "\"name\": \"" + propertyName + "\",";
@@ -91,13 +95,14 @@ bool MqttBridge::setup() {
         p += deviceConfig;
         p += "}";
 
+
         if (Address::VerticalAirflow == switch_) {
-            topic = "homeassistant/select/" + this->uniqueId + "_" + propertyName + "/config";
+            t = "homeassistant/select/" + this->uniqueId + "_" + propertyName + "/config";
         } else {
-            topic = "homeassistant/switch/" + this->uniqueId + "_" + propertyName + "/config";
+            t = "homeassistant/switch/" + this->uniqueId + "_" + propertyName + "/config";
         }
 
-        this->mqttClient.publish(topic.c_str(), p.c_str(), true);
+        this->mqttClient.publish(t.c_str(), p.c_str(), true);
     }
 
     p = "{";
@@ -108,14 +113,19 @@ bool MqttBridge::setup() {
     p += deviceConfig;
     p += "}";
 
-    topic = "homeassistant/button/" + this->uniqueId + "_restart/config";
-    this->mqttClient.publish(topic.c_str(), p.c_str(), true);
+    String t = "homeassistant/button/" + this->uniqueId + "_restart/config";
+    this->mqttClient.publish(t.c_str(), p.c_str(), true);
 
-    this->mqttClient.subscribe("fujitsu/" + this->uniqueId + "/#", [this](const String &topic, const String &payload) {
-        this->onMqtt(topic, payload);
+    this->mqttClient.setCallback([this](char* topic, byte* payload, unsigned int length) {
+        char message[length + 1];
+        memcpy(message, payload, length);
+        message[length] = '\0';
+
+        this->onMqtt(topic, message);
     });
 
-    this->controller.setup();
+    t = "fujitsu/" + this->uniqueId + "/#";
+    this->mqttClient.subscribe(t.c_str());
 
     return true;
 }
@@ -136,100 +146,112 @@ bool MqttBridge::loop() {
     }
 }
 
-void MqttBridge::onMqtt(const String &topic, const String &payload) {
-    int lastSlash = topic.lastIndexOf('/');
-    int secondLastSlash = topic.lastIndexOf('/', lastSlash - 1);
+void MqttBridge::onMqtt(char* topic, char* payload) {
+    String t = String(topic);
 
-    String command = topic.substring(secondLastSlash + 1, lastSlash);
-    String property = topic.substring(lastSlash + 1);
+    int lastSlash = t.lastIndexOf('/');
+    int secondLastSlash = t.lastIndexOf('/', lastSlash - 1);
 
-    if (command == "set") {
-        if (property == "restart") {
-            ESP.restart();
+    String command = t.substring(secondLastSlash + 1, lastSlash);
+    String property = t.substring(lastSlash + 1);
 
-            return;
-        }
+    if (command != "set") {
+        return;
+    }
 
-        if (property == this->addressToString(Address::Power)) {
-            this->controller.setPower(this->stringToEnum(Enums::Power::Off, payload));
+    Serial.print("MQTT Received: "); 
+    Serial.print(property); 
+    Serial.print(" ");
+    Serial.println(payload);
 
-            return;
-        }
+    if (property == "restart") {
+        ESP.restart();
 
-        if (property == this->addressToString(Address::Mode)) {
-            if (payload == "off") {
-                this->controller.setPower(Enums::Power::Off);
+        return;
+    }
 
-                return;
-            }
+    if (property == this->addressToString(Address::Power)) {
+        this->controller.setPower(this->stringToEnum(Enums::Power::Off, payload));
 
-            if (!this->controller.isPowerOn()) {
-                this->controller.setPower(Enums::Power::On);
+        return;
+    }
 
-                this->waitingPowerOnFrom = millis();
-                this->modeAfterPowering = this->stringToEnum(Enums::Mode::Auto, payload);
-
-                return;
-            }
-
-            this->controller.setMode(this->stringToEnum(Enums::Mode::Auto, payload));
+    if (property == this->addressToString(Address::Mode)) {
+        if (payload == "off") {
+            this->controller.setPower(Enums::Power::Off);
 
             return;
         }
 
-        if (property == this->addressToString(Address::SetpointTemp)) {
-            this->controller.setTemp(payload.c_str());
+        if (!this->controller.isPowerOn()) {
+            this->controller.setPower(Enums::Power::On);
+
+            this->waitingPowerOnFrom = millis();
+            this->modeAfterPowering = this->stringToEnum(Enums::Mode::Auto, payload);
 
             return;
         }
 
-        if (property == this->addressToString(Address::Fan)) {
-            this->controller.setFanSpeed(this->stringToEnum(Enums::FanSpeed::Auto, payload));
+        this->controller.setMode(this->stringToEnum(Enums::Mode::Auto, payload));
 
-            return;
-        }
+        return;
+    }
 
-        if (property == this->addressToString(Address::VerticalAirflow)) {
-            this->controller.setVerticalAirflow(this->stringToEnum(Enums::VerticalAirflow::Position1, payload));
+    if (property == this->addressToString(Address::SetpointTemp)) {
+        this->controller.setTemp(payload);
 
-            return;
-        }
+        return;
+    }
 
-        if (property == this->addressToString(Address::VerticalSwing)) {
-            this->controller.setVerticalSwing(this->stringToEnum(Enums::VerticalSwing::Off, payload));
+    if (property == this->addressToString(Address::Fan)) {
+        this->controller.setFanSpeed(this->stringToEnum(Enums::FanSpeed::Auto, payload));
 
-            return;
-        }
+        return;
+    }
 
-        if (property == this->addressToString(Address::Powerful)) {
-            this->controller.setPowerful(this->stringToEnum(Enums::Powerful::Off, payload));
+    if (property == this->addressToString(Address::VerticalAirflow)) {
+        this->controller.setVerticalAirflow(this->stringToEnum(Enums::VerticalAirflow::Position1, payload));
 
-            return;
-        }
+        return;
+    }
 
-        if (property == this->addressToString(Address::EconomyMode)) {
-            this->controller.setEconomy(this->stringToEnum(Enums::Economy::Off, payload));
+    if (property == this->addressToString(Address::VerticalSwing)) {
+        this->controller.setVerticalSwing(this->stringToEnum(Enums::VerticalSwing::Off, payload));
 
-            return;
-        }
+        return;
+    }
 
-        if (property == this->addressToString(Address::EnergySavingFan)) {
-            this->controller.setEnergySavingFan(this->stringToEnum(Enums::EnergySavingFan::Off, payload));
+    if (property == this->addressToString(Address::Powerful)) {
+        this->controller.setPowerful(this->stringToEnum(Enums::Powerful::Off, payload));
 
-            return;
-        }
+        return;
+    }
 
-        if (property == this->addressToString(Address::OutdoorUnitLowNoise)) {
-            this->controller.setOutdoorUnitLowNoise(this->stringToEnum(Enums::OutdoorUnitLowNoise::Off, payload));
+    if (property == this->addressToString(Address::EconomyMode)) {
+        this->controller.setEconomy(this->stringToEnum(Enums::Economy::Off, payload));
 
-            return;
-        }
+        return;
+    }
+
+    if (property == this->addressToString(Address::EnergySavingFan)) {
+        this->controller.setEnergySavingFan(this->stringToEnum(Enums::EnergySavingFan::Off, payload));
+
+        return;
+    }
+
+    if (property == this->addressToString(Address::OutdoorUnitLowNoise)) {
+        this->controller.setOutdoorUnitLowNoise(this->stringToEnum(Enums::OutdoorUnitLowNoise::Off, payload));
+
+        return;
     }
 }
 
 void MqttBridge::onRegisterChange(Register *reg) {
+    char topic[64];
+    snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId, this->addressToString(reg->address));
+
     this->mqttClient.publish(
-        "fujitsu/" + this->uniqueId + "/state/" + this->addressToString(reg->address), 
+        topic, 
         this->valueToString(reg), 
         true
     );
@@ -364,7 +386,7 @@ const char* MqttBridge::valueToString(Register *reg) {
     }
 }
 
-const Enums::Power MqttBridge::stringToEnum(Enums::Power def, const String &value) {
+const Enums::Power MqttBridge::stringToEnum(Enums::Power def, const char *value) {
     if (value == "on") {
         return Enums::Power::On;
     }
@@ -372,7 +394,7 @@ const Enums::Power MqttBridge::stringToEnum(Enums::Power def, const String &valu
     return def;
 }
 
-const Enums::Mode MqttBridge::stringToEnum(Enums::Mode def, const String &value) {
+const Enums::Mode MqttBridge::stringToEnum(Enums::Mode def, const char *value) {
     if (value == "cool") {
         return Enums::Mode::Cool;
     } else if (value == "dry") {
@@ -386,7 +408,7 @@ const Enums::Mode MqttBridge::stringToEnum(Enums::Mode def, const String &value)
     return def;
 }
 
-const Enums::FanSpeed MqttBridge::stringToEnum(Enums::FanSpeed def, const String &value) {
+const Enums::FanSpeed MqttBridge::stringToEnum(Enums::FanSpeed def, const char *value) {
     if (value == "auto") {
         return Enums::FanSpeed::Auto;
     } else if (value == "quiet") {
@@ -402,7 +424,7 @@ const Enums::FanSpeed MqttBridge::stringToEnum(Enums::FanSpeed def, const String
     return def;
 }
 
-const Enums::VerticalAirflow MqttBridge::stringToEnum(Enums::VerticalAirflow def, const String &value) {
+const Enums::VerticalAirflow MqttBridge::stringToEnum(Enums::VerticalAirflow def, const char *value) {
     if (value == "1") {
         return Enums::VerticalAirflow::Position1;
     } else if (value == "2") {
@@ -420,7 +442,7 @@ const Enums::VerticalAirflow MqttBridge::stringToEnum(Enums::VerticalAirflow def
     return def;
 }
 
-const Enums::VerticalSwing MqttBridge::stringToEnum(Enums::VerticalSwing def, const String &value) {
+const Enums::VerticalSwing MqttBridge::stringToEnum(Enums::VerticalSwing def, const char *value) {
     if (value == "on") {
         return Enums::VerticalSwing::On;
     }
@@ -428,7 +450,7 @@ const Enums::VerticalSwing MqttBridge::stringToEnum(Enums::VerticalSwing def, co
     return def;
 }
 
-const Enums::Powerful MqttBridge::stringToEnum(Enums::Powerful def, const String &value) {
+const Enums::Powerful MqttBridge::stringToEnum(Enums::Powerful def, const char *value) {
     if (value == "on") {
         return Enums::Powerful::On;
     }
@@ -436,7 +458,7 @@ const Enums::Powerful MqttBridge::stringToEnum(Enums::Powerful def, const String
     return def;
 }
 
-const Enums::Economy MqttBridge::stringToEnum(Enums::Economy def, const String &value) {
+const Enums::Economy MqttBridge::stringToEnum(Enums::Economy def, const char *value) {
     if (value == "on") {
         return Enums::Economy::On;
     }
@@ -444,7 +466,7 @@ const Enums::Economy MqttBridge::stringToEnum(Enums::Economy def, const String &
     return def;
 }
 
-const Enums::EnergySavingFan MqttBridge::stringToEnum(Enums::EnergySavingFan def, const String &value) {
+const Enums::EnergySavingFan MqttBridge::stringToEnum(Enums::EnergySavingFan def, const char *value) {
     if (value == "on") {
         return Enums::EnergySavingFan::On;
     }
@@ -452,7 +474,7 @@ const Enums::EnergySavingFan MqttBridge::stringToEnum(Enums::EnergySavingFan def
     return def;
 }
 
-const Enums::OutdoorUnitLowNoise MqttBridge::stringToEnum(Enums::OutdoorUnitLowNoise def, const String &value) {
+const Enums::OutdoorUnitLowNoise MqttBridge::stringToEnum(Enums::OutdoorUnitLowNoise def, const char *value) {
     if (value == "on") {
         return Enums::OutdoorUnitLowNoise::On;
     }
@@ -461,5 +483,8 @@ const Enums::OutdoorUnitLowNoise MqttBridge::stringToEnum(Enums::OutdoorUnitLowN
 }
 
 void MqttBridge::debug(const char* name, const char* message) {
-    this->mqttClient.publish("fujitsu/" + this->name + "/debug/" + name, message);
+    char topic[64];
+    snprintf(topic, sizeof(topic), "fujitsu/%s/debug/%s", this->name, name);
+
+    this->mqttClient.publish(topic, message);
 }
