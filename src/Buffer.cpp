@@ -26,7 +26,6 @@ bool Buffer::loop(std::function<void(uint8_t buffer[128], int size, bool isValid
         }
 
         this->lastMillis = now;
-
         this->buffer[this->currentIndex] = b;
 
         if (this->currentIndex > 4 && this->currentIndex + 1 == (int) this->buffer[4] + 7) {

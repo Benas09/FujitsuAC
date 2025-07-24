@@ -83,7 +83,7 @@ bool MqttBridge::setup() {
         p += "\"name\": \"" + propertyName + "\",";
         p += "\"unique_id\": \"" + this->uniqueId + "_" + propertyName + "\",";
         p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/" + propertyName + "\",";
-        p += "\"command_topic\": \"fujitsu/" + this->uniqueId + "/set/" + propertyName + " \",";
+        p += "\"command_topic\": \"fujitsu/" + this->uniqueId + "/set/" + propertyName + "\",";
 
         if (Address::VerticalAirflow == switch_) {
             p += "\"options\": [\"1\", \"2\", \"3\", \"4\", \"5\", \"6\"],";
@@ -152,32 +152,30 @@ void MqttBridge::onMqtt(char* topic, char* payload) {
     int lastSlash = t.lastIndexOf('/');
     int secondLastSlash = t.lastIndexOf('/', lastSlash - 1);
 
-    String command = t.substring(secondLastSlash + 1, lastSlash);
-    String property = t.substring(lastSlash + 1);
+    String com = t.substring(secondLastSlash + 1, lastSlash);
+    String prop = t.substring(lastSlash + 1).c_str();
 
-    if (command != "set") {
+    const char *command = com.c_str();
+    const char *property = prop.c_str();
+
+    if (strcmp(command, "set") > 0) {
         return;
     }
 
-    Serial.print("MQTT Received: "); 
-    Serial.print(property); 
-    Serial.print(" ");
-    Serial.println(payload);
-
-    if (property == "restart") {
+    if (0 == strcmp(property, "restart")) {
         ESP.restart();
 
         return;
     }
 
-    if (property == this->addressToString(Address::Power)) {
+    if (0 == strcmp(property, this->addressToString(Address::Power))) {
         this->controller.setPower(this->stringToEnum(Enums::Power::Off, payload));
 
         return;
     }
 
-    if (property == this->addressToString(Address::Mode)) {
-        if (payload == "off") {
+    if (0 == strcmp(property, this->addressToString(Address::Mode))) {
+        if (0 == strcmp(payload, "off")) {
             this->controller.setPower(Enums::Power::Off);
 
             return;
@@ -197,49 +195,49 @@ void MqttBridge::onMqtt(char* topic, char* payload) {
         return;
     }
 
-    if (property == this->addressToString(Address::SetpointTemp)) {
+    if (0 == strcmp(property, this->addressToString(Address::SetpointTemp))) {
         this->controller.setTemp(payload);
 
         return;
     }
 
-    if (property == this->addressToString(Address::Fan)) {
+    if (0 == strcmp(property, this->addressToString(Address::Fan))) {
         this->controller.setFanSpeed(this->stringToEnum(Enums::FanSpeed::Auto, payload));
 
         return;
     }
 
-    if (property == this->addressToString(Address::VerticalAirflow)) {
+    if (0 == strcmp(property, this->addressToString(Address::VerticalAirflow))) {
         this->controller.setVerticalAirflow(this->stringToEnum(Enums::VerticalAirflow::Position1, payload));
 
         return;
     }
 
-    if (property == this->addressToString(Address::VerticalSwing)) {
+    if (0 == strcmp(property, this->addressToString(Address::VerticalSwing))) {
         this->controller.setVerticalSwing(this->stringToEnum(Enums::VerticalSwing::Off, payload));
 
         return;
     }
 
-    if (property == this->addressToString(Address::Powerful)) {
+    if (0 == strcmp(property, this->addressToString(Address::Powerful))) {
         this->controller.setPowerful(this->stringToEnum(Enums::Powerful::Off, payload));
 
         return;
     }
 
-    if (property == this->addressToString(Address::EconomyMode)) {
+    if (0 == strcmp(property, this->addressToString(Address::EconomyMode))) {
         this->controller.setEconomy(this->stringToEnum(Enums::Economy::Off, payload));
 
         return;
     }
 
-    if (property == this->addressToString(Address::EnergySavingFan)) {
+    if (0 == strcmp(property, this->addressToString(Address::EnergySavingFan))) {
         this->controller.setEnergySavingFan(this->stringToEnum(Enums::EnergySavingFan::Off, payload));
 
         return;
     }
 
-    if (property == this->addressToString(Address::OutdoorUnitLowNoise)) {
+    if (0 == strcmp(property, this->addressToString(Address::OutdoorUnitLowNoise))) {
         this->controller.setOutdoorUnitLowNoise(this->stringToEnum(Enums::OutdoorUnitLowNoise::Off, payload));
 
         return;
@@ -364,14 +362,14 @@ const char* MqttBridge::valueToString(Register *reg) {
 
             break;
         case Address::SetpointTemp: {
-            char str[8];
+            static char str[8];
             snprintf(str, sizeof(str), "%u.%u", reg->value / 10, reg->value % 10);
 
             return str;
         }
             
         case Address::ActualTemp: {
-            char str[8];
+            static char str[8];
             snprintf(str, sizeof(str), "%u.%u", (reg->value - 5025) / 100, (reg->value - 5025) % 100);
 
             return str;
@@ -379,7 +377,7 @@ const char* MqttBridge::valueToString(Register *reg) {
 
         default: {
             static char buffer[20];
-            snprintf(buffer, sizeof(buffer), "%04X", static_cast<uint16_t>(reg->address));
+            snprintf(buffer, sizeof(buffer), "%04X", static_cast<uint16_t>(reg->value));
 
             return buffer;
         }
@@ -387,7 +385,7 @@ const char* MqttBridge::valueToString(Register *reg) {
 }
 
 const Enums::Power MqttBridge::stringToEnum(Enums::Power def, const char *value) {
-    if (value == "on") {
+    if (0 == strcmp(value, "on")) {
         return Enums::Power::On;
     }
 
@@ -395,13 +393,13 @@ const Enums::Power MqttBridge::stringToEnum(Enums::Power def, const char *value)
 }
 
 const Enums::Mode MqttBridge::stringToEnum(Enums::Mode def, const char *value) {
-    if (value == "cool") {
+    if (0 == strcmp(value, "cool")) {
         return Enums::Mode::Cool;
-    } else if (value == "dry") {
+    } else if (0 == strcmp(value, "dry")) {
         return Enums::Mode::Dry;
-    } else if (value == "fan_only") {
+    } else if (0 == strcmp(value, "fan_only")) {
         return Enums::Mode::Fan;
-    } else if (value == "heat") {
+    } else if (0 == strcmp(value, "heat")) {
         return Enums::Mode::Heat;
     }
 
@@ -409,15 +407,15 @@ const Enums::Mode MqttBridge::stringToEnum(Enums::Mode def, const char *value) {
 }
 
 const Enums::FanSpeed MqttBridge::stringToEnum(Enums::FanSpeed def, const char *value) {
-    if (value == "auto") {
+    if (0 == strcmp(value, "auto")) {
         return Enums::FanSpeed::Auto;
-    } else if (value == "quiet") {
+    } else if (0 == strcmp(value, "quiet")) {
         return Enums::FanSpeed::Quiet;
-    } else if (value == "low") {
+    } else if (0 == strcmp(value, "low")) {
         return Enums::FanSpeed::Low;
-    } else if (value == "medium") {
+    } else if (0 == strcmp(value, "medium")) {
         return Enums::FanSpeed::Medium;
-    } else if (value == "high") {
+    } else if (0 == strcmp(value, "high")) {
         return Enums::FanSpeed::High;
     }
 
@@ -425,17 +423,17 @@ const Enums::FanSpeed MqttBridge::stringToEnum(Enums::FanSpeed def, const char *
 }
 
 const Enums::VerticalAirflow MqttBridge::stringToEnum(Enums::VerticalAirflow def, const char *value) {
-    if (value == "1") {
+    if (0 == strcmp(value, "1") ) {
         return Enums::VerticalAirflow::Position1;
-    } else if (value == "2") {
+    } else if (strcmp(value, "2") == 0) {
         return Enums::VerticalAirflow::Position2;
-    } else if (value == "3") {
+    } else if (strcmp(value, "3") == 0) {
         return Enums::VerticalAirflow::Position3;
-    } else if (value == "4") {
+    } else if (strcmp(value, "4") == 0) {
         return Enums::VerticalAirflow::Position4;
-    } else if (value == "5") {
+    } else if (strcmp(value, "5") == 0) {
         return Enums::VerticalAirflow::Position5;
-    } else if (value == "6") {
+    } else if (strcmp(value, "6") == 0) {
         return Enums::VerticalAirflow::Position6;
     }
 
@@ -443,7 +441,7 @@ const Enums::VerticalAirflow MqttBridge::stringToEnum(Enums::VerticalAirflow def
 }
 
 const Enums::VerticalSwing MqttBridge::stringToEnum(Enums::VerticalSwing def, const char *value) {
-    if (value == "on") {
+    if (strcmp(value, "on") == 0) {
         return Enums::VerticalSwing::On;
     }
 
@@ -451,7 +449,7 @@ const Enums::VerticalSwing MqttBridge::stringToEnum(Enums::VerticalSwing def, co
 }
 
 const Enums::Powerful MqttBridge::stringToEnum(Enums::Powerful def, const char *value) {
-    if (value == "on") {
+    if (strcmp(value, "on") == 0) {
         return Enums::Powerful::On;
     }
 
@@ -459,7 +457,7 @@ const Enums::Powerful MqttBridge::stringToEnum(Enums::Powerful def, const char *
 }
 
 const Enums::Economy MqttBridge::stringToEnum(Enums::Economy def, const char *value) {
-    if (value == "on") {
+    if (strcmp(value, "on") == 0) {
         return Enums::Economy::On;
     }
 
@@ -467,7 +465,7 @@ const Enums::Economy MqttBridge::stringToEnum(Enums::Economy def, const char *va
 }
 
 const Enums::EnergySavingFan MqttBridge::stringToEnum(Enums::EnergySavingFan def, const char *value) {
-    if (value == "on") {
+    if (strcmp(value, "on") == 0) {
         return Enums::EnergySavingFan::On;
     }
 
@@ -475,7 +473,7 @@ const Enums::EnergySavingFan MqttBridge::stringToEnum(Enums::EnergySavingFan def
 }
 
 const Enums::OutdoorUnitLowNoise MqttBridge::stringToEnum(Enums::OutdoorUnitLowNoise def, const char *value) {
-    if (value == "on") {
+    if (strcmp(value, "on") == 0) {
         return Enums::OutdoorUnitLowNoise::On;
     }
 
@@ -484,7 +482,7 @@ const Enums::OutdoorUnitLowNoise MqttBridge::stringToEnum(Enums::OutdoorUnitLowN
 
 void MqttBridge::debug(const char* name, const char* message) {
     char topic[64];
-    snprintf(topic, sizeof(topic), "fujitsu/%s/debug/%s", this->name, name);
+    snprintf(topic, sizeof(topic), "fujitsu/%s/debug/%s", this->uniqueId, name);
 
     this->mqttClient.publish(topic, message);
 }

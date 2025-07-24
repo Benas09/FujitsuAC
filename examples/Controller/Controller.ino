@@ -14,7 +14,7 @@
 
 
 #define WIFI_SSID "your-ssid"
-#define WIFI_PASSWORD "your-password"
+#define WIFI_PASSWORD "your-pw"
 #define DEVICE_NAME "OfficeAC"
 
 #define MQTT_SERVER "192.168.1.100"
@@ -36,6 +36,9 @@ void setup() {
 
     Serial.print("Connecting to ");
     Serial.println(WIFI_SSID);
+
+    uart.begin(9600);
+    controller.setup();
 
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
@@ -86,4 +89,5 @@ void loop() {
     }
 
     mqttClient.loop();
+    controller.loop();
 }
