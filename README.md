@@ -19,8 +19,8 @@ AC pins are not galvanically isolated and these voltages are not relative to ear
  AC Socket       LM2596                 ESP32
 1 (+12V) ------> V in+ ---> V out+ ---> 5V
 2 (GND)  ------> V in- ---> V out- ---> GND
-3 (DATA) -----------------------------> TX 17
-4 (DATA) -----------------------------> RX 16
+3 (DATA) -----------------------------> RX 16 (Data to ESP)
+4 (DATA) -----------------------------> TX 17 (Data from ESP)
 ```
 
 * Connector PAP-04V-S
