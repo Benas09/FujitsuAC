@@ -25,5 +25,8 @@ AC pins are not galvanically isolated and these voltages are not relative to ear
 4 (DATA) -----------------------------> TX 17 (Data from ESP)
 ```
 
+Pins from left to right 1 2 3 4
+![](/images/socket.jpg)
+
 * Connector PAP-04V-S
 * Pins to crimp: SPHD-002T-P0.5
