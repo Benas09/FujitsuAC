@@ -198,7 +198,7 @@ void FujitsuController::sendRegistries() {
 
     uint16_t checksum = 
         0xFFFF 
-        - 0x03
+        - 0x02
         - (4 * frame.size)
     ;
 
