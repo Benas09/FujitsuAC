@@ -217,6 +217,8 @@ void FujitsuController::sendRegistries() {
 
         checksum -= request[index];
         checksum -= request[index + 1];
+        checksum -= request[index + 2];
+        checksum -= request[index + 3];
     }
 
     request[bufferSize - 2] = (checksum >> 8) & 0xFF;
