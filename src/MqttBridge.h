@@ -35,12 +35,12 @@ namespace FujitsuAC {
             uint32_t waitingPowerOnFrom = 0;
             Enums::Mode modeAfterPowering = Enums::Mode::Auto;
 
-            void onRegisterChange(Register *reg);
+            void onRegisterChange(const Register *reg);
             void onMqtt(char* topic, char* payload);
             void debug(const char* name, const char* message);
             
             static const char* addressToString(Address address);
-            static const char* valueToString(Register *reg);
+            static const char* valueToString(const Register *reg);
 
             const Enums::Power stringToEnum(Enums::Power def, const char *value);
             const Enums::Mode stringToEnum(Enums::Mode def, const char *value);

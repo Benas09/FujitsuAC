@@ -36,6 +36,10 @@ namespace FujitsuAC {
         return true;
     }
 
+    const Register* FujitsuController::getAllRegisters(size_t &outSize) const {
+        return this->registryTable.getAllRegisters(outSize);
+    }
+
     void FujitsuController::sendRequest() {
         if (this->terminated) {
             return;
@@ -71,6 +75,8 @@ namespace FujitsuAC {
                     this->lastResponseReceived = false;
 
                     uint8_t payload[] = {0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFB};
+                    this->debug("send", this->toHexStr(payload, sizeof(payload)));
+
                     uart.write(payload, sizeof(payload));
 
                     break;
@@ -81,6 +87,8 @@ namespace FujitsuAC {
                     this->lastResponseReceived = false;
 
                     uint8_t payload[] = {0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04, 0x00, 0x01, 0xFF, 0xF5};
+                    this->debug("send", this->toHexStr(payload, sizeof(payload)));
+
                     uart.write(payload, sizeof(payload));
 
                     break;
@@ -448,7 +456,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(result);
     }
 
-    void FujitsuController::setOnRegisterChangeCallback(std::function<void(Register* reg)> onRegisterChangeCallback) {
+    void FujitsuController::setOnRegisterChangeCallback(std::function<void(const Register* reg)> onRegisterChangeCallback) {
         this->onRegisterChangeCallback = onRegisterChangeCallback;
     }
 

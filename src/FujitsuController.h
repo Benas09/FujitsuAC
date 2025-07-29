@@ -34,11 +34,12 @@ namespace FujitsuAC {
         void setOutdoorUnitLowNoise(Enums::OutdoorUnitLowNoise outdoorUnitLowNoise);
         void setTemp(const char *temp);
 
-        void setOnRegisterChangeCallback(std::function<void(Register* reg)> onRegisterChangeCallback);
+        void setOnRegisterChangeCallback(std::function<void(const Register* reg)> onRegisterChangeCallback);
         void setDebugCallback(std::function<void(const char* name, const char* message)> debugCallback);
+        const Register* getAllRegisters(size_t &outSize) const;
 
       private:
-        std::function<void(Register *reg)> onRegisterChangeCallback;
+        std::function<void(const Register *reg)> onRegisterChangeCallback;
         std::function<void(const char* name, const char* message)> debugCallback;
         
         Stream &uart;

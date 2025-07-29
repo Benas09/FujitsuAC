@@ -20,7 +20,7 @@ namespace FujitsuAC {
         name(name) {}
 
     bool MqttBridge::setup() {
-        this->controller.setOnRegisterChangeCallback([this](Register* reg) {
+        this->controller.setOnRegisterChangeCallback([this](const Register* reg) {
             this->onRegisterChange(reg);
         });
 
@@ -119,6 +119,18 @@ namespace FujitsuAC {
         String t = "homeassistant/button/" + this->uniqueId + "_restart/config";
         this->mqttClient.publish(t.c_str(), p.c_str(), true);
 
+        p = "{";
+        p += "\"name\": \"actual_temp\",";
+        p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/actual_temp\",";
+        p += "\"unit_of_measurement\": \"°C\",";
+        p += "\"unique_id\": \"" + this->uniqueId + "_actual_temp\",";
+        p += "\"device_class\": \"temperature\",";
+        p += deviceConfig;
+        p += "}";
+
+        t = "homeassistant/sensor/" + this->uniqueId + "_actual_temp/config";
+        this->mqttClient.publish(t.c_str(), p.c_str(), true);
+
         this->mqttClient.setCallback([this](char* topic, byte* payload, unsigned int length) {
             char message[length + 1];
             memcpy(message, payload, length);
@@ -129,6 +141,14 @@ namespace FujitsuAC {
 
         t = "fujitsu/" + this->uniqueId + "/#";
         this->mqttClient.subscribe(t.c_str());
+
+        //Send current registry values after MQTT connection
+        size_t registryCount;
+        const Register* registers = this->controller.getAllRegisters(registryCount);
+
+        for (size_t i = 0; i < registryCount; ++i) {
+            this->onRegisterChange(&registers[i]);
+        }
 
         return true;
     }
@@ -216,7 +236,7 @@ namespace FujitsuAC {
         }
     }
 
-    void MqttBridge::onRegisterChange(Register *reg) {
+    void MqttBridge::onRegisterChange(const Register *reg) {
         char topic[64];
         snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId, this->addressToString(reg->address));
 
@@ -249,7 +269,7 @@ namespace FujitsuAC {
         }
     }
 
-    const char* MqttBridge::valueToString(Register *reg) {
+    const char* MqttBridge::valueToString(const Register *reg) {
         switch (reg->address) {
             case Address::Power:
                 switch (static_cast<Enums::Power>(reg->value)) {
