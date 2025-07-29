@@ -8,22 +8,28 @@
 #include "RegistryTable.h"
 #include "Buffer.h"
 
-class DummyUnit {
-    public:
-        DummyUnit(Stream &uart);
+#pragma once
 
-        bool setup();
-        bool loop();
+namespace FujitsuAC {
 
-    private:
-        Stream &uart;
-        RegistryTable registryTable;
-        Buffer buffer;
+    class DummyUnit {
+        public:
+            DummyUnit(Stream &uart);
 
-        void onFrame(uint8_t buffer[128], int size, bool isValid);
+            bool setup();
+            bool loop();
 
-        bool setRegistryValues(uint8_t buffer[128], int size);
-        bool sendRegistryValues(uint8_t buffer[128], int size);
+        private:
+            Stream &uart;
+            RegistryTable registryTable;
+            Buffer buffer;
 
-        void createDefaultRegistryValues();
-};
+            void onFrame(uint8_t buffer[128], int size, bool isValid);
+
+            bool setRegistryValues(uint8_t buffer[128], int size);
+            bool sendRegistryValues(uint8_t buffer[128], int size);
+
+            void createDefaultRegistryValues();
+    };
+
+}

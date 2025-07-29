@@ -9,40 +9,44 @@
 #include <cstddef>
 #include <algorithm>
 
-RegistryTable::RegistryTable() {
-	std::sort(
-		this->registerTable, 
-		this->registerTable + sizeof(this->registerTable) / sizeof(this->registerTable[0]),
-		[](const Register& a, const Register& b) {
-			return a.address < b.address;
+namespace FujitsuAC {
+
+	RegistryTable::RegistryTable() {
+		std::sort(
+			this->registerTable, 
+			this->registerTable + sizeof(this->registerTable) / sizeof(this->registerTable[0]),
+			[](const Register& a, const Register& b) {
+				return a.address < b.address;
+			}
+		);
+	};
+
+	Register* RegistryTable::getRegister(Address address) {
+		size_t size = sizeof(this->registerTable) / sizeof(this->registerTable[0]);
+
+		auto it = std::lower_bound(
+			this->registerTable, 
+			this->registerTable + size,
+			address,
+			[](const Register& reg, Address val) {
+				return reg.address < val;
+			}
+		);
+
+		if (
+			it != registerTable + sizeof(registerTable) / sizeof(registerTable[0]) 
+			&& it->address == address
+		) {
+			return it;
 		}
-	);
-};
 
-Register* RegistryTable::getRegister(Address address) {
-	size_t size = sizeof(this->registerTable) / sizeof(this->registerTable[0]);
-
-	auto it = std::lower_bound(
-		this->registerTable, 
-		this->registerTable + size,
-		address,
-		[](const Register& reg, Address val) {
-			return reg.address < val;
-		}
-	);
-
-	if (
-		it != registerTable + sizeof(registerTable) / sizeof(registerTable[0]) 
-		&& it->address == address
-	) {
-		return it;
+		return nullptr;
 	}
 
-	return nullptr;
-}
+	const Register* RegistryTable::getAllRegisters(size_t &outSize) const {
+		outSize = sizeof(registerTable) / sizeof(registerTable[0]);
 
-const Register* RegistryTable::getAllRegisters(size_t &outSize) const {
-	outSize = sizeof(registerTable) / sizeof(registerTable[0]);
+		return registerTable;
+	}
 
-	return registerTable;
 }

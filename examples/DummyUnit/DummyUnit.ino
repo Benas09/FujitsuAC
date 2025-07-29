@@ -11,7 +11,7 @@
 #define TXD2 17
 
 SoftwareSerial controllerUart(RXD2, TXD2, true); //RX, TX
-DummyUnit dummyUnit = DummyUnit(controllerUart);
+FujitsuAC::DummyUnit dummyUnit = FujitsuAC::DummyUnit(controllerUart);
 
 void onConnectionEstablished() {}
 

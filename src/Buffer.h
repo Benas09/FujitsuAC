@@ -7,19 +7,25 @@
 
 #include <SoftwareSerial.h>
 
-class Buffer {
-    public:
-        Buffer(Stream &uart);
+#pragma once
 
-        bool setup();
-        bool loop(std::function<void(uint8_t buffer[128], int size, bool isValid)> callback);
+namespace FujitsuAC {
 
-    private:
-        Stream &uart;
+    class Buffer {
+        public:
+            Buffer(Stream &uart);
 
-        uint32_t lastMillis = 0;
-        uint8_t buffer[128];
-        int currentIndex = 0;
+            bool setup();
+            bool loop(std::function<void(uint8_t buffer[128], int size, bool isValid)> callback);
 
-        bool isValidFrame(uint8_t buffer[128], int size);
-};
+        private:
+            Stream &uart;
+
+            uint32_t lastMillis = 0;
+            uint8_t buffer[128];
+            int currentIndex = 0;
+
+            bool isValidFrame(uint8_t buffer[128], int size);
+    };
+
+}

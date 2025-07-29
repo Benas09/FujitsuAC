@@ -24,8 +24,8 @@
 #define TXD2 17
 
 SoftwareSerial uart(RXD2, TXD2, true); //RX, TX
-FujitsuController controller = FujitsuController(uart);
-MqttBridge* bridge = nullptr;
+FujitsuAC::FujitsuController controller = FujitsuAC::FujitsuController(uart);
+FujitsuAC::MqttBridge* bridge = nullptr;
 
 WiFiClient espClient;
 PubSubClient mqttClient = PubSubClient(espClient);
@@ -71,7 +71,7 @@ void reconnect() {
 
         if (mqttClient.connect(DEVICE_NAME, topic, 0, true, "offline")) {
             if (nullptr == bridge) {
-                bridge = new MqttBridge(mqttClient, controller, uniqueId.c_str(), DEVICE_NAME);
+                bridge = new FujitsuAC::MqttBridge(mqttClient, controller, uniqueId.c_str(), DEVICE_NAME);
             }
 
             bridge->setup();
