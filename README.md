@@ -1,6 +1,7 @@
 # FujitsuAC
 
-Fujitsu AC Wifi controller
+Fujitsu AC Wifi controller. 
+FGLair app is not required, everything is local.
 
 Using this library you can control your Fujitsu AC through 4 pin socket dedicated to UTY-TFSXW1 wifi module.
 
