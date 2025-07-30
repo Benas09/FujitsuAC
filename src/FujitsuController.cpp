@@ -301,10 +301,8 @@ namespace FujitsuAC {
         if (0x02 == buffer[0]) {
             this->debug("received", this->toHexStr(buffer, size));
 
-            if (0x01 != buffer[4]) {
+            if (0x01 != buffer[5]) {
                 this->debug("error", "Invalid status");
-
-                return;
             }
 
             this->lastResponseReceived = true;

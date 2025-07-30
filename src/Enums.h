@@ -47,8 +47,8 @@ namespace FujitsuAC {
         };
 
         enum class Powerful: uint16_t {
+            Off = 0x0000,
             On = 0x0001,
-            Off = 0x0003
         };
 
         enum class EconomyMode: uint16_t {
