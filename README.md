@@ -7,7 +7,7 @@ Using this library you can control your Fujitsu AC through 4 pin socket dedicate
 Works with:
 * ASYG09KMTB / AOYG09KMTA
 
-**Not fully tested**
+![](/images/homeassistant.png)
 
 ## Connection
 
