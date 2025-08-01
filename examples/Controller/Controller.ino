@@ -6,6 +6,10 @@
 */
 #include <WiFi.h>
 
+#include <ESPmDNS.h>
+#include <NetworkUdp.h>
+#include <ArduinoOTA.h>
+
 #include <PubSubClient.h>
 
 #include <SoftwareSerial.h>
@@ -16,6 +20,7 @@
 #define WIFI_SSID "your-ssid"
 #define WIFI_PASSWORD "your-pw"
 #define DEVICE_NAME "OfficeAC"
+#define OTA_PASSWORD "office_ac"
 
 #define MQTT_SERVER "192.168.1.100"
 #define MQTT_PORT 1883
@@ -51,6 +56,10 @@ void setup() {
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
 
+    ArduinoOTA.setHostname(DEVICE_NAME);
+    ArduinoOTA.setPassword(OTA_PASSWORD);
+    ArduinoOTA.begin();
+
     uniqueId = WiFi.macAddress();
     uniqueId.replace(":", "");
     uniqueId.toLowerCase();
@@ -84,6 +93,8 @@ void reconnect() {
 }
 
 void loop() {
+    ArduinoOTA.handle();
+
     if (!mqttClient.connected()) {
         reconnect();
     }
