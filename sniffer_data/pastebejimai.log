@@ -1,0 +1,25 @@
+address_10A0
+0001 <- po ijungimo
+0003
+0020
+0006
+0001
+0020
+0000 <- po isjungimo
+
+address_1010
+0001
+0006
+0001
+
+ant fan only
+1002 (setpoint temp) pasikecia i FFFF (6553.5)
+
+address_2020
+1964
+19C8
+1900
+1964
+19C8
+1A90
+1900

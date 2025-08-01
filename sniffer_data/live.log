@@ -1,0 +1,208 @@
+fujitsu/7c9ebdf0677c/debug/changed 0110 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/address_0110 0001
+fujitsu/7c9ebdf0677c/debug/changed 0111 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/address_0111 0001
+fujitsu/7c9ebdf0677c/debug/changed 0112 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/address_0112 0001
+fujitsu/7c9ebdf0677c/debug/changed 0113 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/address_0113 0001
+fujitsu/7c9ebdf0677c/debug/changed 0114 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/address_0114 0001
+fujitsu/7c9ebdf0677c/debug/changed 0115 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/address_0115 0001
+fujitsu/7c9ebdf0677c/debug/changed 0117 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/address_0117 0001
+fujitsu/7c9ebdf0677c/debug/changed 011A | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/address_011A 0001
+fujitsu/7c9ebdf0677c/debug/changed 011D | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/address_011D 0001
+fujitsu/7c9ebdf0677c/debug/changed 0120 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/address_0120 0001
+fujitsu/7c9ebdf0677c/debug/changed 0130 | 0000 -> 0006
+fujitsu/7c9ebdf0677c/state/address_0130 0006
+fujitsu/7c9ebdf0677c/debug/changed 0131 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/address_0131 0001
+fujitsu/7c9ebdf0677c/debug/changed 0150 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/address_0150 0001
+fujitsu/7c9ebdf0677c/debug/changed 0151 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/address_0151 0001
+fujitsu/7c9ebdf0677c/debug/changed 0153 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/address_0153 0001
+fujitsu/7c9ebdf0677c/debug/changed 0170 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/address_0170 0001
+fujitsu/7c9ebdf0677c/debug/changed 0171 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/address_0171 0001
+fujitsu/7c9ebdf0677c/debug/changed 1001 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/mode cool
+fujitsu/7c9ebdf0677c/debug/changed 1002 | 0000 -> 00F0
+fujitsu/7c9ebdf0677c/state/temp 24.0
+fujitsu/7c9ebdf0677c/debug/changed 1003 | 0000 -> 0002
+fujitsu/7c9ebdf0677c/state/fan quiet
+fujitsu/7c9ebdf0677c/debug/changed 1010 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/vertical_airflow 1
+fujitsu/7c9ebdf0677c/debug/changed 1022 | 0000 -> FFFF
+fujitsu/7c9ebdf0677c/state/address_1022 FFFF
+fujitsu/7c9ebdf0677c/debug/changed 1023 | 0000 -> FFFF
+fujitsu/7c9ebdf0677c/state/address_1023 FFFF
+fujitsu/7c9ebdf0677c/debug/changed 10A9 | 0000 -> FFFF
+fujitsu/7c9ebdf0677c/state/address_10A9 FFFF
+fujitsu/7c9ebdf0677c/debug/changed 1031 | 0000 -> 0181
+fujitsu/7c9ebdf0677c/state/address_1031 0181
+fujitsu/7c9ebdf0677c/debug/changed 1033 | 0000 -> 1CE8
+fujitsu/7c9ebdf0677c/state/actual_temp 23.75
+fujitsu/7c9ebdf0677c/debug/changed 1102 | 0000 -> FFFF
+fujitsu/7c9ebdf0677c/state/address_1102 FFFF
+fujitsu/7c9ebdf0677c/debug/changed 1103 | 0000 -> FFFF
+fujitsu/7c9ebdf0677c/state/address_1103 FFFF
+fujitsu/7c9ebdf0677c/debug/changed 1104 | 0000 -> FFFF
+fujitsu/7c9ebdf0677c/state/address_1104 FFFF
+fujitsu/7c9ebdf0677c/debug/changed 1105 | 0000 -> FFFF
+fujitsu/7c9ebdf0677c/state/address_1105 FFFF
+fujitsu/7c9ebdf0677c/debug/changed 1106 | 0000 -> FFFF
+fujitsu/7c9ebdf0677c/state/address_1106 FFFF
+fujitsu/7c9ebdf0677c/debug/changed 1107 | 0000 -> FFFF
+fujitsu/7c9ebdf0677c/state/address_1107 FFFF
+fujitsu/7c9ebdf0677c/debug/changed 1108 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/energy_saving_fan on
+fujitsu/7c9ebdf0677c/debug/changed 1144 | 0000 -> FFFF
+fujitsu/7c9ebdf0677c/state/address_1144 FFFF
+fujitsu/7c9ebdf0677c/debug/changed 1141 | 0000 -> FFFF
+fujitsu/7c9ebdf0677c/state/address_1141 FFFF
+fujitsu/7c9ebdf0677c/debug/changed 2000 | 0000 -> FFFF
+fujitsu/7c9ebdf0677c/state/address_2000 FFFF
+fujitsu/7c9ebdf0677c/debug/changed 2020 | 0000 -> 1964
+fujitsu/7c9ebdf0677c/state/address_2020 1964
+fujitsu/7c9ebdf0677c/debug/changed 1031 | 0181 -> 0000
+fujitsu/7c9ebdf0677c/state/address_1031 0000
+
+fujitsu/7c9ebdf0677c/set/power on
+fujitsu/7c9ebdf0677c/debug/send 02 00 00 00 04 10 00 00 01 FF E8
+fujitsu/7c9ebdf0677c/debug/received 02 00 00 00 01 01 FF FB
+fujitsu/7c9ebdf0677c/debug/changed 1000 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/power on
+
+fujitsu/7c9ebdf0677c/debug/changed 10A0 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/address_10A0 0001
+
+fujitsu/7c9ebdf0677c/set/powerful on
+fujitsu/7c9ebdf0677c/debug/send 02 00 00 00 04 11 20 00 01 FF C7
+fujitsu/7c9ebdf0677c/debug/received 02 00 00 00 01 01 FF FB
+fujitsu/7c9ebdf0677c/debug/changed 1120 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/powerful on
+
+fujitsu/7c9ebdf0677c/debug/changed 10A0 | 0001 -> 0003
+fujitsu/7c9ebdf0677c/state/address_10A0 0003
+fujitsu/7c9ebdf0677c/debug/changed 2020 | 1964 -> 19C8
+fujitsu/7c9ebdf0677c/state/address_2020 19C8
+
+fujitsu/7c9ebdf0677c/set/vertical_swing on
+fujitsu/7c9ebdf0677c/debug/send 02 00 00 00 04 10 11 00 01 FF D7
+fujitsu/7c9ebdf0677c/debug/received 02 00 00 00 01 01 FF FB
+fujitsu/7c9ebdf0677c/debug/changed 1011 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/vertical_swing on
+
+fujitsu/7c9ebdf0677c/debug/changed 10A0 | 0003 -> 0020
+fujitsu/7c9ebdf0677c/state/address_10A0 0020
+fujitsu/7c9ebdf0677c/debug/changed 1033 | 1CE8 -> 1D33
+fujitsu/7c9ebdf0677c/state/actual_temp 24.50
+
+fujitsu/7c9ebdf0677c/set/vertical_airflow 6
+fujitsu/7c9ebdf0677c/debug/send 02 00 00 00 08 10 11 00 00 10 10 00 06 FF AE
+fujitsu/7c9ebdf0677c/debug/received 02 00 00 00 01 01 FF FB
+fujitsu/7c9ebdf0677c/debug/changed 1011 | 0001 -> 0000
+fujitsu/7c9ebdf0677c/state/vertical_swing off
+
+fujitsu/7c9ebdf0677c/debug/changed 1010 | 0001 -> 0006
+fujitsu/7c9ebdf0677c/state/vertical_airflow 6
+fujitsu/7c9ebdf0677c/debug/changed 10A0 | 0020 -> 0006
+fujitsu/7c9ebdf0677c/state/address_10A0 0006
+fujitsu/7c9ebdf0677c/debug/changed 2020 | 19C8 -> 1900
+fujitsu/7c9ebdf0677c/state/address_2020 1900
+
+fujitsu/7c9ebdf0677c/set/vertical_airflow 1
+fujitsu/7c9ebdf0677c/debug/send 02 00 00 00 08 10 11 00 00 10 10 00 01 FF B3
+fujitsu/7c9ebdf0677c/debug/received 02 00 00 00 01 01 FF FB
+fujitsu/7c9ebdf0677c/debug/changed 1010 | 0006 -> 0001
+fujitsu/7c9ebdf0677c/state/vertical_airflow 1
+
+fujitsu/7c9ebdf0677c/debug/changed 10A0 | 0006 -> 0001
+fujitsu/7c9ebdf0677c/state/address_10A0 0001
+
+fujitsu/7c9ebdf0677c/set/vertical_swing on
+fujitsu/7c9ebdf0677c/debug/send 02 00 00 00 04 10 11 00 01 FF D7
+fujitsu/7c9ebdf0677c/debug/received 02 00 00 00 01 01 FF FB
+fujitsu/7c9ebdf0677c/debug/changed 1011 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/vertical_swing on
+
+fujitsu/7c9ebdf0677c/debug/changed 10A0 | 0001 -> 0020
+fujitsu/7c9ebdf0677c/state/address_10A0 0020
+
+fujitsu/7c9ebdf0677c/set/powerful off
+fujitsu/7c9ebdf0677c/debug/send 02 00 00 00 04 11 20 00 00 FF C8
+fujitsu/7c9ebdf0677c/debug/received 02 00 00 00 01 01 FF FB
+fujitsu/7c9ebdf0677c/debug/changed 1120 | 0001 -> 0000
+fujitsu/7c9ebdf0677c/state/powerful off
+
+fujitsu/7c9ebdf0677c/debug/changed 1033 | 1D33 -> 1D1A
+fujitsu/7c9ebdf0677c/state/actual_temp 24.25
+
+fujitsu/7c9ebdf0677c/set/mode fan_only
+fujitsu/7c9ebdf0677c/debug/send 02 00 00 00 04 10 01 00 03 FF E5
+fujitsu/7c9ebdf0677c/debug/received 02 00 00 00 01 01 FF FB
+fujitsu/7c9ebdf0677c/debug/changed 1001 | 0001 -> 0003
+fujitsu/7c9ebdf0677c/state/mode fan_only
+
+fujitsu/7c9ebdf0677c/debug/changed 1002 | 00F0 -> FFFF
+fujitsu/7c9ebdf0677c/state/temp 6553.5
+
+fujitsu/7c9ebdf0677c/set/fan high
+fujitsu/7c9ebdf0677c/debug/send 02 00 00 00 04 10 03 00 0B FF DB
+fujitsu/7c9ebdf0677c/debug/received 02 00 00 00 01 01 FF FB
+fujitsu/7c9ebdf0677c/debug/changed 1003 | 0002 -> 000B
+fujitsu/7c9ebdf0677c/state/fan high
+
+fujitsu/7c9ebdf0677c/debug/changed 2020 | 1900 -> 1964
+fujitsu/7c9ebdf0677c/state/address_2020 1964
+
+fujitsu/7c9ebdf0677c/set/mode cool
+fujitsu/7c9ebdf0677c/debug/send 02 00 00 00 04 10 01 00 01 FF E7
+fujitsu/7c9ebdf0677c/debug/received 02 00 00 00 01 01 FF FB
+fujitsu/7c9ebdf0677c/debug/changed 1001 | 0003 -> 0001
+fujitsu/7c9ebdf0677c/state/mode cool
+
+fujitsu/7c9ebdf0677c/debug/changed 1002 | FFFF -> 00F0
+fujitsu/7c9ebdf0677c/state/temp 24.0
+fujitsu/7c9ebdf0677c/debug/changed 2020 | 1964 -> 19C8
+fujitsu/7c9ebdf0677c/state/address_2020 19C8
+
+fujitsu/7c9ebdf0677c/set/powerful on
+fujitsu/7c9ebdf0677c/debug/send 02 00 00 00 04 11 20 00 01 FF C7
+fujitsu/7c9ebdf0677c/debug/received 02 00 00 00 01 01 FF FB
+fujitsu/7c9ebdf0677c/debug/changed 1120 | 0000 -> 0001
+fujitsu/7c9ebdf0677c/state/powerful on
+
+fujitsu/7c9ebdf0677c/debug/changed 2020 | 19C8 -> 1A90
+fujitsu/7c9ebdf0677c/state/address_2020 1A90
+
+fujitsu/7c9ebdf0677c/set/powerful off
+fujitsu/7c9ebdf0677c/debug/send 02 00 00 00 04 11 20 00 00 FF C8
+fujitsu/7c9ebdf0677c/debug/received 02 00 00 00 01 01 FF FB
+fujitsu/7c9ebdf0677c/debug/changed 1120 | 0001 -> 0000
+fujitsu/7c9ebdf0677c/state/powerful off
+
+fujitsu/7c9ebdf0677c/set/fan auto
+fujitsu/7c9ebdf0677c/debug/send 02 00 00 00 04 10 03 00 00 FF E6
+fujitsu/7c9ebdf0677c/debug/received 02 00 00 00 01 01 FF FB
+fujitsu/7c9ebdf0677c/debug/changed 1003 | 000B -> 0000
+fujitsu/7c9ebdf0677c/state/fan auto
+
+fujitsu/7c9ebdf0677c/set/power off
+fujitsu/7c9ebdf0677c/debug/send 02 00 00 00 04 10 00 00 00 FF E9
+fujitsu/7c9ebdf0677c/debug/received 02 00 00 00 01 01 FF FB
+fujitsu/7c9ebdf0677c/debug/changed 1000 | 0001 -> 0000
+fujitsu/7c9ebdf0677c/state/power off
+
+fujitsu/7c9ebdf0677c/debug/changed 10A0 | 0020 -> 0000
+fujitsu/7c9ebdf0677c/state/address_10A0 0000
+fujitsu/7c9ebdf0677c/debug/changed 2020 | 1A90 -> 1900
+fujitsu/7c9ebdf0677c/state/address_2020 1900
