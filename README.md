@@ -19,7 +19,7 @@ Works with:
 AC pins are not galvanically isolated and these voltages are not relative to earth GND.
 
 ```
- AC Socket       LM2596                 ESP32
+ AC Socket       LM2596/CN3903          ESP32
 1 (+12V) ------> V in+ ---> V out+ ---> 5V
 2 (GND)  ------> V in- ---> V out- ---> GND
 3 (DATA) -----------------------------> RX 16 (Data to ESP)
