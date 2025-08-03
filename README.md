@@ -31,3 +31,6 @@ Pins from left to right 1 2 3 4
 
 * Connector PAP-04V-S
 * Pins to crimp: SPHD-002T-P0.5
+
+![](/images/board_front.jpg)
+![](/images/board_back.jpg)
