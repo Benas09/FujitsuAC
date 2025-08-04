@@ -34,3 +34,5 @@ Pins from left to right 1 2 3 4
 
 ![](/images/board_front.jpg)
 ![](/images/board_back.jpg)
+![](/images/board_case.jpg)
+![](/images/installed.jpg)
