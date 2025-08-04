@@ -45,6 +45,7 @@ void setup() {
     uart.begin(9600);
     controller.setup();
 
+    WiFi.setHostname(DEVICE_NAME);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
     while (WiFi.status() != WL_CONNECTED) {
