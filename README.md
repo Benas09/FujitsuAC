@@ -1,7 +1,11 @@
 # FujitsuAC
 
-Fujitsu AC Wifi controller. 
-FGLair app is not required, everything is local.
+Fujitsu AC Wifi controller.
+
+This library reverse-engineers parts of the communication used by Fujitsu air conditioners, including those using the FGLair® mobile app.
+
+FGLair is a registered trademark of Fujitsu General Limited. This project is not affiliated with or endorsed by Fujitsu. 
+FGLair® app is not required when using this integration - **everything runs local here**.
 
 Using this library you can control your Fujitsu AC through 4 pin socket dedicated to UTY-TFSXW1 wifi module.
 
