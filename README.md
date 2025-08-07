@@ -32,17 +32,17 @@ AC pins are not galvanically isolated and these voltages are not relative to ear
 
 Pins from left to right 1 2 3 4
 ![](/images/socket.jpg)
-
-* Connector PAP-04V-S
-* Pins to crimp: SPHD-002T-P0.5
-
 ![](/images/board_front.jpg)
 ![](/images/board_back.jpg)
 ![](/images/board_case.jpg)
 ![](/images/installed.jpg)
 
 ### Parts list
+
+### Parts list
 * DC/DC converter 12 -> 5 V (https://www.aliexpress.com/item/1005008257960729.html)
 * ESP32 30 pin (https://www.aliexpress.com/item/1005008261897277.html)
 * Connector (4P, 10cm) (https://www.aliexpress.com/item/1005006294406922.html)
 * Board (4x6, needs to be trimmed a little bit) (https://www.aliexpress.com/item/1005007024264426.html)
+
+  You can also crimp your own plug (Connector PAP-04V-S, pins to crimp: SPHD-002T-P0.5)
