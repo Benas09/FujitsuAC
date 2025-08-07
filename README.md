@@ -37,7 +37,20 @@ Pins from left to right 1 2 3 4
 ![](/images/board_case.jpg)
 ![](/images/installed.jpg)
 
-### Parts list
+### Setup
+
+1. Download Arduino IDE (I used 2.3)
+2. Download this library to your "*Arduino IDE*/libraries"
+3. Open Arduino IDE -> File -> Examples -> FujitsuAC -> Controller
+4. Replace config vars with yours:
+   #define WIFI_SSID "your-ssid"
+   #define WIFI_PASSWORD "your-pw"
+   #define DEVICE_NAME "OfficeAC"
+   #define OTA_PASSWORD "office_ac"
+   #define MQTT_SERVER "192.168.1.100"
+   #define MQTT_PORT 1883
+5. Select your ESP32 board and upload code
+6. If everything is ok, new AC device should appear in HomeAssistant MQTT integration
 
 ### Parts list
 * DC/DC converter 12 -> 5 V (https://www.aliexpress.com/item/1005008257960729.html)
