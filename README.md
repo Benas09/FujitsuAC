@@ -52,6 +52,9 @@ Pins from left to right 1 2 3 4
 5. Select your ESP32 board and upload code
 6. If everything is ok, new AC device should appear in HomeAssistant MQTT integration
 
+To prevent getting electric shock, turn off AC from mains first, then plug in wifi module to dedicated socket and turn on AC again.
+If your AC model is not exactly the same as mine, at first I recommend ensure, that registry addresses are the same (change some AC modes with remote control and confirm, that AC state is shown correctly in HomeAssistant)
+
 ### Parts list
 * DC/DC converter 12 -> 5 V (https://www.aliexpress.com/item/1005008257960729.html)
 * ESP32 30 pin (https://www.aliexpress.com/item/1005008261897277.html)
