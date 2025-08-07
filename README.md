@@ -23,7 +23,7 @@ Works with:
 AC pins are not galvanically isolated and these voltages are not relative to earth GND.
 
 ```
- AC Socket       LM2596/CN3903          ESP32
+ AC Socket       CN3903                 ESP32
 1 (+12V) ------> V in+ ---> V out+ ---> 5V
 2 (GND)  ------> V in- ---> V out- ---> GND
 3 (DATA) -----------------------------> RX 16 (Data to ESP)
@@ -40,3 +40,9 @@ Pins from left to right 1 2 3 4
 ![](/images/board_back.jpg)
 ![](/images/board_case.jpg)
 ![](/images/installed.jpg)
+
+### Parts list
+* DC/DC converter 12 -> 5 V (https://www.aliexpress.com/item/1005008257960729.html)
+* ESP32 30 pin (https://www.aliexpress.com/item/1005008261897277.html)
+* Connector (4P, 10cm) (https://www.aliexpress.com/item/1005006294406922.html)
+* Board (4x6, needs to be trimmed a little bit) (https://www.aliexpress.com/item/1005007024264426.html)
