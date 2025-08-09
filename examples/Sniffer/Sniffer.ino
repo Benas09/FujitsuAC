@@ -5,34 +5,44 @@
   Project home: https://github.com/Benas09/FujitsuAC
 */
 
+#include <WiFi.h>
+
+#include <ESPmDNS.h>
+#include <NetworkUdp.h>
+
+#include <PubSubClient.h>
+
 #include <SoftwareSerial.h>
 #include <Buffer.h>
-#include "EspMQTTClient.h"
+
+#define WIFI_SSID "your-ssid"
+#define WIFI_PASSWORD "your-pw"
+#define DEVICE_NAME "FujitsuSniffer"
+
+#define MQTT_SERVER "192.168.1.100"
+#define MQTT_PORT 1883
 
 //mosquitto_sub -h 192.168.1.100 -t fujitsu/sniffer/# -v >> log.txt
 
-EspMQTTClient client = EspMQTTClient(
-    "your-ssid",
-    "your-password",
-    "192.168.1.100",
-    "",
-    "",
-    "FujitsuSniffer",
-    1883
-);
+SoftwareSerial controllerUart(16, 25, true); //RX, TX
+FujitsuAC::Buffer controllerBuffer = FujitsuAC::Buffer(controllerUart);
 
-SoftwareSerial controllerUart(17, 26, true); //RX, TX
-Buffer controllerBuffer = Buffer(controllerUart);
+SoftwareSerial acUart(17, 26, true); //RX, TX
+FujitsuAC::Buffer acBuffer = FujitsuAC::Buffer(acUart);
 
-SoftwareSerial acUart(16, 25, true); //RX, TX
-Buffer acBuffer = Buffer(acUart);
+WiFiClient espClient;
+PubSubClient mqttClient = PubSubClient(espClient);
 
 void setup() {
-    Serial.begin(9600);
+    WiFi.setHostname(DEVICE_NAME);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-    while (!Serial) {}
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+    }
 
-    client.enableOTA();
+    mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
+    mqttClient.setBufferSize(1024);
 
     controllerBuffer.setup();
     controllerUart.begin(9600);
@@ -51,29 +61,34 @@ void onControllerFrame(uint8_t buffer[128], int size, bool isValid) {
 
     msg.toUpperCase();
 
-    client.publish("fujitsu/sniffer/controller", msg);
+    mqttClient.publish("fujitsu/sniffer/tx", msg.c_str());
 }
 
 void onAcFrame(uint8_t buffer[128], int size, bool isValid) {
     String msg = String("");
 
     for (int i = 0; i < size; i++) {
-        msg += String(buffer[i], DEC);
+        msg += String(buffer[i], HEX);
         if (i < size - 1) msg += " ";
     }
 
     msg.toUpperCase();
 
-    client.publish("fujitsu/sniffer/ac", msg);
+    mqttClient.publish("fujitsu/sniffer/rx", msg.c_str());
 }
 
-void onConnectionEstablished()
-{
-    client.publish("fujitsu/sniffer", "Connection established");
+void reconnect() {
+  while (!mqttClient.connected()) {
+    if (mqttClient.connect(DEVICE_NAME)) {
+        mqttClient.publish("fujitsu/sniffer/debug", "Connected");
+    }
+  }
 }
 
 void loop() {
-    client.loop();
+    if (!mqttClient.connected()) {
+      reconnect();
+    }
 
     controllerBuffer.loop(onControllerFrame);
     acBuffer.loop(onAcFrame);
