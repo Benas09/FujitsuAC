@@ -46,6 +46,20 @@ namespace FujitsuAC {
             On = 0x0001,
         };
 
+        enum class HorizontalSwing: uint16_t {
+            Off = 0x0000,
+            On = 0x0001,
+        };
+
+        enum class HorizontalAirflow: uint16_t {
+            Position1 = 0x0001,
+            Position2 = 0x0002,
+            Position3 = 0x0003,
+            Position4 = 0x0004,
+            Position5 = 0x0005,
+            Position6 = 0x0006,
+        };
+
         enum class Powerful: uint16_t {
             Off = 0x0000,
             On = 0x0001,
@@ -62,6 +76,11 @@ namespace FujitsuAC {
         };
 
         enum class OutdoorUnitLowNoise: uint16_t {
+            Off = 0x0000,
+            On = 0x0001,
+        };
+
+        enum class HumanSensor: uint16_t {
             Off = 0x0000,
             On = 0x0001,
         };

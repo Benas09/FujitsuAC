@@ -13,11 +13,13 @@ namespace FujitsuAC {
         PubSubClient &mqttClient, 
         FujitsuController &controller,
         const char* uniqueId,
-        const char* name
+        const char* name,
+        bool horizontalSwingAvailable
     ) : mqttClient(mqttClient), 
         controller(controller), 
         uniqueId(uniqueId),
-        name(name) {}
+        name(name),
+        horizontalSwingAvailable(horizontalSwingAvailable) {}
 
     bool MqttBridge::setup() {
         this->controller.setOnRegisterChangeCallback([this](const Register* reg) {
@@ -32,16 +34,79 @@ namespace FujitsuAC {
 
         char topic[128];
         snprintf(topic, sizeof(topic), "fujitsu/%s/status", this->uniqueId);
+
         this->mqttClient.publish(topic, "online", true);
 
-        String deviceConfig = "\"device\": {";
-        deviceConfig += "\"identifiers\": [\"" + this->uniqueId + "\"],";
-        deviceConfig += "\"manufacturer\": \"https://github.com/Benas09/FujitsuAC\",";
-        deviceConfig += "\"model\": \"Fujitsu AC\",";
-        deviceConfig += "\"name\": \"" + this->name + "\"";
-        deviceConfig += "}";
+        this->createDeviceConfig();
+        this->registerBaseEntities();
+
+        static constexpr Address switches[] = {
+            Address::Power,
+            Address::VerticalAirflow,
+            Address::VerticalSwing,
+            Address::Powerful,
+            Address::EconomyMode,
+            Address::EnergySavingFan,
+            Address::OutdoorUnitLowNoise
+        };
+
+        for (const auto& switch_ : switches) {
+            this->registerSwitch(switch_);
+        }
+
+        if (this->horizontalSwingAvailable) {
+            this->registerSwitch(Address::HorizontalSwing);
+            this->registerSwitch(Address::HorizontalAirflow);
+        }
+
+        this->mqttClient.setCallback([this](char* topic, byte* payload, unsigned int length) {
+            char message[length + 1];
+            memcpy(message, payload, length);
+            message[length] = '\0';
+
+            this->onMqtt(topic, message);
+        });
+
+        snprintf(topic, sizeof(topic), "fujitsu/%s/#", this->uniqueId);
+        this->mqttClient.subscribe(topic);
+
+        //Send current registry values after MQTT connection
+        size_t registryCount;
+        const Register* registers = this->controller.getAllRegisters(registryCount);
+
+        for (size_t i = 0; i < registryCount; ++i) {
+            this->onRegisterChange(&registers[i]);
+        }
+
+        return true;
+    }
+
+    void MqttBridge::createDeviceConfig() {
+        if (0 == this->deviceConfig.length()) {
+            this->deviceConfig = "\"device\": {";
+            this->deviceConfig += "\"identifiers\": [\"" + this->uniqueId + "\"],";
+            this->deviceConfig += "\"manufacturer\": \"https://github.com/Benas09/FujitsuAC\",";
+            this->deviceConfig += "\"model\": \"Fujitsu AC\",";
+            this->deviceConfig += "\"name\": \"" + this->name + "\"";
+            this->deviceConfig += "}";
+        }
+    }
+
+    void MqttBridge::registerBaseEntities() {
+        char topic[128];
 
         String p = "{";
+        p += "\"name\": \"restart\",";
+        p += "\"unique_id\": \"" + this->uniqueId + "_restart\",";
+        p += "\"command_topic\": \"fujitsu/" + this->uniqueId + "/set/restart\",";
+        p += "\"payload_press\": \"restart\",";
+        p += this->deviceConfig;
+        p += "}";
+
+        snprintf(topic, sizeof(topic), "homeassistant/button/%s_restart/config", this->uniqueId.c_str());
+        this->mqttClient.publish(topic, p.c_str(), true);
+
+        p = "{";
         p += "\"name\": \"climate\",";
         p += "\"unique_id\": \"" + this->uniqueId + "_climate\",";
         p += "\"icon\": \"mdi:air-conditioner\",";
@@ -62,62 +127,11 @@ namespace FujitsuAC {
         p += "\"temp_step\": 0.5,";
         p += "\"modes\": [\"auto\", \"cool\", \"dry\", \"fan_only\", \"heat\"],";
         p += "\"fan_modes\": [\"auto\", \"quiet\", \"low\", \"medium\", \"high\"],",
-        p += deviceConfig;
+        p += this->deviceConfig;
         p += "}";
 
-        snprintf(topic, sizeof(topic), "homeassistant/climate/%s_climate/config", this->uniqueId);
+        snprintf(topic, sizeof(topic), "homeassistant/climate/%s_climate/config", this->uniqueId.c_str());
         this->mqttClient.publish(topic, p.c_str(), true);
-
-        static constexpr Address switches[] = {
-            Address::Power,
-            Address::VerticalAirflow,
-            Address::VerticalSwing,
-            Address::Powerful,
-            Address::EconomyMode,
-            Address::EnergySavingFan,
-            Address::OutdoorUnitLowNoise
-        };
-
-        for (const auto& switch_ : switches) {
-            String propertyName = String(this->addressToString(switch_));
-            String t = "";
-
-            p = "{";
-            p += "\"name\": \"" + propertyName + "\",";
-            p += "\"unique_id\": \"" + this->uniqueId + "_" + propertyName + "\",";
-            p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/" + propertyName + "\",";
-            p += "\"command_topic\": \"fujitsu/" + this->uniqueId + "/set/" + propertyName + "\",";
-
-            if (Address::VerticalAirflow == switch_) {
-                p += "\"options\": [\"1\", \"2\", \"3\", \"4\", \"5\", \"6\"],";
-            } else {
-                p += "\"payload_on\": \"on\",";
-                p += "\"payload_off\": \"off\",";
-            }
-            
-            p += deviceConfig;
-            p += "}";
-
-
-            if (Address::VerticalAirflow == switch_) {
-                t = "homeassistant/select/" + this->uniqueId + "_" + propertyName + "/config";
-            } else {
-                t = "homeassistant/switch/" + this->uniqueId + "_" + propertyName + "/config";
-            }
-
-            this->mqttClient.publish(t.c_str(), p.c_str(), true);
-        }
-
-        p = "{";
-        p += "\"name\": \"restart\",";
-        p += "\"unique_id\": \"" + this->uniqueId + "_restart\",";
-        p += "\"command_topic\": \"fujitsu/" + this->uniqueId + "/set/restart\",";
-        p += "\"payload_press\": \"restart\",";
-        p += deviceConfig;
-        p += "}";
-
-        String t = "homeassistant/button/" + this->uniqueId + "_restart/config";
-        this->mqttClient.publish(t.c_str(), p.c_str(), true);
 
         p = "{";
         p += "\"name\": \"actual_temp\",";
@@ -125,32 +139,47 @@ namespace FujitsuAC {
         p += "\"unit_of_measurement\": \"°C\",";
         p += "\"unique_id\": \"" + this->uniqueId + "_actual_temp\",";
         p += "\"device_class\": \"temperature\",";
-        p += deviceConfig;
+        p += this->deviceConfig;
         p += "}";
 
-        t = "homeassistant/sensor/" + this->uniqueId + "_actual_temp/config";
-        this->mqttClient.publish(t.c_str(), p.c_str(), true);
+        snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_actual_temp/config", this->uniqueId.c_str());
+        this->mqttClient.publish(topic, p.c_str(), true);
+    }
 
-        this->mqttClient.setCallback([this](char* topic, byte* payload, unsigned int length) {
-            char message[length + 1];
-            memcpy(message, payload, length);
-            message[length] = '\0';
+    void MqttBridge::registerSwitch(Address address) {
+        String propertyName = String(this->addressToString(address));
+        
+        String p = "{";
+        p += "\"name\": \"" + propertyName + "\",";
+        p += "\"unique_id\": \"" + this->uniqueId + "_" + propertyName + "\",";
+        p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/" + propertyName + "\",";
+        p += "\"command_topic\": \"fujitsu/" + this->uniqueId + "/set/" + propertyName + "\",";
 
-            this->onMqtt(topic, message);
-        });
+        if (
+            Address::VerticalAirflow == address
+            || Address::HorizontalAirflow == address
+        ) {
+            p += "\"options\": [\"1\", \"2\", \"3\", \"4\", \"5\", \"6\"],";
+        } else {
+            p += "\"payload_on\": \"on\",";
+            p += "\"payload_off\": \"off\",";
+        }
+        
+        p += this->deviceConfig;
+        p += "}";
 
-        t = "fujitsu/" + this->uniqueId + "/#";
-        this->mqttClient.subscribe(t.c_str());
+        char topic[128];
 
-        //Send current registry values after MQTT connection
-        size_t registryCount;
-        const Register* registers = this->controller.getAllRegisters(registryCount);
-
-        for (size_t i = 0; i < registryCount; ++i) {
-            this->onRegisterChange(&registers[i]);
+        if (
+            Address::VerticalAirflow == address
+            || Address::HorizontalAirflow == address
+        ) {
+            snprintf(topic, sizeof(topic), "homeassistant/select/%s_%s/config", this->uniqueId.c_str(), propertyName.c_str());
+        } else {
+            snprintf(topic, sizeof(topic), "homeassistant/switch/%s_%s/config", this->uniqueId.c_str(), propertyName.c_str());
         }
 
-        return true;
+        this->mqttClient.publish(topic, p.c_str(), true);
     }
 
     void MqttBridge::onMqtt(char* topic, char* payload) {
@@ -211,6 +240,18 @@ namespace FujitsuAC {
             return;
         }
 
+        if (0 == strcmp(property, this->addressToString(Address::HorizontalAirflow))) {
+            this->controller.setHorizontalAirflow(this->stringToEnum(Enums::HorizontalAirflow::Position1, payload));
+
+            return;
+        }
+
+        if (0 == strcmp(property, this->addressToString(Address::HorizontalSwing))) {
+            this->controller.setHorizontalSwing(this->stringToEnum(Enums::HorizontalSwing::Off, payload));
+
+            return;
+        }
+
         if (0 == strcmp(property, this->addressToString(Address::Powerful))) {
             this->controller.setPowerful(this->stringToEnum(Enums::Powerful::Off, payload));
 
@@ -237,6 +278,21 @@ namespace FujitsuAC {
     }
 
     void MqttBridge::onRegisterChange(const Register *reg) {
+        if (reg->address == Address::ActualTemp) {
+            uint32_t now = millis();
+
+            if ((now - this->lastTempReportMillis) < 180000) {
+                return;
+            }
+            
+            this->lastTempReportMillis = now;
+        }
+
+        if (reg->address == Address::SetpointTemp && 0xFFFF == reg->value) {
+            // Fan mode do not return setpoint temp
+            return;
+        }
+
         char topic[64];
         snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId, this->addressToString(reg->address));
 
@@ -245,6 +301,10 @@ namespace FujitsuAC {
             this->valueToString(reg), 
             true
         );
+
+        if (Address::HumanSensorSupported == reg->address && 0x0001 == reg->value) {
+            this->registerSwitch(Address::HumanSensor);
+        }
     }
 
     const char* MqttBridge::addressToString(Address address) {
@@ -254,12 +314,15 @@ namespace FujitsuAC {
             case Address::FanSpeed: return "fan";
             case Address::VerticalSwing: return "vertical_swing";
             case Address::VerticalAirflow: return "vertical_airflow";
+            case Address::HorizontalSwing: return "horizontal_swing";
+            case Address::HorizontalAirflow: return "horizontal_airflow";
             case Address::Powerful: return "powerful";
             case Address::EconomyMode: return "economy_mode";
             case Address::EnergySavingFan: return "energy_saving_fan";
             case Address::OutdoorUnitLowNoise: return "outdoor_unit_low_noise";
             case Address::SetpointTemp: return "temp";
             case Address::ActualTemp: return "actual_temp";
+            case Address::HumanSensor: return "human_sensor";
             default: {
                 static char buffer[20];
                 snprintf(buffer, sizeof(buffer), "address_%04X", static_cast<uint16_t>(address));
@@ -353,6 +416,14 @@ namespace FujitsuAC {
                 }
 
                 break;
+            case Address::HumanSensor:
+                switch (static_cast<Enums::HumanSensor>(reg->value)) {
+                    case Enums::HumanSensor::On: return "on";
+                    case Enums::HumanSensor::Off: return "off";
+                    default: return "unknown";
+                }
+
+                break;
             case Address::SetpointTemp: {
                 static char str[8];
                 snprintf(str, sizeof(str), "%u.%u", reg->value / 10, reg->value % 10);
@@ -440,6 +511,32 @@ namespace FujitsuAC {
         return def;
     }
 
+    const Enums::HorizontalAirflow MqttBridge::stringToEnum(Enums::HorizontalAirflow def, const char *value) {
+        if (0 == strcmp(value, "1") ) {
+            return Enums::HorizontalAirflow::Position1;
+        } else if (strcmp(value, "2") == 0) {
+            return Enums::HorizontalAirflow::Position2;
+        } else if (strcmp(value, "3") == 0) {
+            return Enums::HorizontalAirflow::Position3;
+        } else if (strcmp(value, "4") == 0) {
+            return Enums::HorizontalAirflow::Position4;
+        } else if (strcmp(value, "5") == 0) {
+            return Enums::HorizontalAirflow::Position5;
+        } else if (strcmp(value, "6") == 0) {
+            return Enums::HorizontalAirflow::Position6;
+        }
+
+        return def;
+    }
+
+    const Enums::HorizontalSwing MqttBridge::stringToEnum(Enums::HorizontalSwing def, const char *value) {
+        if (strcmp(value, "on") == 0) {
+            return Enums::HorizontalSwing::On;
+        }
+
+        return def;
+    }
+
     const Enums::Powerful MqttBridge::stringToEnum(Enums::Powerful def, const char *value) {
         if (strcmp(value, "on") == 0) {
             return Enums::Powerful::On;
@@ -467,6 +564,14 @@ namespace FujitsuAC {
     const Enums::OutdoorUnitLowNoise MqttBridge::stringToEnum(Enums::OutdoorUnitLowNoise def, const char *value) {
         if (strcmp(value, "on") == 0) {
             return Enums::OutdoorUnitLowNoise::On;
+        }
+
+        return def;
+    }
+
+    const Enums::HumanSensor MqttBridge::stringToEnum(Enums::HumanSensor def, const char *value) {
+        if (strcmp(value, "on") == 0) {
+            return Enums::HumanSensor::On;
         }
 
         return def;

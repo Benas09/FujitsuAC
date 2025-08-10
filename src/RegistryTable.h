@@ -40,7 +40,7 @@ namespace FujitsuAC {
                 
                 {Address::Initial16, 0x0000, false},
                 {Address::Initial17, 0x0000, false},
-                {Address::Initial18, 0x0000, false},
+                {Address::HumanSensorSupported, 0x0000, false},
                 {Address::Initial19, 0x0000, false},
                 {Address::Initial20, 0x0000, false},
                 {Address::Initial21, 0x0000, false},
@@ -56,8 +56,8 @@ namespace FujitsuAC {
                 {Address::VerticalAirflow, 0x0000, false},
                 {Address::VerticalSwing, 0x0000, false},
                 {Address::Register7, 0x0000, false},
-                {Address::Register8, 0x0000, false},
-                {Address::Register9, 0x0000, false},
+                {Address::HorizontalAirflow, 0x0000, false},
+                {Address::HorizontalSwing, 0x0000, false},
                 {Address::Register10, 0x0000, false},
                 {Address::Register11, 0x0000, false},
                 {Address::ActualTemp, 0x0000, false},
@@ -65,7 +65,7 @@ namespace FujitsuAC {
                 
                 {Address::EconomyMode, 0x0000, false},
                 {Address::Register15, 0x0000, false},
-                {Address::Register16, 0x0000, false},
+                {Address::HumanSensor, 0x0000, false},
                 {Address::Register17, 0x0000, false},
                 {Address::Register18, 0x0000, false},
                 {Address::Register19, 0x0000, false},

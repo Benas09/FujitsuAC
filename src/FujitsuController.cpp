@@ -393,6 +393,28 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(verticalSwing);
     }
 
+    void FujitsuController::setHorizontalAirflow(Enums::HorizontalAirflow horizontalAirflow) {
+        if (this->frameSendRegistries.size > 0) {
+            return;
+        }
+
+        this->frameSendRegistries.size = 2;
+        this->frameSendRegistries.registries[0] = Address::HorizontalSwing;
+        this->frameSendRegistries.values[0] = static_cast<uint16_t>(Enums::HorizontalSwing::Off);
+        this->frameSendRegistries.registries[1] = Address::HorizontalAirflow;
+        this->frameSendRegistries.values[1] = static_cast<uint16_t>(horizontalAirflow);
+    }
+
+    void FujitsuController::setHorizontalSwing(Enums::HorizontalSwing horizontalSwing) {
+        if (this->frameSendRegistries.size > 0) {
+            return;
+        }
+
+        this->frameSendRegistries.size = 1;
+        this->frameSendRegistries.registries[0] = Address::HorizontalSwing;
+        this->frameSendRegistries.values[0] = static_cast<uint16_t>(horizontalSwing);
+    }
+
     void FujitsuController::setPowerful(Enums::Powerful powerful) {
         if (this->frameSendRegistries.size > 0) {
             return;
@@ -431,6 +453,22 @@ namespace FujitsuAC {
         this->frameSendRegistries.size = 1;
         this->frameSendRegistries.registries[0] = Address::OutdoorUnitLowNoise;
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(outdoorUnitLowNoise);
+    }
+
+    void FujitsuController::setHumanSensor(Enums::HumanSensor humanSensor) {
+        if (this->frameSendRegistries.size > 0) {
+            return;
+        }
+
+        Register* reg = this->registryTable.getRegister(Address::HumanSensorSupported);
+        
+        if (0x0001 != reg->value) {
+            return;
+        }
+
+        this->frameSendRegistries.size = 1;
+        this->frameSendRegistries.registries[0] = Address::HumanSensor;
+        this->frameSendRegistries.values[0] = static_cast<uint16_t>(humanSensor);
     }
 
     void FujitsuController::setTemp(const char *temp) {

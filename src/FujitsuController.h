@@ -28,10 +28,13 @@ namespace FujitsuAC {
         void setFanSpeed(Enums::FanSpeed fanSpeed);
         void setVerticalAirflow(Enums::VerticalAirflow verticalAirflow);
         void setVerticalSwing(Enums::VerticalSwing verticalSwing);
+        void setHorizontalAirflow(Enums::HorizontalAirflow horizontalAirflow);
+        void setHorizontalSwing(Enums::HorizontalSwing horizontalSwing);
         void setPowerful(Enums::Powerful powerful);
         void setEconomy(Enums::EconomyMode economy);
         void setEnergySavingFan(Enums::EnergySavingFan energySavingFan);
         void setOutdoorUnitLowNoise(Enums::OutdoorUnitLowNoise outdoorUnitLowNoise);
+        void setHumanSensor(Enums::HumanSensor humanSensor);
         void setTemp(const char *temp);
 
         void setOnRegisterChangeCallback(std::function<void(const Register* reg)> onRegisterChangeCallback);
@@ -50,6 +53,8 @@ namespace FujitsuAC {
         bool noResponseNotified = false;
         bool initialized = false;
         bool terminated = false;
+
+        bool humanSensorSupported = false;
 
         enum class FrameType: int {
           None = -1,
@@ -107,7 +112,7 @@ namespace FujitsuAC {
         Frame initialRegistries3 = {FrameType::InitialRegistries3, 10, {
               Address::Initial16,
               Address::Initial17,  
-              Address::Initial18,  
+              Address::HumanSensorSupported,  
               Address::Initial19,  
               Address::Initial20,  
               Address::Initial21,  
@@ -126,8 +131,8 @@ namespace FujitsuAC {
               Address::VerticalAirflow,
               Address::VerticalSwing,
               Address::Register7,
-              Address::Register8,
-              Address::Register9,
+              Address::HorizontalAirflow,
+              Address::HorizontalSwing,
               Address::Register10,
               Address::Register11,
               Address::ActualTemp,
@@ -138,7 +143,7 @@ namespace FujitsuAC {
         Frame frameB = {FrameType::FrameB, 19, {
               Address::EconomyMode,  
               Address::Register15,  
-              Address::Register16,  
+              Address::HumanSensor,  
               Address::Register17,  
               Address::Register18,  
               Address::Register19,  

@@ -19,11 +19,13 @@ namespace FujitsuAC {
                 PubSubClient &mqttClient,
                 FujitsuController &controller,
                 const char* uniqueId,
-                const char* name
+                const char* name,
+                bool horizontalSwingAvailable
             );
 
             bool setup();
             bool loop();
+            void registerSwitch(Address address);
 
         private:
             PubSubClient &mqttClient;
@@ -31,9 +33,12 @@ namespace FujitsuAC {
 
             String uniqueId;
             String name;
+            String deviceConfig;
+            bool horizontalSwingAvailable;
+            uint32_t lastTempReportMillis = 0;
 
-            uint32_t waitingPowerOnFrom = 0;
-            Enums::Mode modeAfterPowering = Enums::Mode::Auto;
+            void createDeviceConfig();
+            void registerBaseEntities();
 
             void onRegisterChange(const Register *reg);
             void onMqtt(char* topic, char* payload);
@@ -47,10 +52,13 @@ namespace FujitsuAC {
             const Enums::FanSpeed stringToEnum(Enums::FanSpeed def, const char *value);
             const Enums::VerticalAirflow stringToEnum(Enums::VerticalAirflow def, const char *value);
             const Enums::VerticalSwing stringToEnum(Enums::VerticalSwing def, const char *value);
+            const Enums::HorizontalAirflow stringToEnum(Enums::HorizontalAirflow def, const char *value);
+            const Enums::HorizontalSwing stringToEnum(Enums::HorizontalSwing def, const char *value);
             const Enums::Powerful stringToEnum(Enums::Powerful def, const char *value);
             const Enums::EconomyMode stringToEnum(Enums::EconomyMode def, const char *value);
             const Enums::EnergySavingFan stringToEnum(Enums::EnergySavingFan def, const char *value);
             const Enums::OutdoorUnitLowNoise stringToEnum(Enums::OutdoorUnitLowNoise def, const char *value);
+            const Enums::HumanSensor stringToEnum(Enums::HumanSensor def, const char *value);
     };
 
 }
