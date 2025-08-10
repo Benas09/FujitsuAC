@@ -293,7 +293,10 @@ namespace FujitsuAC {
             }
 
             this->lastResponseReceived = true;
-            this->updateRegistries(buffer, size);
+
+            if (0x01 == buffer[5]) {
+                this->updateRegistries(buffer, size);
+            }
 
             return;
         }

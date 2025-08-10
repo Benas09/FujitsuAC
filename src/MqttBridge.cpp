@@ -30,12 +30,11 @@ namespace FujitsuAC {
             this->debug(name, message);
         });
 
-        Serial.println("MQTT Connected");
-
         char topic[128];
-        snprintf(topic, sizeof(topic), "fujitsu/%s/status", this->uniqueId);
-
+        snprintf(topic, sizeof(topic), "fujitsu/%s/status", this->uniqueId.c_str());
         this->mqttClient.publish(topic, "online", true);
+
+        this->debug("info", "MQTT Connected");
 
         this->createDeviceConfig();
         this->registerBaseEntities();
@@ -67,7 +66,7 @@ namespace FujitsuAC {
             this->onMqtt(topic, message);
         });
 
-        snprintf(topic, sizeof(topic), "fujitsu/%s/#", this->uniqueId);
+        snprintf(topic, sizeof(topic), "fujitsu/%s/#", this->uniqueId.c_str());
         this->mqttClient.subscribe(topic);
 
         //Send current registry values after MQTT connection
@@ -98,6 +97,9 @@ namespace FujitsuAC {
         String p = "{";
         p += "\"name\": \"restart\",";
         p += "\"unique_id\": \"" + this->uniqueId + "_restart\",";
+        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"payload_available\": \"online\",";
+        p += "\"payload_not_available\": \"offline\",";
         p += "\"command_topic\": \"fujitsu/" + this->uniqueId + "/set/restart\",";
         p += "\"payload_press\": \"restart\",";
         p += this->deviceConfig;
@@ -110,6 +112,10 @@ namespace FujitsuAC {
         p += "\"name\": \"climate\",";
         p += "\"unique_id\": \"" + this->uniqueId + "_climate\",";
         p += "\"icon\": \"mdi:air-conditioner\",";
+
+        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"payload_available\": \"online\",";
+        p += "\"payload_not_available\": \"offline\",";
 
         p += "\"mode_command_topic\": \"fujitsu/" + this->uniqueId + "/set/mode\",";
         p += "\"mode_state_topic\": \"fujitsu/" + this->uniqueId + "/state/mode\",";
@@ -135,6 +141,9 @@ namespace FujitsuAC {
 
         p = "{";
         p += "\"name\": \"actual_temp\",";
+        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"payload_available\": \"online\",";
+        p += "\"payload_not_available\": \"offline\",";
         p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/actual_temp\",";
         p += "\"unit_of_measurement\": \"°C\",";
         p += "\"unique_id\": \"" + this->uniqueId + "_actual_temp\",";
@@ -144,6 +153,8 @@ namespace FujitsuAC {
 
         snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_actual_temp/config", this->uniqueId.c_str());
         this->mqttClient.publish(topic, p.c_str(), true);
+
+        this->debug("info", "Base entities registered");
     }
 
     void MqttBridge::registerSwitch(Address address) {
@@ -152,6 +163,9 @@ namespace FujitsuAC {
         String p = "{";
         p += "\"name\": \"" + propertyName + "\",";
         p += "\"unique_id\": \"" + this->uniqueId + "_" + propertyName + "\",";
+        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"payload_available\": \"online\",";
+        p += "\"payload_not_available\": \"offline\",";
         p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/" + propertyName + "\",";
         p += "\"command_topic\": \"fujitsu/" + this->uniqueId + "/set/" + propertyName + "\",";
 
@@ -180,6 +194,8 @@ namespace FujitsuAC {
         }
 
         this->mqttClient.publish(topic, p.c_str(), true);
+
+        this->debug("info", "Switch registered");
     }
 
     void MqttBridge::onMqtt(char* topic, char* payload) {
@@ -294,7 +310,7 @@ namespace FujitsuAC {
         }
 
         char topic[64];
-        snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId, this->addressToString(reg->address));
+        snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), this->addressToString(reg->address));
 
         this->mqttClient.publish(
             topic, 
@@ -579,7 +595,7 @@ namespace FujitsuAC {
 
     void MqttBridge::debug(const char* name, const char* message) {
         char topic[64];
-        snprintf(topic, sizeof(topic), "fujitsu/%s/debug/%s", this->uniqueId, name);
+        snprintf(topic, sizeof(topic), "fujitsu/%s/debug/%s", this->uniqueId.c_str(), name);
 
         this->mqttClient.publish(topic, message);
     }
