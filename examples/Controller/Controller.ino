@@ -28,6 +28,14 @@ Project home: https://github.com/Benas09/FujitsuAC
 #define RXD2 16
 #define TXD2 17
 
+SoftwareSerial uart(RXD2, TXD2, true); //RX, TX
+FujitsuAC::FujitsuController controller = FujitsuAC::FujitsuController(uart);
+FujitsuAC::MqttBridge* bridge = nullptr;
+
+WiFiClient espClient;
+PubSubClient mqttClient = PubSubClient(espClient);
+String uniqueId = "000000000000";
+
 void setup() {
     Serial.begin(115200);
 
