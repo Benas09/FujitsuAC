@@ -24,6 +24,8 @@ Project home: https://github.com/Benas09/FujitsuAC
 
 #define MQTT_SERVER "192.168.1.100"
 #define MQTT_PORT 1883
+// #define MQTT_USER "your-mqtt-user"
+// #define MQTT_PASS "your-mqtt-pass"
 
 #define RXD2 16
 #define TXD2 17
@@ -79,7 +81,11 @@ void reconnect() {
         char topic[64];
         snprintf(topic, sizeof(topic), "fujitsu/%s/status", uniqueId.c_str());
 
+#ifdef MQTT_USER
+        if (mqttClient.connect(DEVICE_NAME, MQTT_USER, MQTT_PASS, topic, 0, true, "offline")) {
+#else
         if (mqttClient.connect(DEVICE_NAME, topic, 0, true, "offline")) {
+#endif
             if (nullptr == bridge) {
                 bridge = new FujitsuAC::MqttBridge(mqttClient, controller, uniqueId.c_str(), DEVICE_NAME, false);
             }
