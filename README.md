@@ -41,7 +41,7 @@ Pins from left to right 1 2 3 4
 ### Setup
 
 1. Download Arduino IDE (I used 2.3)
-2. Download this library to your "*Arduino IDE*/libraries"
+2. Download this library to your "*Arduino IDE*/libraries" (Or directly from Arduino IDE Library manager (search FujitsuAC))
 3. Open Arduino IDE -> File -> Examples -> FujitsuAC -> Controller
 4. Replace config vars with yours:
    * #define WIFI_SSID "your-ssid"
