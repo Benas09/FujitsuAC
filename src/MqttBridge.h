@@ -48,6 +48,7 @@ namespace FujitsuAC {
             static const char* valueToString(const Register *reg);
 
             const Enums::Power stringToEnum(Enums::Power def, const char *value);
+            const Enums::MinimumHeat stringToEnum(Enums::MinimumHeat def, const char *value);
             const Enums::Mode stringToEnum(Enums::Mode def, const char *value);
             const Enums::FanSpeed stringToEnum(Enums::FanSpeed def, const char *value);
             const Enums::VerticalAirflow stringToEnum(Enums::VerticalAirflow def, const char *value);

@@ -344,6 +344,12 @@ namespace FujitsuAC {
         }
     }
 
+    bool FujitsuController::isMinimumHeatEnabled() {
+        Register* reg = this->registryTable.getRegister(Address::MinimumHeat);
+
+        return static_cast<uint16_t>(Enums::MinimumHeat::On) == reg->value;
+    }
+
     void FujitsuController::setPower(Enums::Power power) {
         if (this->frameSendRegistries.size > 0) {
             return;
@@ -354,8 +360,28 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(power);
     }
 
+    void FujitsuController::setMinimumHeat(Enums::MinimumHeat minimumHeat) {
+        if (this->frameSendRegistries.size > 0) {
+            return;
+        }
+        
+        this->debug("warning", "Not tested yet");
+
+        return;
+
+        this->frameSendRegistries.size = 1;
+        this->frameSendRegistries.registries[0] = Address::MinimumHeat;
+        this->frameSendRegistries.values[0] = static_cast<uint16_t>(minimumHeat);
+    }
+
     void FujitsuController::setMode(Enums::Mode mode) {
         if (this->frameSendRegistries.size > 0) {
+            return;
+        }
+
+        if (this->isMinimumHeatEnabled()) {
+            this->debug("info", "Minimum heat is on");
+
             return;
         }
 
@@ -369,6 +395,12 @@ namespace FujitsuAC {
             return;
         }
 
+        if (this->isMinimumHeatEnabled()) {
+            this->debug("info", "Minimum heat is on");
+
+            return;
+        }
+
         this->frameSendRegistries.size = 1;
         this->frameSendRegistries.registries[0] = Address::FanSpeed;
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(fanSpeed);
@@ -379,29 +411,15 @@ namespace FujitsuAC {
             return;
         }
 
-        Register* reg = this->registryTable.getRegister(Address::Mode);
-
-        if (static_cast<uint16_t>(Enums::Mode::Cool) != reg->value) {
-            this->debug("warning", "Currently not supported");
-            return;
-        }
-
         this->frameSendRegistries.size = 2;
         this->frameSendRegistries.registries[0] = Address::VerticalSwing;
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(Enums::VerticalSwing::Off);
-        this->frameSendRegistries.registries[1] = Address::VerticalAirflow;
+        this->frameSendRegistries.registries[1] = Address::VerticalAirflowSetterRegistry;
         this->frameSendRegistries.values[1] = static_cast<uint16_t>(verticalAirflow);
     }
 
     void FujitsuController::setVerticalSwing(Enums::VerticalSwing verticalSwing) {
         if (this->frameSendRegistries.size > 0) {
-            return;
-        }
-
-        Register* reg = this->registryTable.getRegister(Address::Mode);
-
-        if (static_cast<uint16_t>(Enums::Mode::Cool) != reg->value) {
-            this->debug("warning", "Currently not supported");
             return;
         }
 
@@ -415,29 +433,15 @@ namespace FujitsuAC {
             return;
         }
 
-        Register* reg = this->registryTable.getRegister(Address::Mode);
-
-        if (static_cast<uint16_t>(Enums::Mode::Cool) != reg->value) {
-            this->debug("warning", "Currently not supported");
-            return;
-        }
-
         this->frameSendRegistries.size = 2;
         this->frameSendRegistries.registries[0] = Address::HorizontalSwing;
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(Enums::HorizontalSwing::Off);
-        this->frameSendRegistries.registries[1] = Address::HorizontalAirflow;
+        this->frameSendRegistries.registries[1] = Address::HorizontalAirflowSetterRegistry;
         this->frameSendRegistries.values[1] = static_cast<uint16_t>(horizontalAirflow);
     }
 
     void FujitsuController::setHorizontalSwing(Enums::HorizontalSwing horizontalSwing) {
         if (this->frameSendRegistries.size > 0) {
-            return;
-        }
-
-        Register* reg = this->registryTable.getRegister(Address::Mode);
-
-        if (static_cast<uint16_t>(Enums::Mode::Cool) != reg->value) {
-            this->debug("warning", "Currently not supported");
             return;
         }
 
@@ -451,6 +455,12 @@ namespace FujitsuAC {
             return;
         }
 
+        if (this->isMinimumHeatEnabled()) {
+            this->debug("info", "Minimum heat is on");
+
+            return;
+        }
+
         this->frameSendRegistries.size = 1;
         this->frameSendRegistries.registries[0] = Address::Powerful;
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(powerful);
@@ -461,6 +471,12 @@ namespace FujitsuAC {
             return;
         }
 
+        if (this->isMinimumHeatEnabled()) {
+            this->debug("info", "Minimum heat is on");
+
+            return;
+        }
+
         this->frameSendRegistries.size = 1;
         this->frameSendRegistries.registries[0] = Address::EconomyMode;
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(economy);
@@ -468,6 +484,12 @@ namespace FujitsuAC {
 
     void FujitsuController::setEnergySavingFan(Enums::EnergySavingFan energySavingFan) {
         if (this->frameSendRegistries.size > 0) {
+            return;
+        }
+
+        if (this->isMinimumHeatEnabled()) {
+            this->debug("info", "Minimum heat is on");
+
             return;
         }
 
@@ -509,14 +531,36 @@ namespace FujitsuAC {
             return;
         }
 
+        if (this->isMinimumHeatEnabled()) {
+            this->debug("info", "Minimum heat is on");
+
+            return;
+        }
+
+        Register* modeRegistry = this->registryTable.getRegister(Address::Mode);
+
+        if (static_cast<uint16_t>(Enums::Mode::Fan) == modeRegistry->value) {
+            this->debug("info", "Fan mode enabled");
+
+            return;
+        }
+
+        int minTemp = static_cast<uint16_t>(Enums::Mode::Heat) == modeRegistry->value
+            ? 160
+            : 180
+        ;
+
         double number = std::strtod(temp, nullptr);
         int result = static_cast<int>(number * 10 + 0.5);
 
         result = (result + 2) / 5 * 5;
 
-        if (result < 180) {
-            result = 180;
+        if (result < minTemp) {
+            this->debug("info", "Too small temp given");
+            result = minTemp;
         } else if (result > 300) {
+            this->debug("info", "Too big temp given");
+
             result = 300;
         };
 

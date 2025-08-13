@@ -24,6 +24,11 @@ namespace FujitsuAC {
           //    MinimumHeat = 0x0001 adresas 17 1/
         };
 
+        enum class MinimumHeat: uint16_t {
+            On = 0x0001,
+            Off = 0x0000
+        };
+
         enum class FanSpeed: uint16_t {
             Auto = 0x0000,
             Quiet = 0x0002,
@@ -39,6 +44,7 @@ namespace FujitsuAC {
             Position4 = 0x0004,
             Position5 = 0x0005,
             Position6 = 0x0006,
+            Swing = 0x0020,
         };
 
         enum class VerticalSwing: uint16_t {
@@ -58,6 +64,7 @@ namespace FujitsuAC {
             Position4 = 0x0004,
             Position5 = 0x0005,
             Position6 = 0x0006,
+            Swing = 0x0020,
         };
 
         enum class Powerful: uint16_t {

@@ -46,7 +46,8 @@ namespace FujitsuAC {
             Address::Powerful,
             Address::EconomyMode,
             Address::EnergySavingFan,
-            Address::OutdoorUnitLowNoise
+            Address::OutdoorUnitLowNoise,
+            Address::MinimumHeat
         };
 
         for (const auto& switch_ : switches) {
@@ -195,7 +196,10 @@ namespace FujitsuAC {
 
         this->mqttClient.publish(topic, p.c_str(), true);
 
-        this->debug("info", "Switch registered");
+        char message[64];
+        snprintf(message, sizeof(message), "Switch '%s' registered", propertyName.c_str());
+
+        this->debug("info", message);
     }
 
     void MqttBridge::onMqtt(char* topic, char* payload) {
@@ -222,6 +226,12 @@ namespace FujitsuAC {
 
         if (0 == strcmp(property, this->addressToString(Address::Power))) {
             this->controller.setPower(this->stringToEnum(Enums::Power::Off, payload));
+
+            return;
+        }
+
+        if (0 == strcmp(property, this->addressToString(Address::MinimumHeat))) {
+            this->controller.setMinimumHeat(this->stringToEnum(Enums::MinimumHeat::Off, payload));
 
             return;
         }
@@ -339,6 +349,7 @@ namespace FujitsuAC {
             case Address::SetpointTemp: return "temp";
             case Address::ActualTemp: return "actual_temp";
             case Address::HumanSensor: return "human_sensor";
+            case Address::MinimumHeat: return "minimum_heat";
             default: {
                 static char buffer[20];
                 snprintf(buffer, sizeof(buffer), "address_%04X", static_cast<uint16_t>(address));
@@ -354,6 +365,14 @@ namespace FujitsuAC {
                 switch (static_cast<Enums::Power>(reg->value)) {
                     case Enums::Power::On: return "on";
                     case Enums::Power::Off: return "off";
+                    default: return "unknown";
+                }
+
+                break;
+            case Address::MinimumHeat:
+                switch (static_cast<Enums::MinimumHeat>(reg->value)) {
+                    case Enums::MinimumHeat::On: return "on";
+                    case Enums::MinimumHeat::Off: return "off";
                     default: return "unknown";
                 }
 
@@ -396,6 +415,28 @@ namespace FujitsuAC {
                     case Enums::VerticalAirflow::Position4: return "4";
                     case Enums::VerticalAirflow::Position5: return "5";
                     case Enums::VerticalAirflow::Position6: return "6";
+                    case Enums::VerticalAirflow::Swing: return "1";
+                    default: return "unknown";
+                }
+
+                break;
+            case Address::HorizontalSwing:
+                switch (static_cast<Enums::HorizontalSwing>(reg->value)) {
+                    case Enums::HorizontalSwing::On: return "on";
+                    case Enums::HorizontalSwing::Off: return "off";
+                    default: return "unknown";
+                }
+
+                break;
+            case Address::HorizontalAirflow:
+                switch (static_cast<Enums::HorizontalAirflow>(reg->value)) {
+                    case Enums::HorizontalAirflow::Position1: return "1";
+                    case Enums::HorizontalAirflow::Position2: return "2";
+                    case Enums::HorizontalAirflow::Position3: return "3";
+                    case Enums::HorizontalAirflow::Position4: return "4";
+                    case Enums::HorizontalAirflow::Position5: return "5";
+                    case Enums::HorizontalAirflow::Position6: return "6";
+                    case Enums::HorizontalAirflow::Swing: return "1";
                     default: return "unknown";
                 }
 
@@ -466,6 +507,14 @@ namespace FujitsuAC {
     const Enums::Power MqttBridge::stringToEnum(Enums::Power def, const char *value) {
         if (0 == strcmp(value, "on")) {
             return Enums::Power::On;
+        }
+
+        return def;
+    }
+
+    const Enums::MinimumHeat MqttBridge::stringToEnum(Enums::MinimumHeat def, const char *value) {
+        if (0 == strcmp(value, "on")) {
+            return Enums::MinimumHeat::On;
         }
 
         return def;

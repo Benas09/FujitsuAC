@@ -24,6 +24,7 @@ namespace FujitsuAC {
         bool loop();
 
         void setPower(Enums::Power power);
+        void setMinimumHeat(Enums::MinimumHeat minimumHeat);
         void setMode(Enums::Mode mode);
         void setFanSpeed(Enums::FanSpeed fanSpeed);
         void setVerticalAirflow(Enums::VerticalAirflow verticalAirflow);
@@ -128,12 +129,12 @@ namespace FujitsuAC {
               Address::Mode,
               Address::SetpointTemp,
               Address::FanSpeed,
-              Address::VerticalAirflow,
+              Address::VerticalAirflowSetterRegistry,
               Address::VerticalSwing,
-              Address::Register7,
-              Address::HorizontalAirflow,
+              Address::VerticalAirflow,
+              Address::HorizontalAirflowSetterRegistry,
               Address::HorizontalSwing,
-              Address::Register10,
+              Address::HorizontalAirflow,
               Address::Register11,
               Address::ActualTemp,
               Address::Register13,
@@ -142,7 +143,7 @@ namespace FujitsuAC {
 
         Frame frameB = {FrameType::FrameB, 19, {
               Address::EconomyMode,  
-              Address::Register15,  
+              Address::MinimumHeat,  
               Address::HumanSensor,  
               Address::Register17,  
               Address::Register18,  
@@ -180,6 +181,8 @@ namespace FujitsuAC {
         };
 
         FrameSendRegistries frameSendRegistries = {FrameType::SendRegistries, 0, {}, {}};
+
+        bool isMinimumHeatEnabled();
 
         void sendRequest();
         void requestRegistries(Frame frame);

@@ -25,14 +25,14 @@ namespace FujitsuAC {
         Initial9 = 0x011A,  
         Initial10 = 0x011D,  
         Initial11 = 0x0120,  
-        Initial12 = 0x0130, //available vertical positions
+        Initial12 = 0x0130,
         Initial13 = 0x0131,  
         Initial14 = 0x0142,  
         Initial15 = 0x0143,  
 
         Initial16 = 0x0150,
         Initial17 = 0x0151,  
-        HumanSensorSupported = 0x0152, //available human sensor 0 no 1 yes
+        HumanSensorSupported = 0x0152,
         Initial19 = 0x0153,  
         Initial20 = 0x0154,  
         Initial21 = 0x0155,  
@@ -45,19 +45,19 @@ namespace FujitsuAC {
         Mode      = 0x1001,
         SetpointTemp = 0x1002,
         FanSpeed = 0x1003,  
-        VerticalAirflow = 0x1010, 
+        VerticalAirflowSetterRegistry = 0x1010, 
         VerticalSwing = 0x1011,  
-        Register7  = 0x10A0, //Possible vertical airflow 1
-        HorizontalAirflow = 0x1022,  
-        HorizontalSwing = 0x1023,  //Possible horizontal swing
-        Register10 = 0x10A9, //Possible horizontal airflow1
+        VerticalAirflow  = 0x10A0,
+        HorizontalAirflowSetterRegistry = 0x1022,  
+        HorizontalSwing = 0x1023,
+        HorizontalAirflow = 0x10A9,
         Register11 = 0x1031,  
         ActualTemp = 0x1033,  
         Register13 = 0x1034,  
 
         EconomyMode = 0x1100,  
-        Register15 = 0x1101,  
-        HumanSensor = 0x1102, //human sensor off 0 / on 1
+        MinimumHeat = 0x1101,  
+        HumanSensor = 0x1102,
         Register17 = 0x1103,  
         Register18 = 0x1104,  
         Register19 = 0x1105,  
