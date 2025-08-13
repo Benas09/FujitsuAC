@@ -379,6 +379,13 @@ namespace FujitsuAC {
             return;
         }
 
+        Register* reg = this->registryTable.getRegister(Address::Mode);
+
+        if (static_cast<uint16_t>(Enums::Mode::Cool) != reg->value) {
+            this->debug("warning", "Currently not supported");
+            return;
+        }
+
         this->frameSendRegistries.size = 2;
         this->frameSendRegistries.registries[0] = Address::VerticalSwing;
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(Enums::VerticalSwing::Off);
@@ -388,6 +395,13 @@ namespace FujitsuAC {
 
     void FujitsuController::setVerticalSwing(Enums::VerticalSwing verticalSwing) {
         if (this->frameSendRegistries.size > 0) {
+            return;
+        }
+
+        Register* reg = this->registryTable.getRegister(Address::Mode);
+
+        if (static_cast<uint16_t>(Enums::Mode::Cool) != reg->value) {
+            this->debug("warning", "Currently not supported");
             return;
         }
 
@@ -401,6 +415,13 @@ namespace FujitsuAC {
             return;
         }
 
+        Register* reg = this->registryTable.getRegister(Address::Mode);
+
+        if (static_cast<uint16_t>(Enums::Mode::Cool) != reg->value) {
+            this->debug("warning", "Currently not supported");
+            return;
+        }
+
         this->frameSendRegistries.size = 2;
         this->frameSendRegistries.registries[0] = Address::HorizontalSwing;
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(Enums::HorizontalSwing::Off);
@@ -410,6 +431,13 @@ namespace FujitsuAC {
 
     void FujitsuController::setHorizontalSwing(Enums::HorizontalSwing horizontalSwing) {
         if (this->frameSendRegistries.size > 0) {
+            return;
+        }
+
+        Register* reg = this->registryTable.getRegister(Address::Mode);
+
+        if (static_cast<uint16_t>(Enums::Mode::Cool) != reg->value) {
+            this->debug("warning", "Currently not supported");
             return;
         }
 
@@ -466,6 +494,8 @@ namespace FujitsuAC {
         Register* reg = this->registryTable.getRegister(Address::HumanSensorSupported);
         
         if (0x0001 != reg->value) {
+            this->debug("warning", "Not supported");
+
             return;
         }
 
