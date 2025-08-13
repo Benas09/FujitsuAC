@@ -9,8 +9,9 @@ FGLair® app is not required when using this integration - **everything runs loc
 
 Using this library you can control your Fujitsu AC through 4 pin socket dedicated to UTY-TFSXW1 wifi module.
 
-Works with:
-* ASYG09KMTB / AOYG09KMTA
+Tested with:
+* ASYG09KMTB
+* ASYG09KMCC
 
 ![](/images/homeassistant.png)
 
