@@ -13,13 +13,11 @@ namespace FujitsuAC {
         PubSubClient &mqttClient, 
         FujitsuController &controller,
         const char* uniqueId,
-        const char* name,
-        bool horizontalSwingAvailable
+        const char* name
     ) : mqttClient(mqttClient), 
         controller(controller), 
         uniqueId(uniqueId),
-        name(name),
-        horizontalSwingAvailable(horizontalSwingAvailable) {}
+        name(name) {}
 
     bool MqttBridge::setup() {
         this->controller.setOnRegisterChangeCallback([this](const Register* reg) {
@@ -52,11 +50,6 @@ namespace FujitsuAC {
 
         for (const auto& switch_ : switches) {
             this->registerSwitch(switch_);
-        }
-
-        if (this->horizontalSwingAvailable) {
-            this->registerSwitch(Address::HorizontalSwing);
-            this->registerSwitch(Address::HorizontalAirflow);
         }
 
         this->mqttClient.setCallback([this](char* topic, byte* payload, unsigned int length) {
@@ -328,8 +321,13 @@ namespace FujitsuAC {
             true
         );
 
-        if (Address::HumanSensorSupported == reg->address && 0x0001 == reg->value) {
+        if (Address::HumanSensorSupported == reg->address && this->controller.isHumanSensorSupported()) {
             this->registerSwitch(Address::HumanSensor);
+        }
+
+        if (Address::HorizontalSwingSupported == reg->address && this->controller.isHorizontalSwingSupported()) {
+            this->registerSwitch(Address::HorizontalSwing);
+            this->registerSwitch(Address::HorizontalAirflow);
         }
     }
 

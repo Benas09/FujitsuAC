@@ -38,6 +38,9 @@ namespace FujitsuAC {
         void setHumanSensor(Enums::HumanSensor humanSensor);
         void setTemp(const char *temp);
 
+        bool isHorizontalSwingSupported();
+        bool isHumanSensorSupported();
+
         void setOnRegisterChangeCallback(std::function<void(const Register* reg)> onRegisterChangeCallback);
         void setDebugCallback(std::function<void(const char* name, const char* message)> debugCallback);
         const Register* getAllRegisters(size_t &outSize) const;
@@ -105,7 +108,7 @@ namespace FujitsuAC {
               Address::Initial11,  
               Address::Initial12,  
               Address::Initial13,  
-              Address::Initial14,  
+              Address::HorizontalSwingSupported,  
               Address::Initial15,
             }
         };

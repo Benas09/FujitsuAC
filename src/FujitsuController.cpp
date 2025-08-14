@@ -350,6 +350,18 @@ namespace FujitsuAC {
         return static_cast<uint16_t>(Enums::MinimumHeat::On) == reg->value;
     }
 
+    bool FujitsuController::isHorizontalSwingSupported() {
+        Register* reg = this->registryTable.getRegister(Address::HorizontalSwingSupported);
+
+        return 0x0015 == reg->value;
+    }
+
+    bool FujitsuController::isHumanSensorSupported() {
+        Register* reg = this->registryTable.getRegister(Address::HumanSensorSupported);
+        
+        return 0x0001 == reg->value;
+    }
+
     void FujitsuController::setPower(Enums::Power power) {
         if (this->frameSendRegistries.size > 0) {
             return;
@@ -433,6 +445,12 @@ namespace FujitsuAC {
             return;
         }
 
+        if (!this->isHorizontalSwingSupported()) {
+            this->debug("warning", "Horizontal swing is not supported");
+
+            return;
+        }
+
         this->frameSendRegistries.size = 2;
         this->frameSendRegistries.registries[0] = Address::HorizontalSwing;
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(Enums::HorizontalSwing::Off);
@@ -442,6 +460,12 @@ namespace FujitsuAC {
 
     void FujitsuController::setHorizontalSwing(Enums::HorizontalSwing horizontalSwing) {
         if (this->frameSendRegistries.size > 0) {
+            return;
+        }
+
+        if (!this->isHorizontalSwingSupported()) {
+            this->debug("warning", "Horizontal swing is not supported");
+
             return;
         }
 
@@ -513,10 +537,8 @@ namespace FujitsuAC {
             return;
         }
 
-        Register* reg = this->registryTable.getRegister(Address::HumanSensorSupported);
-        
-        if (0x0001 != reg->value) {
-            this->debug("warning", "Not supported");
+        if (!this->isHumanSensorSupported()) {
+            this->debug("warning", "Human sensor is not supported");
 
             return;
         }

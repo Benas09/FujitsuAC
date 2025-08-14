@@ -35,7 +35,7 @@ namespace FujitsuAC {
                 {Address::Initial11, 0x0000, false},
                 {Address::Initial12, 0x0000, false},
                 {Address::Initial13, 0x0000, false},
-                {Address::Initial14, 0x0000, false},
+                {Address::HorizontalSwingSupported, 0x0000, false},
                 {Address::Initial15, 0x0000, false},
                 
                 {Address::Initial16, 0x0000, false},

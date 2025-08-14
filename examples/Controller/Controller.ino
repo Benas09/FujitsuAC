@@ -87,7 +87,7 @@ void reconnect() {
         if (mqttClient.connect(DEVICE_NAME, topic, 0, true, "offline")) {
 #endif
             if (nullptr == bridge) {
-                bridge = new FujitsuAC::MqttBridge(mqttClient, controller, uniqueId.c_str(), DEVICE_NAME, false);
+                bridge = new FujitsuAC::MqttBridge(mqttClient, controller, uniqueId.c_str(), DEVICE_NAME);
             }
 
             bridge->setup();

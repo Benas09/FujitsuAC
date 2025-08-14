@@ -27,7 +27,7 @@ namespace FujitsuAC {
         Initial11 = 0x0120,  
         Initial12 = 0x0130,
         Initial13 = 0x0131,  
-        Initial14 = 0x0142,  
+        HorizontalSwingSupported = 0x0142,  
         Initial15 = 0x0143,  
 
         Initial16 = 0x0150,
