@@ -6,17 +6,10 @@
 */
 
 #include "Buffer.h"
-#include <Arduino.h>
 
 namespace FujitsuAC {
 
     Buffer::Buffer(Stream &uart): uart(uart) {}
-
-    bool Buffer::setup() {
-        this->lastMillis = millis();
-        
-        return true;
-    }
 
     bool Buffer::loop(std::function<void(uint8_t buffer[128], int size, bool isValid)> callback) {
         while (this->uart.available()) {

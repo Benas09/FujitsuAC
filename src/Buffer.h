@@ -5,9 +5,8 @@
   Project home: https://github.com/Benas09/FujitsuAC
 */
 
-#include <SoftwareSerial.h>
-
 #pragma once
+#include <Arduino.h>
 
 namespace FujitsuAC {
 
@@ -15,7 +14,6 @@ namespace FujitsuAC {
         public:
             Buffer(Stream &uart);
 
-            bool setup();
             bool loop(std::function<void(uint8_t buffer[128], int size, bool isValid)> callback);
 
         private:
