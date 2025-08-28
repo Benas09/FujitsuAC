@@ -22,7 +22,6 @@ namespace FujitsuAC {
 
             size_t write(uint8_t byte) override;
             size_t write(const uint8_t* buffer, size_t size) override;
-
         private:
             uart_port_t _uart_port;
     };

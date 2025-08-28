@@ -54,5 +54,4 @@ namespace FujitsuAC {
     size_t Uart::write(const uint8_t* buffer, size_t size) {
         return uart_write_bytes(_uart_port, buffer, size);
     }
-
 }

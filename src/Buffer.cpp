@@ -12,6 +12,8 @@ namespace FujitsuAC {
     Buffer::Buffer(Stream &uart): uart(uart) {}
 
     bool Buffer::loop(std::function<void(uint8_t buffer[128], int size, bool isValid)> callback) {
+        int previousIndex = this->currentIndex;
+
         while (this->uart.available()) {
             uint8_t b = uart.read();
             uint32_t now = millis();
@@ -37,6 +39,10 @@ namespace FujitsuAC {
             this->currentIndex++;
         }
         
+        if (previousIndex != this->currentIndex && this->debugCallback) {
+            this->debugCallback("buffer", this->getCurrentBufferAsHexString());
+        }
+
         return true;
     }
 
@@ -50,6 +56,27 @@ namespace FujitsuAC {
         }
         
         return frameChecksum == checksum;
+    }
+
+    const char* Buffer::getCurrentBufferAsHexString() {
+        static char hexStr[384];
+        int offset = 0;
+
+        for (int i = 0; i < this->currentIndex && offset < sizeof(hexStr) - 3; ++i) {
+            offset += snprintf(
+                hexStr + offset, 
+                sizeof(hexStr) - offset,
+                (i < size - 1) 
+                    ? "%02X " 
+                    : "%02X", buffer[i]
+            );
+        }
+
+        return hexStr;
+    }
+
+    void Buffer::setDebugCallback(std::function<void(const char* name, const char* message)> debugCallback) {
+        this->debugCallback = debugCallback;
     }
 
 }

@@ -15,15 +15,18 @@ namespace FujitsuAC {
             Buffer(Stream &uart);
 
             bool loop(std::function<void(uint8_t buffer[128], int size, bool isValid)> callback);
+            void setDebugCallback(std::function<void(const char* name, const char* message)> debugCallback);
 
         private:
             Stream &uart;
+            std::function<void(const char* name, const char* message)> debugCallback;
 
             uint32_t lastMillis = 0;
             uint8_t buffer[128];
             int currentIndex = 0;
 
             bool isValidFrame(uint8_t buffer[128], int size);
+            const char* getCurrentBufferAsHexString();
     };
 
 }
