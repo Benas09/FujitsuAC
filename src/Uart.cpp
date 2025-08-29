@@ -23,6 +23,7 @@ namespace FujitsuAC {
         uart_param_config(_uart_port, &uart_config);
         uart_set_pin(_uart_port, txPin, rxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
         uart_set_line_inverse(_uart_port, UART_SIGNAL_TXD_INV | UART_SIGNAL_RXD_INV);
+        gpio_set_pull_mode((gpio_num_t)rxPin, GPIO_PULLDOWN_ONLY);
     }
 
     int Uart::available() {
