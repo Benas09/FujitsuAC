@@ -9,10 +9,11 @@
 
 namespace FujitsuAC {
 
-    FujitsuController::FujitsuController(Stream &uart) : 
+    FujitsuController::FujitsuController(Stream &uart, bool enabledBufferDebug) : 
         uart(uart),
         registryTable(),
-        buffer(uart) {
+        buffer(uart),
+        enabledBufferDebug(enabledBufferDebug) {
     }
 
     bool FujitsuController::setup() {
@@ -597,6 +598,10 @@ namespace FujitsuAC {
 
     void FujitsuController::setDebugCallback(std::function<void(const char* name, const char* message)> debugCallback) {
         this->debugCallback = debugCallback;
+
+        if (enabledBufferDebug) {
+            this->buffer.setDebugCallback(debugCallback);
+        }
     }
 
     void FujitsuController::debug(const char* name, const char* message) {

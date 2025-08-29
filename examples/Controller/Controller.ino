@@ -30,8 +30,10 @@ Project home: https://github.com/Benas09/FujitsuAC
 #define RXD2 16
 #define TXD2 17
 
+#define ENABLED_BUFFER_DEBUG true
+
 FujitsuAC::Uart uart = FujitsuAC::Uart(UART_NUM_2, RXD2, TXD2); //RX, TX
-FujitsuAC::FujitsuController controller = FujitsuAC::FujitsuController(uart);
+FujitsuAC::FujitsuController controller = FujitsuAC::FujitsuController(uart, ENABLED_BUFFER_DEBUG);
 FujitsuAC::MqttBridge* bridge = nullptr;
 
 WiFiClient espClient;

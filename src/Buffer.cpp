@@ -66,7 +66,7 @@ namespace FujitsuAC {
             offset += snprintf(
                 hexStr + offset, 
                 sizeof(hexStr) - offset,
-                (i < size - 1) 
+                (i < this->currentIndex - 1) 
                     ? "%02X " 
                     : "%02X", buffer[i]
             );

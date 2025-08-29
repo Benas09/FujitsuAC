@@ -18,7 +18,7 @@ namespace FujitsuAC {
     class FujitsuController {
 
       public:
-        FujitsuController(Stream &uart);
+        FujitsuController(Stream &uart, bool enabledBufferDebug);
 
         bool setup();
         bool loop();
@@ -53,6 +53,7 @@ namespace FujitsuAC {
         RegistryTable registryTable;
         Buffer buffer;
         uint32_t lastRequestMillis = 0;
+        bool enabledBufferDebug = false;
         bool lastResponseReceived = true;
         bool noResponseNotified = false;
         bool initialized = false;
