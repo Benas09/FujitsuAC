@@ -24,19 +24,16 @@ namespace FujitsuAC {
 
             this->lastMillis = now;
             this->buffer[this->currentIndex] = b;
+            this->currentIndex++;
 
-            if (this->currentIndex > 4 && this->currentIndex + 1 == (int) this->buffer[4] + 7) {
+            if (this->currentIndex > 4 && this->currentIndex == (int) this->buffer[4] + 7) {
                 if (callback) {
                     callback(
                         this->buffer, (int) this->buffer[4] + 7,
                         this->isValidFrame(this->buffer, (int) this->buffer[4] + 7)
                     );
                 }
-
-                continue;
             }
-
-            this->currentIndex++;
         }
         
         if (previousIndex != this->currentIndex && this->debugCallback) {
