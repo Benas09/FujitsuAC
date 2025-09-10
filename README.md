@@ -10,8 +10,9 @@ FGLair® app is not required when using this integration - **everything runs loc
 Using this library you can control your Fujitsu AC through 4 pin socket dedicated to UTY-TFSXW1 wifi module.
 
 Tested with:
-* ASYG09KMTB
-* ASYG09KMCC
+* ASYG09KMTB (Works with Hardware UART)
+* ASYG09KMCC (Works with Hardware UART)
+* ASYG12KGTB (Works with Hardware UART. Logic level converter required, did not work without it)
 
 ![](/images/homeassistant.png)
 
@@ -62,5 +63,6 @@ If your AC model is not exactly the same as mine, at first I recommend ensure, t
 * ESP32 30 pin (https://www.aliexpress.com/item/1005008261897277.html)
 * Connector (4P, 10cm) (https://www.aliexpress.com/item/1005006294406922.html)
 * Board (4x6, needs to be trimmed a little bit) (https://www.aliexpress.com/item/1005007024264426.html)
+* Some units may need logic level converter, otherwise they wont communicate with ESP (https://www.aliexpress.com/item/1005006968679749.html)
 
   You can also crimp your own plug (Connector PAP-04V-S, pins to crimp: SPHD-002T-P0.5)
