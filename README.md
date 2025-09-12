@@ -13,6 +13,7 @@ Tested with:
 * ASYG09KMTB (Works with Hardware UART)
 * ASYG09KMCC (Works with Hardware UART)
 * ASYG12KGTB (Works with Hardware UART. Logic level converter required, did not work without it)
+* ASTG18KMTC (Works with SoftwareSerial. Hardware UART is not confirmed yet.)
 
 ![](/images/homeassistant.png)
 
@@ -34,6 +35,13 @@ AC pins are not galvanically isolated and these voltages are not relative to ear
 
 Pins from left to right 1 2 3 4
 ![](/images/socket.jpg)
+
+Pinout for USB style socket:
+Pin 1 - 12v - Red Wire
+Pin 2 - 17 pin - White Wire
+Pin 3 - 16 pin - Green Wire
+Pin 4 - GND - Black Wire
+
 ![](/images/board_front.jpg)
 ![](/images/board_back.jpg)
 ![](/images/board_case.jpg)
