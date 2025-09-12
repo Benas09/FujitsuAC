@@ -12,8 +12,14 @@ Project home: https://github.com/Benas09/FujitsuAC
 
 #include <PubSubClient.h>
 
-// #include <Uart.h>
+#define HARDWARE_UART 1 //0 for SoftwareSerial
+
+#if HARDWARE_UART
+#include <Uart.h>
+#else
 #include <SoftwareSerial.h>
+#endif
+
 #include <FujitsuController.h>
 #include <MqttBridge.h>
 
@@ -31,8 +37,12 @@ Project home: https://github.com/Benas09/FujitsuAC
 #define RXD2 16
 #define TXD2 17
 
-// FujitsuAC::Uart uart = FujitsuAC::Uart(UART_NUM_2, RXD2, TXD2); //RX, TX
+#if HARDWARE_UART
+FujitsuAC::Uart uart = FujitsuAC::Uart(UART_NUM_2, RXD2, TXD2); //RX, TX
+#else
 SoftwareSerial uart(RXD2, TXD2, true); //RX, TX
+#endif
+
 FujitsuAC::FujitsuController controller = FujitsuAC::FujitsuController(uart);
 FujitsuAC::MqttBridge* bridge = nullptr;
 
@@ -46,7 +56,10 @@ void setup() {
     Serial.print("Connecting to ");
     Serial.println(WIFI_SSID);
 
+#if HARDWARE_UART != 1
     uart.begin(9600);
+#endif
+
     controller.setup();
 
     WiFi.setHostname(DEVICE_NAME);
