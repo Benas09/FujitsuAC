@@ -33,14 +33,22 @@ AC pins are not galvanically isolated and these voltages are not relative to ear
 4 (DATA) -----------------------------> TX 17 (Data from ESP)
 ```
 
-Pins from left to right 1 2 3 4
+Pins from left to right 1 2 3 4 <br/>
 ![](/images/socket.jpg)
 
+Circuit for JST type connector <br/>
+![](/images/circuit.png)
+
+USB Pinout from top to bottom <br/>
+![](/images/usb_plug.png)
+<br/>
+```
 Pinout for USB style socket:
-Pin 1 - 12v - Red Wire
-Pin 2 - 17 pin - White Wire
-Pin 3 - 16 pin - Green Wire
-Pin 4 - GND - Black Wire
+Pin 1 - 12v
+Pin 2 - AC_TX - 16 pin
+Pin 3 - AC_RX - 17 pin
+Pin 4 - GND
+```
 
 ![](/images/board_front.jpg)
 ![](/images/board_back.jpg)
