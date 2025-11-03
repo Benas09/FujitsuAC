@@ -121,12 +121,13 @@ namespace FujitsuAC {
         p += "\"fan_mode_state_topic\": \"fujitsu/" + this->uniqueId + "/state/fan\",";
 
         p += "\"current_temperature_topic\": \"fujitsu/" + this->uniqueId + "/state/actual_temp\",";
+        p += "\"current_humidity_topic\": \"fujitsu/" + this->uniqueId + "/state/humidity\",";
 
         p += "\"min_temp\": 18,";
         p += "\"max_temp\": 30,";
         p += "\"temp_step\": 0.5,";
         p += "\"modes\": [\"auto\", \"cool\", \"dry\", \"fan_only\", \"heat\"],";
-        p += "\"fan_modes\": [\"auto\", \"quiet\", \"low\", \"medium\", \"high\"],",
+        p += "\"fan_modes\": [\"auto\", \"quiet\", \"low\", \"medium\", \"high\"],";
         p += this->deviceConfig;
         p += "}";
 
@@ -146,6 +147,21 @@ namespace FujitsuAC {
         p += "}";
 
         snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_actual_temp/config", this->uniqueId.c_str());
+        this->mqttClient.publish(topic, p.c_str(), true);
+
+        p = "{";
+        p += "\"name\": \"humidity\",";
+        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"payload_available\": \"online\",";
+        p += "\"payload_not_available\": \"offline\",";
+        p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/humidity\",";
+        p += "\"unit_of_measurement\": \"%\",";
+        p += "\"unique_id\": \"" + this->uniqueId + "_humidity\",";
+        p += "\"device_class\": \"humidity\",";
+        p += this->deviceConfig;
+        p += "}";
+
+        snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_humidity/config", this->uniqueId.c_str());
         this->mqttClient.publish(topic, p.c_str(), true);
 
         this->debug("info", "Base entities registered");
@@ -346,6 +362,7 @@ namespace FujitsuAC {
             case Address::OutdoorUnitLowNoise: return "outdoor_unit_low_noise";
             case Address::SetpointTemp: return "temp";
             case Address::ActualTemp: return "actual_temp";
+            case Address::Humidity: return "humidity";
             case Address::HumanSensor: return "human_sensor";
             case Address::MinimumHeat: return "minimum_heat";
             default: {
@@ -490,6 +507,12 @@ namespace FujitsuAC {
                 static char str[8];
                 snprintf(str, sizeof(str), "%u.%u", (reg->value - 5025) / 100, (reg->value - 5025) % 100);
 
+                return str;
+            }
+
+            case Address::Humidity: {
+                static char str[8];
+                snprintf(str, sizeof(str), "%u", (reg->value) / 100);
                 return str;
             }
 

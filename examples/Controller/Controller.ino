@@ -86,7 +86,7 @@ void setup() {
     Serial.println(uniqueId);
 
     mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
-    mqttClient.setBufferSize(1024);
+    mqttClient.setBufferSize(2048);
 }
 
 void reconnect() {
