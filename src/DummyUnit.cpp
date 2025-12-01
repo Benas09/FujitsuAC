@@ -226,7 +226,7 @@ namespace FujitsuAC {
         //     { Address::Register39, 0x0000 },
         //     { Address::Register40, 0x0000 },
         //     { Address::Register41, 0xFFFF },
-        //     { Address::Humidity, 0x1964 },
+        //     { Address::OutdoorTemp, 0x1964 },
         //     { Address::Register43, 0x0000 },
         //     { Address::Register44, 0x0000 }
         // };
@@ -304,7 +304,7 @@ namespace FujitsuAC {
             { Address::Register39, 0x0000 },
             { Address::Register40, 0x0000 },
             { Address::Register41, 0xFFFF },
-            { Address::Humidity, 0x15E0 },
+            { Address::OutdoorTemp, 0x15E0 },
             { Address::Register43, 0x0000 },
             { Address::Register44, 0x0000 }
         };

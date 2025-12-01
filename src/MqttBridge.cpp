@@ -150,18 +150,18 @@ namespace FujitsuAC {
         this->mqttClient.publish(topic, p.c_str(), true);
 
         p = "{";
-        p += "\"name\": \"humidity\",";
+        p += "\"name\": \"outdoor_temp\",";
         p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
         p += "\"payload_available\": \"online\",";
         p += "\"payload_not_available\": \"offline\",";
-        p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/humidity\",";
-        p += "\"unit_of_measurement\": \"%\",";
-        p += "\"unique_id\": \"" + this->uniqueId + "_humidity\",";
-        p += "\"device_class\": \"humidity\",";
+        p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/outdoor_temp\",";
+        p += "\"unit_of_measurement\": \"°C\",";
+        p += "\"unique_id\": \"" + this->uniqueId + "_outdoor_temp\",";
+        p += "\"device_class\": \"temperature\",";
         p += this->deviceConfig;
         p += "}";
 
-        snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_humidity/config", this->uniqueId.c_str());
+        snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_outdoor_temp/config", this->uniqueId.c_str());
         this->mqttClient.publish(topic, p.c_str(), true);
 
         this->debug("info", "Base entities registered");
@@ -362,7 +362,7 @@ namespace FujitsuAC {
             case Address::OutdoorUnitLowNoise: return "outdoor_unit_low_noise";
             case Address::SetpointTemp: return "temp";
             case Address::ActualTemp: return "actual_temp";
-            case Address::Humidity: return "humidity";
+            case Address::OutdoorTemp: return "outdoor_temp";
             case Address::HumanSensor: return "human_sensor";
             case Address::MinimumHeat: return "minimum_heat";
             default: {
@@ -510,9 +510,11 @@ namespace FujitsuAC {
                 return str;
             }
 
-            case Address::Humidity: {
+            case Address::OutdoorTemp: {
+                int val = reg->value - 5025;
                 static char str[8];
-                snprintf(str, sizeof(str), "%u", (reg->value) / 100);
+                snprintf(str, sizeof(str), "%d.%02d", val / 100, abs(val % 100));
+
                 return str;
             }
 

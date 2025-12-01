@@ -92,7 +92,7 @@ namespace FujitsuAC {
                 {Address::Register39, 0x0000, false},
                 {Address::Register40, 0x0000, false},
                 {Address::Register41, 0x0000, false},
-                {Address::Humidity, 0x0000, false},
+                {Address::OutdoorTemp, 0x0000, false},
                 {Address::Register43, 0x0000, false},
                 {Address::Register44, 0x0000, false},
             };

@@ -84,7 +84,7 @@ namespace FujitsuAC {
         Register39 = 0x1406,  
         Register40 = 0x140E,  
         Register41 = 0x2000,  
-        Humidity = 0x2020,  
+        OutdoorTemp = 0x2020,  
         Register43 = 0x2021,  
         Register44 = 0xF001,
     };

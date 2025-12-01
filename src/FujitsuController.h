@@ -177,7 +177,7 @@ namespace FujitsuAC {
               Address::Register39,  
               Address::Register40,  
               Address::Register41,  
-              Address::Humidity,  
+              Address::OutdoorTemp,  
               Address::Register43,  
               Address::Register44,
             }
