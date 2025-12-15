@@ -4,12 +4,22 @@ Copyright (c) 2025 Benas Ragauskas. All rights reserved.
 
 Project home: https://github.com/Benas09/FujitsuAC
 */
+//EEPROM
+#include <Preferences.h>
+
+//WiFi
 #include <WiFi.h>
 
+// Access point
+#include <NetworkClient.h>
+#include <WiFiAP.h>
+
+//OTA
 #include <ESPmDNS.h>
 #include <NetworkUdp.h>
 #include <ArduinoOTA.h>
 
+//MQTT
 #include <PubSubClient.h>
 
 #define HARDWARE_UART 1 //0 for SoftwareSerial
@@ -23,19 +33,26 @@ Project home: https://github.com/Benas09/FujitsuAC
 #include <FujitsuController.h>
 #include <MqttBridge.h>
 
-
-#define WIFI_SSID "your-ssid"
-#define WIFI_PASSWORD "your-pw"
-#define DEVICE_NAME "OfficeAC"
-#define OTA_PASSWORD "office_ac"
-
-#define MQTT_SERVER "192.168.1.100"
-#define MQTT_PORT 1883
-// #define MQTT_USER "your-mqtt-user"
-// #define MQTT_PASS "your-mqtt-pass"
-
 #define RXD2 16
 #define TXD2 17
+
+// #define LED_W 6
+// #define LED_R 7
+// #define RESET_BUTTON 20
+
+String uniqueId;
+
+String wifiSsid;
+String wifiPw;
+String mqttIp;
+String mqttPort;
+String mqttUser;
+String mqttPw;
+String deviceName;
+String otaPw;
+
+Preferences preferences;
+NetworkServer server(80);
 
 #if HARDWARE_UART
 FujitsuAC::Uart uart = FujitsuAC::Uart(UART_NUM_2, RXD2, TXD2); //RX, TX
@@ -48,13 +65,73 @@ FujitsuAC::MqttBridge* bridge = nullptr;
 
 WiFiClient espClient;
 PubSubClient mqttClient = PubSubClient(espClient);
-String uniqueId = "000000000000";
+
+void generateUniqueId() {
+    char buf[13];
+    snprintf(buf, sizeof(buf), "%012llX", ESP.getEfuseMac());
+    uniqueId = buf;
+    uniqueId.toLowerCase();
+}
+
+void initIO() {
+#ifdef LED_R
+    ledcAttach(LED_R, 12000, 8);
+    ledcWrite(LED_R, 253);
+#endif
+
+#ifdef LED_W
+    ledcAttach(LED_W, 12000, 8);
+    ledcWrite(LED_W, 253);
+#endif
+
+#ifdef RESET_BUTTON
+    pinMode(RESET_BUTTON, INPUT_PULLUP);
+#endif
+}
+
+void loadPreferences() {
+    preferences.begin("fujitsu_ac", false);
+
+    wifiSsid = preferences.getString("wifi-ssid", "");
+    wifiPw = preferences.getString("wifi-pw", "");
+    mqttIp = preferences.getString("mqtt-ip", "");
+    mqttPort = preferences.getString("mqtt-port", "");
+    mqttUser = preferences.getString("mqtt-user", "");
+    mqttPw = preferences.getString("mqtt-pw", "");
+    deviceName = preferences.getString("device-name", "");
+    otaPw = preferences.getString("ota-pw", "");
+
+    preferences.end();
+}
+
+void createAP() {
+    IPAddress apIP(192,168,1,1);
+    IPAddress apGateway(192,168,1,1);
+    IPAddress apSubnet(255,255,255,0);
+
+    WiFi.softAPConfig(apIP, apGateway, apSubnet);
+
+    char accessPointName[64];
+    snprintf(accessPointName, sizeof(accessPointName), "FujitsuAC-%s", uniqueId.c_str());
+
+    if (!WiFi.softAP(accessPointName)) {
+        ESP.restart();
+    }
+
+    server.begin();
+}
 
 void setup() {
-    Serial.begin(115200);
-
-    Serial.print("Connecting to ");
-    Serial.println(WIFI_SSID);
+    generateUniqueId();
+    initIO();
+    loadPreferences();
+    handleResetButton();
+    
+    if (wifiSsid == "") {
+        createAP();
+        return;
+    }
+    
 
 #if HARDWARE_UART != 1
     uart.begin(9600);
@@ -62,59 +139,68 @@ void setup() {
 
     controller.setup();
 
-    WiFi.setHostname(DEVICE_NAME);
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    WiFi.setHostname(deviceName.c_str());
+    WiFi.begin(wifiSsid, wifiPw);
 
     while (WiFi.status() != WL_CONNECTED) {
+#ifdef LED_R
+        ledcWrite(LED_R, 255);
+#endif
+#ifdef LED_W
+        ledcWrite(LED_W, 255);
+#endif
+
         delay(500);
-        Serial.print(".");
+
+#ifdef LED_R
+        ledcWrite(LED_R, 253);
+#endif
+#ifdef LED_W
+        ledcWrite(LED_W, 253);
+#endif
     }
 
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
-
-    ArduinoOTA.setHostname(DEVICE_NAME);
-    ArduinoOTA.setPassword(OTA_PASSWORD);
+    ArduinoOTA.setHostname(deviceName.c_str());
+    ArduinoOTA.setPassword(otaPw.c_str());
     ArduinoOTA.begin();
 
-    uniqueId = WiFi.macAddress();
-    uniqueId.replace(":", "");
-    uniqueId.toLowerCase();
-
-    Serial.print("UniqueId: "); 
-    Serial.println(uniqueId);
-
-    mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
+    mqttClient.setServer(mqttIp.c_str(), (uint16_t) mqttPort.toInt());
     mqttClient.setBufferSize(2048);
 }
 
 void reconnect() {
     while (!mqttClient.connected()) {
-        Serial.print("Connecting to MQTT...");
-
         char topic[64];
         snprintf(topic, sizeof(topic), "fujitsu/%s/status", uniqueId.c_str());
 
-#ifdef MQTT_USER
-        if (mqttClient.connect(DEVICE_NAME, MQTT_USER, MQTT_PASS, topic, 0, true, "offline")) {
-#else
-        if (mqttClient.connect(DEVICE_NAME, topic, 0, true, "offline")) {
-#endif
+        bool connected = false;
+
+        if (mqttUser == "") {
+            connected = mqttClient.connect(deviceName.c_str(), topic, 0, true, "offline");
+        } else {
+            connected = mqttClient.connect(deviceName.c_str(), mqttUser.c_str(), mqttPw.c_str(), topic, 0, true, "offline");
+        }
+
+        if (connected) {
             if (nullptr == bridge) {
-                bridge = new FujitsuAC::MqttBridge(mqttClient, controller, uniqueId.c_str(), DEVICE_NAME);
+                bridge = new FujitsuAC::MqttBridge(mqttClient, controller, uniqueId.c_str(), deviceName.c_str());
             }
 
             bridge->setup();
         } else {
-            Serial.print("failed, rc=");
-            Serial.print(mqttClient.state());
             delay(5000);
         }
     }
 }
 
 void loop() {
+    handleResetButton();
+
+    if (wifiSsid == "") {
+        handleHttp();
+        return;
+    }
+
     ArduinoOTA.handle();
 
     if (!mqttClient.connected()) {
@@ -123,4 +209,145 @@ void loop() {
 
     mqttClient.loop();
     controller.loop();
+}
+
+String getConfigValue(String qs, String key) {
+    int start = qs.indexOf(key + "=");
+    if (start == -1) return "";
+
+    start += key.length() + 1;
+    int end = qs.indexOf("&", start);
+    if (end == -1) end = qs.length();
+
+    return qs.substring(start, end);
+}
+
+void parseConfig(String content) {
+    preferences.begin("fujitsu_ac", false);
+
+    preferences.putString("wifi-ssid", getConfigValue(content, "wifi-ssid")); 
+    preferences.putString("wifi-pw", getConfigValue(content, "wifi-pw")); 
+    preferences.putString("mqtt-ip", getConfigValue(content, "mqtt-ip")); 
+    preferences.putString("mqtt-port", getConfigValue(content, "mqtt-port")); 
+    preferences.putString("mqtt-user", getConfigValue(content, "mqtt-user")); 
+    preferences.putString("mqtt-pw", getConfigValue(content, "mqtt-pw")); 
+    preferences.putString("device-name", getConfigValue(content, "device-name")); 
+    preferences.putString("ota-pw", getConfigValue(content, "ota-pw"));
+
+    preferences.end();
+}
+
+void handleResetButton() {
+#ifdef RESET_BUTTON
+    if (LOW == digitalRead(RESET_BUTTON)) {
+        preferences.begin("fujitsu_ac", false);
+
+        preferences.putString("wifi-ssid", ""); 
+        preferences.putString("wifi-pw", ""); 
+        preferences.putString("mqtt-ip", ""); 
+        preferences.putString("mqtt-port", ""); 
+        preferences.putString("mqtt-user", ""); 
+        preferences.putString("mqtt-pw", ""); 
+        preferences.putString("device-name", ""); 
+        preferences.putString("ota-pw", "");
+
+        preferences.end();
+
+        delay(1000);
+        ESP.restart();
+    }
+#endif
+}
+
+void handleHttp() {
+    NetworkClient client = server.accept();
+
+    if (client) {
+        if (client.connected()) {
+            String firstLine = client.readStringUntil('\n');
+            
+            if (firstLine.startsWith("POST /")) {
+                String body = "";
+
+                while (client.available()) {
+                    body = client.readStringUntil('\n');
+                    body.trim();
+
+                    if (body.startsWith("wifi-ssid")) {
+                        parseConfig(body);
+
+                        client.println("HTTP/1.1 200 OK");
+                        client.println("Content-type:text/html");
+                        client.println();
+                        client.println("Saved");
+                        client.println();
+
+                        ESP.restart();
+                    }
+                }
+            }
+
+            client.println("HTTP/1.1 200 OK");
+            client.println("Content-type:text/html");
+            client.println();
+
+            const char *content = R"rawliteral(
+                <html
+                    <head>
+                        <style>
+                            input {
+                                display: block;
+                                margin-bottom: 10px;
+
+                            }
+
+                            label {
+                                font-weight: bold;
+                                display: block;            
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>FujitsuAC</h1>
+
+                        <form name="config" method="post">
+                            <label>Wifi SSID</label>
+                            <input type="text" name="wifi-ssid" required>
+
+                            <label>Wifi password</label>
+                            <input type="text" name="wifi-pw" required>
+
+                            <label>MQTT Server IP</label>
+                            <input type="text" name="mqtt-ip" value="192.168.1.100" required>
+
+                            <label>MQTT Server port</label>
+                            <input type="text" name="mqtt-port" value="1883" required>
+
+                            <label>MQTT User</label>
+                            <input type="text" name="mqtt-user">
+
+                            <label>MQTT Password</label>
+                            <input type="text" name="mqtt-pw">
+
+                            <label>Device name</label>
+                            <input type="text" name="device-name" value="LivingRoomAC" required>
+
+                            <label>Device password</label>
+                            <input type="text" name="ota-pw" value="living_room_ac" required>
+
+                            <input type="submit" value="Submit">
+                        </form>
+
+                        <br/>
+                        <span><a href="https://github.com/Benas09/FujitsuAC">Fujitsu AC</a></span>
+                    </body>
+                </html>
+            )rawliteral";
+
+            client.print(content);
+            client.println();
+        }
+
+        client.stop();
+    }
 }
