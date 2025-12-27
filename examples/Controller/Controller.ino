@@ -211,6 +211,32 @@ void loop() {
     controller.loop();
 }
 
+String urlDecode(const String &s) {
+    String out;
+    out.reserve(s.length());
+
+    for (int i = 0; i < s.length(); i++) {
+        char c = s[i];
+
+        if (c == '+') {
+            out += ' ';
+        } else if (c == '%' && i + 2 < s.length()) {
+            char h1 = s[i + 1];
+            char h2 = s[i + 2];
+
+            int v1 = isdigit(h1) ? h1 - '0' : toupper(h1) - 'A' + 10;
+            int v2 = isdigit(h2) ? h2 - '0' : toupper(h2) - 'A' + 10;
+
+            out += char((v1 << 4) | v2);
+            i += 2;
+        } else {
+            out += c;
+        }
+    }
+    
+    return out;
+}
+
 String getConfigValue(String qs, String key) {
     int start = qs.indexOf(key + "=");
     if (start == -1) return "";
@@ -219,7 +245,7 @@ String getConfigValue(String qs, String key) {
     int end = qs.indexOf("&", start);
     if (end == -1) end = qs.length();
 
-    return qs.substring(start, end);
+    return urlDecode(qs.substring(start, end));
 }
 
 void parseConfig(String content) {
