@@ -320,18 +320,91 @@ void handleHttp() {
             const char *content = R"rawliteral(
                 <html
                     <head>
-                        <style>
-                            input {
-                                display: block;
-                                margin-bottom: 10px;
+                        <title>FujitsuAC Config</title>
 
+                        <style>
+                            * {
+                                box-sizing: border-box;
+                                font-family: Arial, Helvetica, sans-serif;
+                            }
+
+                            body {
+                                background: #f4f6f8;
+                                margin: 0;
+                                padding: 20px;
+                                color: #333;
+                            }
+
+                            h1 {
+                                text-align: center;
+                                margin-bottom: 20px;
+                                font-size: 24px;
+                            }
+
+                            form {
+                                max-width: 420px;
+                                margin: 0 auto;
+                                background: #ffffff;
+                                padding: 20px;
+                                border-radius: 6px;
+                                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
                             }
 
                             label {
-                                font-weight: bold;
-                                display: block;            
+                                display: block;
+                                font-weight: 600;
+                                margin-bottom: 4px;
+                                font-size: 14px;
+                            }
+
+                            input[type="text"] {
+                                width: 100%;
+                                padding: 8px 10px;
+                                margin-bottom: 14px;
+                                border: 1px solid #ccc;
+                                border-radius: 4px;
+                                font-size: 14px;
+                            }
+
+                            input[type="text"]:focus {
+                                outline: none;
+                                border-color: #4a90e2;
+                            }
+
+                            input[type="submit"] {
+                                width: 100%;
+                                padding: 10px;
+                                background: #4a90e2;
+                                border: none;
+                                border-radius: 4px;
+                                color: #fff;
+                                font-size: 15px;
+                                font-weight: 600;
+                                cursor: pointer;
+                            }
+
+                            input[type="submit"]:hover {
+                                background: #3b7dc4;
+                            }
+
+                            span {
+                                display: block;
+                                text-align: center;
+                                margin-top: 16px;
+                                font-size: 13px;
+                            }
+
+                            a {
+                                color: #4a90e2;
+                                text-decoration: none;
+                            }
+
+                            a:hover {
+                                text-decoration: underline;
                             }
                         </style>
+
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     </head>
                     <body>
                         <h1>FujitsuAC</h1>
