@@ -170,6 +170,9 @@ void setup() {
 
 void reconnect() {
     while (!mqttClient.connected()) {
+#ifdef LED_W
+        ledcWrite(LED_W, 255);
+#endif
         char topic[64];
         snprintf(topic, sizeof(topic), "fujitsu/%s/status", uniqueId.c_str());
 
@@ -182,6 +185,9 @@ void reconnect() {
         }
 
         if (connected) {
+#ifdef LED_W
+            ledcWrite(LED_W, 254);
+#endif
             if (nullptr == bridge) {
                 bridge = new FujitsuAC::MqttBridge(mqttClient, controller, uniqueId.c_str(), deviceName.c_str());
             }
