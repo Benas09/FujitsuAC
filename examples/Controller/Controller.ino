@@ -81,7 +81,7 @@ void initIO() {
 
 #ifdef LED_W
     ledcAttach(LED_W, 12000, 8);
-    ledcWrite(LED_W, 253);
+    ledcWrite(LED_W, 255);
 #endif
 
 #ifdef RESET_BUTTON
@@ -139,25 +139,25 @@ void setup() {
 
     controller.setup();
 
+    WiFi.mode(WIFI_STA);
     WiFi.setHostname(deviceName.c_str());
     WiFi.begin(wifiSsid, wifiPw);
+
+    uint32_t start = millis();
 
     while (WiFi.status() != WL_CONNECTED) {
 #ifdef LED_R
         ledcWrite(LED_R, 255);
-#endif
-#ifdef LED_W
-        ledcWrite(LED_W, 255);
-#endif
-
         delay(500);
-
-#ifdef LED_R
         ledcWrite(LED_R, 253);
+        delay(500);
+#else
+        delay(50);
 #endif
-#ifdef LED_W
-        ledcWrite(LED_W, 253);
-#endif
+
+        if (millis() - start > 600000) {
+            clearConfig();
+        }
     }
 
     ArduinoOTA.setHostname(deviceName.c_str());
@@ -263,24 +263,28 @@ void parseConfig(String content) {
     preferences.end();
 }
 
+void clearConfig() {
+    preferences.begin("fujitsu_ac", false);
+
+    preferences.putString("wifi-ssid", ""); 
+    preferences.putString("wifi-pw", ""); 
+    preferences.putString("mqtt-ip", ""); 
+    preferences.putString("mqtt-port", ""); 
+    preferences.putString("mqtt-user", ""); 
+    preferences.putString("mqtt-pw", ""); 
+    preferences.putString("device-name", ""); 
+    preferences.putString("ota-pw", "");
+
+    preferences.end();
+
+    delay(1000);
+    ESP.restart();
+}
+
 void handleResetButton() {
 #ifdef RESET_BUTTON
     if (LOW == digitalRead(RESET_BUTTON)) {
-        preferences.begin("fujitsu_ac", false);
-
-        preferences.putString("wifi-ssid", ""); 
-        preferences.putString("wifi-pw", ""); 
-        preferences.putString("mqtt-ip", ""); 
-        preferences.putString("mqtt-port", ""); 
-        preferences.putString("mqtt-user", ""); 
-        preferences.putString("mqtt-pw", ""); 
-        preferences.putString("device-name", ""); 
-        preferences.putString("ota-pw", "");
-
-        preferences.end();
-
-        delay(1000);
-        ESP.restart();
+        clearConfig();
     }
 #endif
 }
