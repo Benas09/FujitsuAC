@@ -54,6 +54,7 @@ Pin 4 - GND
 ![](/images/board_back.jpg)
 ![](/images/board_case.jpg)
 ![](/images/installed.jpg)
+![](/images/web.png)
 
 ### Setup
 
