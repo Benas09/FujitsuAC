@@ -139,8 +139,9 @@ void setup() {
 
     controller.setup();
 
-    WiFi.mode(WIFI_STA);
+    WiFi.disconnect(true, true);
     WiFi.setHostname(deviceName.c_str());
+    WiFi.mode(WIFI_STA);
     WiFi.begin(wifiSsid, wifiPw);
 
     uint32_t start = millis();
