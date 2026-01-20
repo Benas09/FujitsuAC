@@ -257,6 +257,18 @@ namespace FujitsuAC {
         this->noResponseNotified = false;
 
         if (FrameType::Init1 == this->lastFrameSent) {
+            uint8_t expectedResponseAfterRestart[8] = {0xFE, 0x00, 0x00, 0x00, 0x01, 0x02, 0xFE, 0xFE};
+
+            if (
+                size == sizeof(expectedResponseAfterRestart) 
+                && memcmp(buffer, expectedResponseAfterRestart, sizeof(expectedResponseAfterRestart)) == 0
+            ) {
+                // wait real initialization frame
+                this->debug("received", this->toHexStr(buffer, size));
+
+                return;
+            }
+
             uint8_t expectedResponse[8] = {0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0xFF, 0xFD};
 
             if (size != sizeof(expectedResponse) || memcmp(buffer, expectedResponse, sizeof(expectedResponse)) > 0) {
