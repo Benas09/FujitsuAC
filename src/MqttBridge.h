@@ -33,15 +33,19 @@ namespace FujitsuAC {
             String uniqueId;
             String name;
             String deviceConfig;
-            uint32_t lastTempReportMillis = 0;
+            uint32_t lastTempReportMillis = -180000;
+            uint32_t lastDiagnosticReportMillis = -30000;
 
             void createDeviceConfig();
+            void registerDiagnosticEntities();
             void registerBaseEntities();
 
+            void sendDiagnosticData();
             void onRegisterChange(const Register *reg);
             void onMqtt(char* topic, char* payload);
             void debug(const char* name, const char* message);
             
+            static const char* getResetReason();
             static const char* addressToString(Address address);
             static const char* valueToString(const Register *reg);
 

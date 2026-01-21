@@ -6,6 +6,8 @@
 */
 
 #include "MqttBridge.h"
+#include <WiFi.h>
+#include "esp_system.h"
 
 namespace FujitsuAC {
 
@@ -35,6 +37,9 @@ namespace FujitsuAC {
         this->debug("info", "MQTT Connected");
 
         this->createDeviceConfig();
+        this->registerDiagnosticEntities();
+        this->sendDiagnosticData();
+
         this->registerBaseEntities();
 
         static constexpr Address switches[] = {
@@ -68,8 +73,21 @@ namespace FujitsuAC {
         const Register* registers = this->controller.getAllRegisters(registryCount);
 
         for (size_t i = 0; i < registryCount; ++i) {
+            if (
+                registers[i].address == Address::ActualTemp
+                || registers[i].address == Address::OutdoorTemp
+            ) {
+                continue;
+            }
+
             this->onRegisterChange(&registers[i]);
         }
+
+        return true;
+    }
+
+    bool MqttBridge::loop() {
+        this->sendDiagnosticData();
 
         return true;
     }
@@ -83,6 +101,41 @@ namespace FujitsuAC {
             this->deviceConfig += "\"name\": \"" + this->name + "\"";
             this->deviceConfig += "}";
         }
+    }
+
+    void MqttBridge::registerDiagnosticEntities() {
+        char topic[128];
+
+        String p = "{";
+        p += "\"name\": \"wifi_rssi\",";
+        p += "\"icon\": \"mdi:wifi\",";
+        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"payload_available\": \"online\",";
+        p += "\"payload_not_available\": \"offline\",";
+        p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/wifi_rssi\",";
+        p += "\"unit_of_measurement\": \"dB\",";
+        p += "\"unique_id\": \"" + this->uniqueId + "_wifi_rssi\",";
+        p += this->deviceConfig;
+        p += "}";
+
+        snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_wifi_rssi/config", this->uniqueId.c_str());
+        this->mqttClient.publish(topic, p.c_str(), true);
+
+        p = "{";
+        p += "\"name\": \"reset_reason\",";
+        p += "\"icon\": \"mdi:restart\",";
+        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"payload_available\": \"online\",";
+        p += "\"payload_not_available\": \"offline\",";
+        p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/reset_reason\",";
+        p += "\"unique_id\": \"" + this->uniqueId + "_reset_reason\",";
+        p += this->deviceConfig;
+        p += "}";
+
+        snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_reset_reason/config", this->uniqueId.c_str());
+        this->mqttClient.publish(topic, p.c_str(), true);
+
+        this->debug("info", "Diagnostic entities registered");
     }
 
     void MqttBridge::registerBaseEntities() {
@@ -344,6 +397,44 @@ namespace FujitsuAC {
         if (Address::HorizontalSwingSupported == reg->address && this->controller.isHorizontalSwingSupported()) {
             this->registerSwitch(Address::HorizontalSwing);
             this->registerSwitch(Address::HorizontalAirflow);
+        }
+    }
+
+    void MqttBridge::sendDiagnosticData() {
+        if ((millis() - this->lastDiagnosticReportMillis) < 30000) {
+            return;
+        }
+
+        char topic[64];
+
+        snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "wifi_rssi");
+
+        char rssi[8];
+        snprintf(rssi, sizeof(rssi), "%d", WiFi.RSSI());
+        this->mqttClient.publish(topic, rssi, true);
+
+        snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "reset_reason");
+        this->mqttClient.publish(topic, this->getResetReason(), true);
+
+        this->lastDiagnosticReportMillis = millis();
+    }
+
+    const char* MqttBridge::getResetReason() {
+        esp_reset_reason_t reason = esp_reset_reason();
+
+        switch (reason) {
+            case ESP_RST_UNKNOWN: return "UNKNOWN";
+            case ESP_RST_POWERON: return "POWERON";
+            case ESP_RST_EXT: return "EXTERNAL";
+            case ESP_RST_SW: return "SOFTWARE";
+            case ESP_RST_PANIC: return "PANIC";
+            case ESP_RST_INT_WDT: return "INT_WDT";
+            case ESP_RST_TASK_WDT: return "TASK_WDT";
+            case ESP_RST_WDT: return "WDT";
+            case ESP_RST_DEEPSLEEP: return "DEEPSLEEP";
+            case ESP_RST_BROWNOUT: return "BROWNOUT";
+            case ESP_RST_SDIO: return "SDIO";
+            default: return "INVALID";
         }
     }
 

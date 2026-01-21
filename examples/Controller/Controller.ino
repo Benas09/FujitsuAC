@@ -215,6 +215,7 @@ void loop() {
     }
 
     mqttClient.loop();
+    bridge->loop();
     controller.loop();
 }
 
