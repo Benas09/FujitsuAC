@@ -38,6 +38,7 @@ namespace FujitsuAC {
 
         this->createDeviceConfig();
         this->registerDiagnosticEntities();
+        this->sendInitialDiagnosticData();
         this->sendDiagnosticData();
 
         this->registerBaseEntities();
@@ -107,12 +108,29 @@ namespace FujitsuAC {
         char topic[128];
 
         String p = "{";
+        p += "\"name\": \"name\",";
+        p += "\"icon\": \"mdi:text-recognition\",";
+        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"payload_available\": \"online\",";
+        p += "\"payload_not_available\": \"offline\",";
+        p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/name\",";
+        p += "\"entity_category\": \"diagnostic\",";
+        p += "\"unique_id\": \"" + this->uniqueId + "_name\",";
+        p += this->deviceConfig;
+        p += "}";
+
+        snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_name/config", this->uniqueId.c_str());
+        this->mqttClient.publish(topic, p.c_str(), true);
+
+        p = "{";
         p += "\"name\": \"wifi_rssi\",";
         p += "\"icon\": \"mdi:wifi\",";
         p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
         p += "\"payload_available\": \"online\",";
         p += "\"payload_not_available\": \"offline\",";
         p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/wifi_rssi\",";
+        p += "\"device_class\": \"signal_strength\",";
+        p += "\"entity_category\": \"diagnostic\",";
         p += "\"unit_of_measurement\": \"dB\",";
         p += "\"unique_id\": \"" + this->uniqueId + "_wifi_rssi\",";
         p += this->deviceConfig;
@@ -128,6 +146,7 @@ namespace FujitsuAC {
         p += "\"payload_available\": \"online\",";
         p += "\"payload_not_available\": \"offline\",";
         p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/reset_reason\",";
+        p += "\"entity_category\": \"diagnostic\",";
         p += "\"unique_id\": \"" + this->uniqueId + "_reset_reason\",";
         p += this->deviceConfig;
         p += "}";
@@ -400,6 +419,16 @@ namespace FujitsuAC {
         }
     }
 
+    void MqttBridge::sendInitialDiagnosticData() {
+        char topic[64];
+
+        snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "name");
+        this->mqttClient.publish(topic, this->name.c_str(), true);
+
+        snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "reset_reason");
+        this->mqttClient.publish(topic, this->getResetReason(), true);
+    }
+
     void MqttBridge::sendDiagnosticData() {
         if ((millis() - this->lastDiagnosticReportMillis) < 30000) {
             return;
@@ -408,13 +437,9 @@ namespace FujitsuAC {
         char topic[64];
 
         snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "wifi_rssi");
-
         char rssi[8];
         snprintf(rssi, sizeof(rssi), "%d", WiFi.RSSI());
         this->mqttClient.publish(topic, rssi, true);
-
-        snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "reset_reason");
-        this->mqttClient.publish(topic, this->getResetReason(), true);
 
         this->lastDiagnosticReportMillis = millis();
     }

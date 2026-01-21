@@ -40,6 +40,7 @@ namespace FujitsuAC {
             void registerDiagnosticEntities();
             void registerBaseEntities();
 
+            void sendInitialDiagnosticData();
             void sendDiagnosticData();
             void onRegisterChange(const Register *reg);
             void onMqtt(char* topic, char* payload);
