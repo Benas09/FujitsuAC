@@ -140,12 +140,28 @@ namespace FujitsuAC {
         this->mqttClient.publish(topic, p.c_str(), true);
 
         p = "{";
+        p += "\"name\": \"ip\",";
+        p += "\"icon\": \"mdi:ip\",";
+        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"payload_available\": \"online\",";
+        p += "\"payload_not_available\": \"offline\",";
+        p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/ip\",";
+        p += "\"entity_category\": \"diagnostic\",";
+        p += "\"unique_id\": \"" + this->uniqueId + "_ip\",";
+        p += this->deviceConfig;
+        p += "}";
+
+        snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_ip/config", this->uniqueId.c_str());
+        this->mqttClient.publish(topic, p.c_str(), true);
+
+        p = "{";
         p += "\"name\": \"reset_reason\",";
         p += "\"icon\": \"mdi:restart\",";
         p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
         p += "\"payload_available\": \"online\",";
         p += "\"payload_not_available\": \"offline\",";
         p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/reset_reason\",";
+        p += "\"device_class\": \"enum\",";
         p += "\"entity_category\": \"diagnostic\",";
         p += "\"unique_id\": \"" + this->uniqueId + "_reset_reason\",";
         p += this->deviceConfig;
@@ -424,6 +440,9 @@ namespace FujitsuAC {
 
         snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "name");
         this->mqttClient.publish(topic, this->name.c_str(), true);
+
+        snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "ip");
+        this->mqttClient.publish(topic, WiFi.localIP().toString().c_str(), true);
 
         snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "reset_reason");
         this->mqttClient.publish(topic, this->getResetReason(), true);
