@@ -121,32 +121,45 @@ void createAP() {
     server.begin();
 }
 
-void setup() {
-    generateUniqueId();
-    initIO();
-    loadPreferences();
-    handleResetButton();
-    
-    if (wifiSsid == "") {
-        createAP();
+void connectToWifi()
+{
+    if (WiFi.status() == WL_CONNECTED) {
         return;
     }
-    
 
-#if HARDWARE_UART != 1
-    uart.begin(9600);
-#endif
-
-    controller.setup();
+    uint32_t start = millis();
 
     WiFi.disconnect(true, true);
     WiFi.setHostname(deviceName.c_str());
     WiFi.mode(WIFI_STA);
-    WiFi.begin(wifiSsid, wifiPw);
 
-    uint32_t start = millis();
+    int bestNetwork = -1;
+    int bestRSSI = -1000;
+
+    int networkCount = WiFi.scanNetworks();
+
+    for (int i = 0; i < networkCount; i++) {
+        uint8_t* bssid = WiFi.BSSID(i);
+        int rssi = WiFi.RSSI(i);
+
+        if (
+            WiFi.SSID(i) == wifiSsid
+            && rssi > bestRSSI
+        ) {
+            bestRSSI = rssi;
+            bestNetwork = i;
+        }
+    }
+
+    if (-1 != bestNetwork) {
+        uint8_t* bestBssid = WiFi.BSSID(bestNetwork);
+        int channel = WiFi.channel(bestNetwork);
+
+        WiFi.begin(wifiSsid, wifiPw, channel, bestBssid, true);
+    }
 
     while (WiFi.status() != WL_CONNECTED) {
+        handleResetButton();
 #ifdef LED_R
         ledcWrite(LED_R, 255);
         delay(500);
@@ -160,6 +173,27 @@ void setup() {
             clearConfig();
         }
     }
+}
+
+void setup() {
+    generateUniqueId();
+    initIO();
+    loadPreferences();
+    handleResetButton();
+
+    if (wifiSsid == "") {
+        createAP();
+        return;
+    }
+    
+
+#if HARDWARE_UART != 1
+    uart.begin(9600);
+#endif
+
+    controller.setup();
+
+    connectToWifi();
 
     ArduinoOTA.setHostname(deviceName.c_str());
     ArduinoOTA.setPassword(otaPw.c_str());
@@ -174,6 +208,7 @@ void reconnect() {
 #ifdef LED_W
         ledcWrite(LED_W, 255);
 #endif
+
         char topic[64];
         snprintf(topic, sizeof(topic), "fujitsu/%s/status", uniqueId.c_str());
 
