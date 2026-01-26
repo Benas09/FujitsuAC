@@ -19,7 +19,8 @@ namespace FujitsuAC {
                 PubSubClient &mqttClient,
                 FujitsuController &controller,
                 const char* uniqueId,
-                const char* name
+                const char* name,
+                const char* version
             );
 
             bool setup();
@@ -32,6 +33,7 @@ namespace FujitsuAC {
 
             String uniqueId;
             String name;
+            String version;
             String deviceConfig;
             uint32_t lastTempReportMillis = -180000;
             uint32_t lastDiagnosticReportMillis = -30000;

@@ -15,11 +15,13 @@ namespace FujitsuAC {
         PubSubClient &mqttClient, 
         FujitsuController &controller,
         const char* uniqueId,
-        const char* name
+        const char* name,
+        const char* version
     ) : mqttClient(mqttClient), 
         controller(controller), 
         uniqueId(uniqueId),
-        name(name) {}
+        name(name),
+        version(version) {}
 
     bool MqttBridge::setup() {
         this->controller.setOnRegisterChangeCallback([this](const Register* reg) {
@@ -152,6 +154,21 @@ namespace FujitsuAC {
         p += "}";
 
         snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_ip/config", this->uniqueId.c_str());
+        this->mqttClient.publish(topic, p.c_str(), true);
+
+        p = "{";
+        p += "\"name\": \"version\",";
+        p += "\"icon\": \"mdi:git\",";
+        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"payload_available\": \"online\",";
+        p += "\"payload_not_available\": \"offline\",";
+        p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/version\",";
+        p += "\"entity_category\": \"diagnostic\",";
+        p += "\"unique_id\": \"" + this->uniqueId + "_version\",";
+        p += this->deviceConfig;
+        p += "}";
+
+        snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_version/config", this->uniqueId.c_str());
         this->mqttClient.publish(topic, p.c_str(), true);
 
         p = "{";
@@ -443,6 +460,9 @@ namespace FujitsuAC {
 
         snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "ip");
         this->mqttClient.publish(topic, WiFi.localIP().toString().c_str(), true);
+
+        snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "version");
+        this->mqttClient.publish(topic, this->version.c_str(), true);
 
         snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "reset_reason");
         this->mqttClient.publish(topic, this->getResetReason(), true);
