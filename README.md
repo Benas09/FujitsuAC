@@ -20,7 +20,10 @@ Tested with:
 * ASYG09KMTB
 * ASYG09KMCC
 * ASYG12KGTB
+
+USB type connector (UTY-TFSXF3)
 * ASTG18KMTC
+* ASTG09KMTC
 
 ![](/images/homeassistant.png)
 
