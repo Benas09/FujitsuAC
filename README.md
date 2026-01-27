@@ -1,6 +1,7 @@
 # FujitsuAC
 
 If you want to support this project, you can buy ready to use dongle. Write me an email: benas.rag@gmail.com
+
 ![](/images/dongle1.jpg)
 ![](/images/dongle2.jpg)
 
