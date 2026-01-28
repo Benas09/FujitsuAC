@@ -13,6 +13,7 @@ Using this library you can control your Fujitsu AC through:
   * ASYG09KMTB
   * ASYG09KMCC
   * ASYG12KGTB
+  * ASYG09KGTB
   
 * USB-type connector dedicated to UTY-TFSXF3:
   * Tested with:
