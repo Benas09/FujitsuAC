@@ -28,7 +28,17 @@ Contact: benas.rag@gmail.com
 ![](/images/dongle1.jpg)
 ![](/images/dongle2.jpg)
 
-Or you can build it yourself - instructions below :)
+Or you can build it yourself - you will find instructions below :)
+
+# Screenshots
+#### HomeAssistant Integration (MQTT Autodiscovery)
+![](/images/ha1.png)
+![](/images/ha2.png)
+![](/images/ha3.png)
+
+#### Credentials page
+*This page is available at 192.168.1.1 when connected to the access point created by the dongle, when no config saved yet, or impossible to connect to WiFi*<br/>
+![](/images/web.png)
 
 # Building the module
 
@@ -95,11 +105,7 @@ USB Pinout from top to bottom <br/>
 5. Dongle will reboot and connect to your wifi network.
 6. If everything is ok, new AC device should appear in HomeAssistant MQTT integration
 
-# Pictures
-#### Credentials interface
-![](/images/web.png)
-
-#### DIY Module (Logic level shifter is not included here yet)
+# DIY Module (Logic level shifter is not included here yet)
 ![](/images/board_front.jpg)
 ![](/images/board_back.jpg)
 ![](/images/board_case.jpg)
