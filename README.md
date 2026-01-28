@@ -43,7 +43,9 @@ Or you can build it yourself - you will find instructions below :)
 # Building the module
 
 ### Required parts
-* DC/DC converter 12 -> 5 V (https://www.aliexpress.com/item/1005008257960729.html)
+* DC/DC converter 12 -> 5 V<br/>
+*Choose 5V version, also ensure you get right one. in case of bigger voltage, you will pass too high voltage to AC UART and risk to damage it*<br/>
+(https://www.aliexpress.com/item/1005008257960729.html)
 * ESP32 30 pin (https://www.aliexpress.com/item/1005008261897277.html)
 * Connector (4P, 10cm/20cm) (https://www.aliexpress.com/item/1005006294406922.html)
 * Board (4x6, needs to be trimmed a little bit) (https://www.aliexpress.com/item/1005007024264426.html)
