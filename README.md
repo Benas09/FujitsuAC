@@ -44,7 +44,7 @@ Or you can build it yourself - instructions below :)
 
 **!!! IMPORTANT !!!**
 
-**Do not connect anything from air conditioner external device, like your computer. If you touch AC GND with, lets say laptop GND, it will fry your laptop USB port and/or AC mainboard fuse.**
+**Do not connect anything from air conditioner to external device, like your computer. If you touch AC GND with, lets say laptop GND, it will fry your laptop USB port and/or AC mainboard fuse.**
 AC pins are not galvanically isolated and these voltages are not relative to earth GND.
 
 #### JST-type wiring
