@@ -88,14 +88,17 @@ USB Pinout from top to bottom <br/>
 ![](/images/usb_plug.png)
 <br/>
 
-#### Uploading the code
+#### Uploading the code first time
 1. Download Arduino IDE (I used 2.3)
 2. File -> Preferences -> Additional boards manager URLs: http://arduino.esp8266.com/stable/package_esp8266com_index.json
 3. Download required libraries:
    * this library - FujitsuAC (Benas09)
    * PubSubClient 2.8 (Nick O'Leary)
 4. Open Arduino IDE -> File -> Examples -> FujitsuAC -> Controller
-5. Select your ESP32 board and upload code (when uploading from MAC, you have to set upload speed to lowest - 460800, otherwise you will get an error while uploading)
+5. Select your ESP32 board:
+   * Choose your board type Tools -> Board -> esp32 -> ESP32 Dev module
+   * Choose your port Tools -> Port -> /dev/ttyUSB0 (or similar)
+   * Sketch -> Upload using programmer (when uploading from MAC, you have to set upload speed to lowest - 460800, otherwise you will get an error while uploading)
 
 *Additional button can be used for credentials reset functionality - uncomment RESET_BUTTON and set to corresponding pin. When you press this button (pull corresponding pin to GND) - controller deletes given credentials, reboots and goes to point*
 
@@ -106,6 +109,14 @@ USB Pinout from top to bottom <br/>
 4. Fill in WiFi, MQTT credentials, name your device and click Submit. (Device password will be required for OTA updates)
 5. Dongle will reboot and connect to your wifi network.
 6. If everything is ok, new AC device should appear in HomeAssistant MQTT integration
+
+#### OTA Update
+1. Open Arduino IDE
+2. File -> Examples -> FujitsuAC -> Controller
+3. Select your ESP32 board:
+   * Choose your board type Tools -> Board -> esp32 -> ESP32 Dev module
+   * Choose your port Tools -> Port -> Network ports -> "YourDongleName at your-dongle-ip" (disappears time by time, so wait or reload Arduino IDE to apear again)
+   * Sketch -> Upload
 
 # DIY Module (Logic level shifter is not included here yet)
 ![](/images/board_front.jpg)
