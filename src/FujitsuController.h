@@ -38,12 +38,14 @@ namespace FujitsuAC {
         void setHumanSensor(Enums::HumanSensor humanSensor);
         void setTemp(const char *temp);
 
+        bool isPoweredOn();
         bool isHorizontalSwingSupported();
         bool isHumanSensorSupported();
 
         void setOnRegisterChangeCallback(std::function<void(const Register* reg)> onRegisterChangeCallback);
         void setDebugCallback(std::function<void(const char* name, const char* message)> debugCallback);
         const Register* getAllRegisters(size_t &outSize) const;
+        Register* getRegister(Address address);
 
       private:
         std::function<void(const Register *reg)> onRegisterChangeCallback;

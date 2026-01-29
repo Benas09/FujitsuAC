@@ -40,6 +40,10 @@ namespace FujitsuAC {
         return this->registryTable.getAllRegisters(outSize);
     }
 
+    Register* FujitsuController::getRegister(Address address) {
+        return this->registryTable.getRegister(address);
+    }
+
     void FujitsuController::sendRequest() {
         if (this->terminated) {
             return;
@@ -354,6 +358,12 @@ namespace FujitsuAC {
                 }
             }
         }
+    }
+
+    bool FujitsuController::isPoweredOn() {
+        Register* reg = this->registryTable.getRegister(Address::Power);
+        
+        return static_cast<uint16_t>(Enums::Power::On) == reg->value;
     }
 
     bool FujitsuController::isMinimumHeatEnabled() {

@@ -37,6 +37,8 @@ namespace FujitsuAC {
             String deviceConfig;
             uint32_t lastTempReportMillis = -180000;
             uint32_t lastDiagnosticReportMillis = -30000;
+            
+            Enums::Mode poweringToMode = Enums::Mode::None;
 
             void createDeviceConfig();
             void registerDiagnosticEntities();
@@ -50,7 +52,7 @@ namespace FujitsuAC {
             
             static const char* getResetReason();
             static const char* addressToString(Address address);
-            static const char* valueToString(const Register *reg);
+            const char* valueToString(const Register *reg);
 
             const Enums::Power stringToEnum(Enums::Power def, const char *value);
             const Enums::MinimumHeat stringToEnum(Enums::MinimumHeat def, const char *value);

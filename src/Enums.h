@@ -21,6 +21,8 @@ namespace FujitsuAC {
             Dry = 0x0002,
             Fan = 0x0003,
             Heat = 0x0004,
+
+            None = 0x0005, //internal
           //    MinimumHeat = 0x0001 adresas 17 1/
         };
 

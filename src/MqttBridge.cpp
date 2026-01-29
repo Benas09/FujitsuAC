@@ -92,6 +92,12 @@ namespace FujitsuAC {
     bool MqttBridge::loop() {
         this->sendDiagnosticData();
 
+        if (this->poweringToMode != Enums::Mode::None && this->controller.isPoweredOn()) {
+            this->controller.setMode(this->poweringToMode);
+
+            this->poweringToMode = Enums::Mode::None;
+        }
+
         return true;
     }
 
@@ -231,7 +237,7 @@ namespace FujitsuAC {
         p += "\"min_temp\": 18,";
         p += "\"max_temp\": 30,";
         p += "\"temp_step\": 0.5,";
-        p += "\"modes\": [\"auto\", \"cool\", \"dry\", \"fan_only\", \"heat\"],";
+        p += "\"modes\": [\"off\", \"auto\", \"cool\", \"dry\", \"fan_only\", \"heat\"],";
         p += "\"fan_modes\": [\"auto\", \"quiet\", \"low\", \"medium\", \"high\"],";
         p += this->deviceConfig;
         p += "}";
@@ -351,6 +357,18 @@ namespace FujitsuAC {
         }
 
         if (0 == strcmp(property, this->addressToString(Address::Mode))) {
+            if (0 == strcmp(payload, "off")) {
+                this->controller.setPower(Enums::Power::Off);
+            }
+
+            if (!this->controller.isPoweredOn()) {
+                this->controller.setPower(Enums::Power::On);
+
+                this->poweringToMode = this->stringToEnum(Enums::Mode::Auto, payload);
+
+                return;
+            }
+
             this->controller.setMode(this->stringToEnum(Enums::Mode::Auto, payload));
 
             return;
@@ -450,6 +468,12 @@ namespace FujitsuAC {
             this->registerSwitch(Address::HorizontalSwing);
             this->registerSwitch(Address::HorizontalAirflow);
         }
+
+        if (Address::Power == reg->address) {
+            Register* modeRegister = this->controller.getRegister(Address::Mode);
+
+            this->onRegisterChange(modeRegister);
+        }
     }
 
     void MqttBridge::sendInitialDiagnosticData() {
@@ -548,6 +572,10 @@ namespace FujitsuAC {
 
                 break;
             case Address::Mode:
+                if (!this->controller.isPoweredOn()) {
+                    return "off";
+                }
+
                 switch (static_cast<Enums::Mode>(reg->value)) {
                     case Enums::Mode::Auto: return "auto";
                     case Enums::Mode::Cool: return "cool";

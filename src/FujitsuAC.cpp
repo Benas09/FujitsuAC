@@ -6,7 +6,7 @@
 */
 #include "FujitsuAC.h"
 
-#define VERSION "1.1.0"
+#define VERSION "1.1.1"
 
 namespace FujitsuAC {
 
@@ -50,6 +50,10 @@ namespace FujitsuAC {
             this->handleHttp();
 
             return;
+        }
+
+        if (WiFi.status() != WL_CONNECTED) {
+            ESP.restart();
         }
 
         ArduinoOTA.handle();
