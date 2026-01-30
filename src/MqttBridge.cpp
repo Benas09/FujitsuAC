@@ -359,12 +359,18 @@ namespace FujitsuAC {
         if (0 == strcmp(property, this->addressToString(Address::Mode))) {
             if (0 == strcmp(payload, "off")) {
                 this->controller.setPower(Enums::Power::Off);
+
+                return;
             }
 
             if (!this->controller.isPoweredOn()) {
                 this->controller.setPower(Enums::Power::On);
 
                 this->poweringToMode = this->stringToEnum(Enums::Mode::Auto, payload);
+
+                // Workaround to get shown required mode shown immediately after turn on, instead of waiting real registry update
+                const Register tempModeRegister = {Address::Mode, static_cast<uint16_t>(this->poweringToMode), false};
+                this->publishState(Address::Mode, this->valueToString(&tempModeRegister));
 
                 return;
             }
@@ -435,6 +441,14 @@ namespace FujitsuAC {
         }
     }
 
+    void MqttBridge::publishState(Address address, const char* value)
+    {
+        char topic[64];
+        snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), this->addressToString(address));
+
+        this->mqttClient.publish(topic, value, true);
+    }
+
     void MqttBridge::onRegisterChange(const Register *reg) {
         if (reg->address == Address::ActualTemp) {
             uint32_t now = millis();
@@ -451,14 +465,14 @@ namespace FujitsuAC {
             return;
         }
 
-        char topic[64];
-        snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), this->addressToString(reg->address));
+        this->publishState(reg->address, this->valueToString(reg));
 
-        this->mqttClient.publish(
-            topic, 
-            this->valueToString(reg), 
-            true
-        );
+        if (Address::Power == reg->address && static_cast<uint16_t>(Enums::Power::Off) == reg->value) {
+            // Workaround to get shown required mode shown immediately after turn off
+            Register* modeRegister = this->controller.getRegister(Address::Mode);
+
+            this->publishState(modeRegister->address, this->valueToString(modeRegister));
+        }
 
         if (Address::HumanSensorSupported == reg->address && this->controller.isHumanSensorSupported()) {
             this->registerSwitch(Address::HumanSensor);
@@ -467,12 +481,6 @@ namespace FujitsuAC {
         if (Address::HorizontalSwingSupported == reg->address && this->controller.isHorizontalSwingSupported()) {
             this->registerSwitch(Address::HorizontalSwing);
             this->registerSwitch(Address::HorizontalAirflow);
-        }
-
-        if (Address::Power == reg->address) {
-            Register* modeRegister = this->controller.getRegister(Address::Mode);
-
-            this->onRegisterChange(modeRegister);
         }
     }
 

@@ -6,7 +6,7 @@
 */
 #include "FujitsuAC.h"
 
-#define VERSION "1.1.3"
+#define VERSION "1.1.4"
 
 namespace FujitsuAC {
 
@@ -261,6 +261,10 @@ namespace FujitsuAC {
 
     void FujitsuAC::connectToMqtt() {
         while (!mqttClient.connected()) {
+            if (WiFi.status() != WL_CONNECTED) {
+                ESP.restart();
+            }
+
             if (ledWPin > 0) {
                 ledcWrite(ledWPin, 1023);
             }

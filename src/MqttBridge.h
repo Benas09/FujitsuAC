@@ -37,7 +37,7 @@ namespace FujitsuAC {
             String deviceConfig;
             uint32_t lastTempReportMillis = -180000;
             uint32_t lastDiagnosticReportMillis = -30000;
-            
+
             Enums::Mode poweringToMode = Enums::Mode::None;
 
             void createDeviceConfig();
@@ -47,6 +47,7 @@ namespace FujitsuAC {
             void sendInitialDiagnosticData();
             void sendDiagnosticData();
             void onRegisterChange(const Register *reg);
+            void publishState(Address address, const char* value);
             void onMqtt(char* topic, char* payload);
             void debug(const char* name, const char* message);
             
