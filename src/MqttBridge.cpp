@@ -458,16 +458,13 @@ namespace FujitsuAC {
         this->publishState(reg->address, this->valueToString(reg));
 
         if (Address::Power == reg->address) {
-            // Workaround to get shown required mode shown immediately after turn off
-            if (static_cast<uint16_t>(Enums::Power::Off) == reg->value) {
-                Register* modeRegister = this->controller.getRegister(Address::Mode);
-
-                this->publishState(modeRegister->address, this->valueToString(modeRegister));
-            }
-
             if (static_cast<uint16_t>(Enums::Power::On) == reg->value) {
                 this->isPoweringOn = false;
             }
+
+            // Workaround to get shown required mode shown immediately after turn off
+            Register* modeRegister = this->controller.getRegister(Address::Mode);
+            this->publishState(modeRegister->address, this->valueToString(modeRegister));
         }
 
         if (Address::HumanSensorSupported == reg->address && this->controller.isHumanSensorSupported()) {
