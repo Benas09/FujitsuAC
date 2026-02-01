@@ -38,7 +38,7 @@ namespace FujitsuAC {
             uint32_t lastTempReportMillis = -180000;
             uint32_t lastDiagnosticReportMillis = -30000;
 
-            Enums::Mode poweringToMode = Enums::Mode::None;
+            bool isPoweringOn = false;
 
             void createDeviceConfig();
             void registerDiagnosticEntities();

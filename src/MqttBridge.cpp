@@ -92,10 +92,8 @@ namespace FujitsuAC {
     bool MqttBridge::loop() {
         this->sendDiagnosticData();
 
-        if (this->poweringToMode != Enums::Mode::None && this->controller.isPoweredOn()) {
-            this->controller.setMode(this->poweringToMode);
-
-            this->poweringToMode = Enums::Mode::None;
+        if (this->isPoweringOn && !this->controller.isPoweredOn()) {
+            this->controller.setPower(Enums::Power::On);
         }
 
         return true;
@@ -363,19 +361,11 @@ namespace FujitsuAC {
                 return;
             }
 
-            if (!this->controller.isPoweredOn()) {
-                this->controller.setPower(Enums::Power::On);
-
-                this->poweringToMode = this->stringToEnum(Enums::Mode::Auto, payload);
-
-                // Workaround to get shown required mode shown immediately after turn on, instead of waiting real registry update
-                const Register tempModeRegister = {Address::Mode, static_cast<uint16_t>(this->poweringToMode), false};
-                this->publishState(Address::Mode, this->valueToString(&tempModeRegister));
-
-                return;
-            }
-
             this->controller.setMode(this->stringToEnum(Enums::Mode::Auto, payload));
+
+            if (!this->controller.isPoweredOn()) {
+                this->isPoweringOn = true;
+            }
 
             return;
         }
@@ -467,11 +457,17 @@ namespace FujitsuAC {
 
         this->publishState(reg->address, this->valueToString(reg));
 
-        if (Address::Power == reg->address && static_cast<uint16_t>(Enums::Power::Off) == reg->value) {
+        if (Address::Power == reg->address) {
             // Workaround to get shown required mode shown immediately after turn off
-            Register* modeRegister = this->controller.getRegister(Address::Mode);
+            if (static_cast<uint16_t>(Enums::Power::Off) == reg->value) {
+                Register* modeRegister = this->controller.getRegister(Address::Mode);
 
-            this->publishState(modeRegister->address, this->valueToString(modeRegister));
+                this->publishState(modeRegister->address, this->valueToString(modeRegister));
+            }
+
+            if (static_cast<uint16_t>(Enums::Power::On) == reg->value) {
+                this->isPoweringOn = false;
+            }
         }
 
         if (Address::HumanSensorSupported == reg->address && this->controller.isHumanSensorSupported()) {
@@ -580,7 +576,7 @@ namespace FujitsuAC {
 
                 break;
             case Address::Mode:
-                if (!this->controller.isPoweredOn()) {
+                if (!this->isPoweringOn && !this->controller.isPoweredOn()) {
                     return "off";
                 }
 
