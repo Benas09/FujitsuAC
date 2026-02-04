@@ -6,7 +6,7 @@
 */
 #include "FujitsuAC.h"
 
-#define VERSION "1.1.5"
+#define VERSION "1.1.6"
 
 namespace FujitsuAC {
 
@@ -62,6 +62,7 @@ namespace FujitsuAC {
 
         this->mqttClient.loop();
         this->bridge->loop();
+        this->networkUpdater->loop();
         this->controller.loop();
     }
 
@@ -192,7 +193,7 @@ namespace FujitsuAC {
         WiFi.softAPConfig(apIP, apGateway, apSubnet);
 
         char accessPointName[64];
-        snprintf(accessPointName, sizeof(accessPointName), "FujitsuAC-%s", uniqueId.c_str());
+        snprintf(accessPointName, sizeof(accessPointName), "fAir-%s", uniqueId.c_str());
 
         if (!WiFi.softAP(accessPointName)) {
             ESP.restart();
@@ -287,6 +288,8 @@ namespace FujitsuAC {
 
                 if (nullptr == bridge) {
                     bridge = new MqttBridge(mqttClient, controller, uniqueId.c_str(), deviceName.c_str(), VERSION);
+                    networkUpdater = new NetworkUpdater(*bridge);
+                    networkUpdater->setup();
                 }
 
                 bridge->setup();
@@ -300,6 +303,146 @@ namespace FujitsuAC {
         NetworkClient client = this->server.accept();
 
         if (client) {
+            const char *contentStart = R"rawliteral(
+                <html>
+                    <head>
+                        <title>fAir</title>
+
+                        <style>
+                            * {
+                                box-sizing: border-box;
+                                font-family: Arial, Helvetica, sans-serif;
+                            }
+
+                            body {
+                                background: #f4f6f8;
+                                margin: 0;
+                                padding: 20px;
+                                color: #333;
+                            }
+
+                            h1 {
+                                text-align: center;
+                                margin-bottom: 20px;
+                                font-size: 24px;
+                            }
+
+                            h3 {
+                                text-align: center;
+                                margin-bottom: 20px;
+                                font-size: 18px;
+                            }
+
+                            form {
+                                max-width: 420px;
+                                margin: 0 auto;
+                                background: #ffffff;
+                                padding: 20px;
+                                border-radius: 6px;
+                                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                            }
+
+                            label {
+                                display: block;
+                                font-weight: 600;
+                                margin-bottom: 4px;
+                                font-size: 14px;
+                            }
+
+                            input[type="text"] {
+                                width: 100%;
+                                padding: 8px 10px;
+                                margin-bottom: 14px;
+                                border: 1px solid #ccc;
+                                border-radius: 4px;
+                                font-size: 14px;
+                            }
+
+                            input[type="text"]:focus {
+                                outline: none;
+                                border-color: #4a90e2;
+                            }
+
+                            input[type="submit"] {
+                                width: 100%;
+                                padding: 10px;
+                                background: #4a90e2;
+                                border: none;
+                                border-radius: 4px;
+                                color: #fff;
+                                font-size: 15px;
+                                font-weight: 600;
+                                cursor: pointer;
+                            }
+
+                            input[type="submit"]:hover {
+                                background: #3b7dc4;
+                            }
+
+                            span {
+                                display: block;
+                                text-align: center;
+                                margin-top: 16px;
+                                font-size: 13px;
+                            }
+
+                            a {
+                                color: #4a90e2;
+                                text-decoration: none;
+                            }
+
+                            a:hover {
+                                text-decoration: underline;
+                            }
+                        </style>
+
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    </head>
+                    <body>
+                        <h1>fAir</h1>
+            )rawliteral";
+
+            const char *formBody = R"rawliteral(
+                <form name="config" method="post">
+                    <label>Wifi SSID</label>
+                    <input type="text" name="wifi-ssid" required>
+
+                    <label>Wifi password</label>
+                    <input type="text" name="wifi-pw" required>
+
+                    <label>MQTT Server IP</label>
+                    <input type="text" name="mqtt-ip" value="192.168.1.100" required>
+
+                    <label>MQTT Server port</label>
+                    <input type="text" name="mqtt-port" value="1883" required>
+
+                    <label>MQTT User</label>
+                    <input type="text" name="mqtt-user">
+
+                    <label>MQTT Password</label>
+                    <input type="text" name="mqtt-pw">
+
+                    <label>Device name</label>
+                    <input type="text" name="device-name" value="LivingRoomAC" required>
+
+                    <label>Device password</label>
+                    <input type="text" name="ota-pw" value="living_room_ac" required>
+
+                    <input type="submit" value="Submit">
+                </form>
+            )rawliteral";
+
+            const char *successBody = R"rawliteral(
+                <h3>Config saved successfuly!</h3>
+            )rawliteral";
+
+            const char *contentEnd = R"rawliteral(
+                        <br/>
+                        <span><a href="https://github.com/Benas09/FujitsuAC">fAir</a></span>
+                    </body>
+                </html>
+            )rawliteral";
+
             if (client.connected()) {
                 String firstLine = client.readStringUntil('\n');
                 
@@ -316,7 +459,11 @@ namespace FujitsuAC {
                             client.println("HTTP/1.1 200 OK");
                             client.println("Content-type:text/html");
                             client.println();
-                            client.println("Saved");
+                            
+                            client.print(contentStart);
+                            client.print(successBody);
+                            client.print(contentEnd);
+
                             client.println();
 
                             client.flush();
@@ -332,133 +479,10 @@ namespace FujitsuAC {
                 client.println("Content-type:text/html");
                 client.println();
 
-                const char *content = R"rawliteral(
-                    <html
-                        <head>
-                            <title>FujitsuAC Config</title>
+                client.print(contentStart);
+                client.print(formBody);
+                client.print(contentEnd);
 
-                            <style>
-                                * {
-                                    box-sizing: border-box;
-                                    font-family: Arial, Helvetica, sans-serif;
-                                }
-
-                                body {
-                                    background: #f4f6f8;
-                                    margin: 0;
-                                    padding: 20px;
-                                    color: #333;
-                                }
-
-                                h1 {
-                                    text-align: center;
-                                    margin-bottom: 20px;
-                                    font-size: 24px;
-                                }
-
-                                form {
-                                    max-width: 420px;
-                                    margin: 0 auto;
-                                    background: #ffffff;
-                                    padding: 20px;
-                                    border-radius: 6px;
-                                    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-                                }
-
-                                label {
-                                    display: block;
-                                    font-weight: 600;
-                                    margin-bottom: 4px;
-                                    font-size: 14px;
-                                }
-
-                                input[type="text"] {
-                                    width: 100%;
-                                    padding: 8px 10px;
-                                    margin-bottom: 14px;
-                                    border: 1px solid #ccc;
-                                    border-radius: 4px;
-                                    font-size: 14px;
-                                }
-
-                                input[type="text"]:focus {
-                                    outline: none;
-                                    border-color: #4a90e2;
-                                }
-
-                                input[type="submit"] {
-                                    width: 100%;
-                                    padding: 10px;
-                                    background: #4a90e2;
-                                    border: none;
-                                    border-radius: 4px;
-                                    color: #fff;
-                                    font-size: 15px;
-                                    font-weight: 600;
-                                    cursor: pointer;
-                                }
-
-                                input[type="submit"]:hover {
-                                    background: #3b7dc4;
-                                }
-
-                                span {
-                                    display: block;
-                                    text-align: center;
-                                    margin-top: 16px;
-                                    font-size: 13px;
-                                }
-
-                                a {
-                                    color: #4a90e2;
-                                    text-decoration: none;
-                                }
-
-                                a:hover {
-                                    text-decoration: underline;
-                                }
-                            </style>
-
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        </head>
-                        <body>
-                            <h1>FujitsuAC</h1>
-
-                            <form name="config" method="post">
-                                <label>Wifi SSID</label>
-                                <input type="text" name="wifi-ssid" required>
-
-                                <label>Wifi password</label>
-                                <input type="text" name="wifi-pw" required>
-
-                                <label>MQTT Server IP</label>
-                                <input type="text" name="mqtt-ip" value="192.168.1.100" required>
-
-                                <label>MQTT Server port</label>
-                                <input type="text" name="mqtt-port" value="1883" required>
-
-                                <label>MQTT User</label>
-                                <input type="text" name="mqtt-user">
-
-                                <label>MQTT Password</label>
-                                <input type="text" name="mqtt-pw">
-
-                                <label>Device name</label>
-                                <input type="text" name="device-name" value="LivingRoomAC" required>
-
-                                <label>Device password</label>
-                                <input type="text" name="ota-pw" value="living_room_ac" required>
-
-                                <input type="submit" value="Submit">
-                            </form>
-
-                            <br/>
-                            <span><a href="https://github.com/Benas09/FujitsuAC">Fujitsu AC</a></span>
-                        </body>
-                    </html>
-                )rawliteral";
-
-                client.print(content);
                 client.println();
             }
 

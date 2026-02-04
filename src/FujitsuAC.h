@@ -28,6 +28,8 @@
 #include <FujitsuController.h>
 #include <MqttBridge.h>
 
+#include <NetworkUpdater.h>
+
 #pragma once
 
 namespace FujitsuAC {
@@ -45,11 +47,12 @@ namespace FujitsuAC {
 
             Uart uart;
             FujitsuController controller;
-
+            
             WiFiClient espClient;
             PubSubClient mqttClient;
 
             MqttBridge* bridge = nullptr;
+            NetworkUpdater* networkUpdater = nullptr;
 
             String uniqueId;
             String wifiSsid;

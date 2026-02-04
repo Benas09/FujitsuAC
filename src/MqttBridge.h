@@ -26,6 +26,9 @@ namespace FujitsuAC {
             bool setup();
             bool loop();
             void registerSwitch(Address address);
+            void onVersionReceived(const char* version);
+            void debug(const char* name, const char* message);
+            void setOnFirmwareUpdateRequestCallback(std::function<void()> onFirmwareUpdateRequestCallback);
 
         private:
             PubSubClient &mqttClient;
@@ -40,6 +43,8 @@ namespace FujitsuAC {
 
             bool isPoweringOn = false;
 
+            std::function<void()> onFirmwareUpdateRequestCallback;
+
             void createDeviceConfig();
             void registerDiagnosticEntities();
             void registerBaseEntities();
@@ -49,7 +54,6 @@ namespace FujitsuAC {
             void onRegisterChange(const Register *reg);
             void publishState(Address address, const char* value);
             void onMqtt(char* topic, char* payload);
-            void debug(const char* name, const char* message);
             
             static const char* getResetReason();
             static const char* addressToString(Address address);

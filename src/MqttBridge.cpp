@@ -99,12 +99,16 @@ namespace FujitsuAC {
         return true;
     }
 
+    void MqttBridge::setOnFirmwareUpdateRequestCallback(std::function<void()> onFirmwareUpdateRequestCallback) {
+        this->onFirmwareUpdateRequestCallback = onFirmwareUpdateRequestCallback;
+    }
+
     void MqttBridge::createDeviceConfig() {
         if (0 == this->deviceConfig.length()) {
             this->deviceConfig = "\"device\": {";
             this->deviceConfig += "\"identifiers\": [\"" + this->uniqueId + "\"],";
-            this->deviceConfig += "\"manufacturer\": \"https://github.com/Benas09/FujitsuAC\",";
-            this->deviceConfig += "\"model\": \"Fujitsu AC\",";
+            this->deviceConfig += "\"manufacturer\": \"bepro.lt\",";
+            this->deviceConfig += "\"model\": \"fAir\",";
             this->deviceConfig += "\"name\": \"" + this->name + "\"";
             this->deviceConfig += "}";
         }
@@ -114,6 +118,39 @@ namespace FujitsuAC {
         char topic[128];
 
         String p = "{";
+        p += "\"name\": \"restart\",";
+        p += "\"icon\": \"mdi:restart\",";
+        p += "\"unique_id\": \"" + this->uniqueId + "_restart\",";
+        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"payload_available\": \"online\",";
+        p += "\"payload_not_available\": \"offline\",";
+        p += "\"command_topic\": \"fujitsu/" + this->uniqueId + "/set/restart\",";
+        p += "\"entity_category\": \"diagnostic\",";
+        p += "\"payload_press\": \"restart\",";
+        p += this->deviceConfig;
+        p += "}";
+
+        snprintf(topic, sizeof(topic), "homeassistant/button/%s_%s/config", this->uniqueId.c_str(), "restart");
+        this->mqttClient.publish(topic, p.c_str(), true);
+
+        p = "{";
+        p += "\"name\": \"update_firmware\",";
+        p += "\"icon\": \"mdi:update\",";
+        p += "\"unique_id\": \"" + this->uniqueId + "_update_firmware\",";
+        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"payload_available\": \"online\",";
+        p += "\"payload_not_available\": \"offline\",";
+        p += "\"command_topic\": \"fujitsu/" + this->uniqueId + "/set/update_firmware\",";
+        p += "\"entity_category\": \"diagnostic\",";
+        p += "\"payload_press\": \"update_firmware\",";
+        
+        p += this->deviceConfig;
+        p += "}";
+
+        snprintf(topic, sizeof(topic), "homeassistant/button/%s_%s/config", this->uniqueId.c_str(), "update_firmware");
+        this->mqttClient.publish(topic, p.c_str(), true);
+
+        p = "{";
         p += "\"name\": \"name\",";
         p += "\"icon\": \"mdi:text-recognition\",";
         p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
@@ -176,6 +213,21 @@ namespace FujitsuAC {
         this->mqttClient.publish(topic, p.c_str(), true);
 
         p = "{";
+        p += "\"name\": \"latest_version\",";
+        p += "\"icon\": \"mdi:git\",";
+        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"payload_available\": \"online\",";
+        p += "\"payload_not_available\": \"offline\",";
+        p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/latest_version\",";
+        p += "\"entity_category\": \"diagnostic\",";
+        p += "\"unique_id\": \"" + this->uniqueId + "_latest_version\",";
+        p += this->deviceConfig;
+        p += "}";
+
+        snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_latest_version/config", this->uniqueId.c_str());
+        this->mqttClient.publish(topic, p.c_str(), true);
+
+        p = "{";
         p += "\"name\": \"reset_reason\",";
         p += "\"icon\": \"mdi:restart\",";
         p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
@@ -198,20 +250,6 @@ namespace FujitsuAC {
         char topic[128];
 
         String p = "{";
-        p += "\"name\": \"restart\",";
-        p += "\"unique_id\": \"" + this->uniqueId + "_restart\",";
-        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
-        p += "\"payload_available\": \"online\",";
-        p += "\"payload_not_available\": \"offline\",";
-        p += "\"command_topic\": \"fujitsu/" + this->uniqueId + "/set/restart\",";
-        p += "\"payload_press\": \"restart\",";
-        p += this->deviceConfig;
-        p += "}";
-
-        snprintf(topic, sizeof(topic), "homeassistant/button/%s_restart/config", this->uniqueId.c_str());
-        this->mqttClient.publish(topic, p.c_str(), true);
-
-        p = "{";
         p += "\"name\": \"climate\",";
         p += "\"unique_id\": \"" + this->uniqueId + "_climate\",";
         p += "\"icon\": \"mdi:air-conditioner\",";
@@ -338,6 +376,14 @@ namespace FujitsuAC {
 
         if (0 == strcmp(property, "restart")) {
             ESP.restart();
+
+            return;
+        }
+
+        if (0 == strcmp(property, "update_firmware")) {
+            if (this->onFirmwareUpdateRequestCallback) {
+                this->onFirmwareUpdateRequestCallback();
+            }
 
             return;
         }
@@ -856,4 +902,10 @@ namespace FujitsuAC {
         this->mqttClient.publish(topic, message);
     }
 
+    void MqttBridge::onVersionReceived(const char* version) {
+        char topic[64];
+        snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "latest_version");
+
+        this->mqttClient.publish(topic, version, true);
+    }
 }
