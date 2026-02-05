@@ -118,6 +118,14 @@ USB Pinout from top to bottom <br/>
    * Choose your port Tools -> Port -> Network ports -> "YourDongleName at your-dongle-ip" (disappears time by time, so wait or reload Arduino IDE to apear again)
    * Sketch -> Upload
 
+#### Network update
+Since 1.1.6 one-click network update is available. The dongle checks for new version every 24 hours (and immediately after reboot). To update, just click "update firmware" button in HA and wait.
+
+Chip list for prebuilt firmwares:
+* ESP32
+* ESP32-S3
+* others will ignore update request
+
 # DIY Module (Logic level shifter is not included here yet)
 ![](/images/board_front.jpg)
 ![](/images/board_back.jpg)
