@@ -6,7 +6,7 @@
 */
 #include "FujitsuAC.h"
 
-#define VERSION "1.1.6"
+#define VERSION "1.1.7"
 
 namespace FujitsuAC {
 

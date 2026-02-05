@@ -6,14 +6,13 @@
 */
 
 //Version check
+#include "esp_chip_info.h"
 #include <lwip/apps/sntp.h>
 #include <WiFiClientSecure.h>
 
 //OTA
 #include <HTTPClient.h>
 #include <HTTPUpdate.h>
-
-#include "esp_system.h"
 
 #include <MqttBridge.h>
 

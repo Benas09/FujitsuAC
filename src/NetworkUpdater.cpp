@@ -122,9 +122,25 @@ namespace FujitsuAC {
 		networkClient.setCACert(rootCACertificate);
 		networkClient.setTimeout(12000);
 
-		String chip = ESP.getChipModel();
-		chip.toLowerCase();
-		chip.replace("-", "");
+		esp_chip_info_t info;
+		esp_chip_info(&info);
+
+		String chip;
+
+		switch (info.model) {
+			case CHIP_ESP32:
+				chip = "esp32";   
+				break;
+			case CHIP_ESP32S3:
+				chip = "esp32s3";
+				break;
+			default:
+				chip = ESP.getChipModel();
+				chip.toLowerCase();
+				chip.replace("-", "");
+
+				break;
+		}
 
 		snprintf(msg, sizeof(msg), "NetworkUpdater: %s", chip.c_str());
 		this->bridge.debug("info", msg);
