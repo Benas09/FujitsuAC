@@ -25,8 +25,8 @@ Using this library you can control your Fujitsu AC through:
 If you want to support this project, you can buy **ready-to-use** dongle.
 Contact: benas.rag@gmail.com
 
+![](/images/dongle-usb.jpg)
 ![](/images/dongle1.jpg)
-![](/images/dongle2.jpg)
 
 Or you can build it yourself - you will find instructions below :)
 
