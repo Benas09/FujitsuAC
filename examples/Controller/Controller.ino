@@ -9,16 +9,15 @@ Project home: https://github.com/Benas09/FujitsuAC
 #define RXD2 16
 #define TXD2 17
 
-/*
-Uncomment any of these if you connected required hardware.
-LED_R: 3V3 -> LED POSITIVE | LED NEGATIVE -> RESISTOR -> LED_R Pin (Used for WiFi indication)
-LED_W: 3V3 -> LED POSITIVE | LED NEGATIVE -> RESISTOR -> LED_W Pin (Used for Mqtt indication)
-RESET_BUTTON: When this pin is shorted to GND via push button, credentials are cleared and dongle reboots
-*/
-
-// #define LED_W 6
-// #define LED_R 7
-// #define RESET_BUTTON 20
+#if CONFIG_IDF_TARGET_ESP32S3
+    #define LED_W 6
+    #define LED_R 7
+    #define RESET_BUTTON 20
+#elif CONFIG_IDF_TARGET_ESP32
+    #define LED_W 18
+    #define LED_R 19
+    #define RESET_BUTTON 21
+#endif
 
 #ifndef LED_W
     #define LED_W -1
