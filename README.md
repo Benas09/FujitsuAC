@@ -43,13 +43,17 @@ Or you can build it yourself - you will find instructions below :)
 # Building the module
 
 ### Required parts
-* DC/DC converter 12 -> 5 V<br/>
+* DC/DC converter 12 -> 5 V (~2.65 € for bundle of 5pcs)<br/>
 *Choose 5V version, also ensure you get right one. in case of bigger voltage, you will pass too high voltage to AC UART and risk to damage it*<br/>
 (https://www.aliexpress.com/item/1005008257960729.html)
-* ESP32 30 pin (https://www.aliexpress.com/item/1005008261897277.html)
-* Connector (4P, 10cm/20cm) (https://www.aliexpress.com/item/1005006294406922.html)
-* Board (4x6, needs to be trimmed a little bit) (https://www.aliexpress.com/item/1005007024264426.html)
-* Logic level converter (https://www.aliexpress.com/item/1005006968679749.html)
+* ESP32 30 pin (~4.40 €)
+* Connector (4P, 10cm/20cm) (~3.00 € for bundle of 5pcs, https://www.aliexpress.com/item/1005006294406922.html)
+* Board (4x6, needs to be trimmed a little bit) (~2.00 € for bundle of 5pcs, https://www.aliexpress.com/item/1005007024264426.html)
+* Logic level converter (~2.50 € for bundle of 5pcs, https://www.aliexpress.com/item/1005006968679749.html)
+
+* Total parts cost for a dongle:
+  * ~ 15.00 € (if you build one)
+  * ~ 6.50 € each (if you build 5)
 
   You can also crimp your own plug (Connector PAP-04V-S, pins to crimp: SPHD-002T-P0.5) <- very time consuming if you do not have right tools for it.
 
