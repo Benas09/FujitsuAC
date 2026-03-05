@@ -6,7 +6,7 @@
 */
 #include "FujitsuAC.h"
 
-#define VERSION "1.1.8"
+#define VERSION "1.1.9"
 
 namespace FujitsuAC {
 
@@ -289,10 +289,10 @@ namespace FujitsuAC {
                 if (nullptr == bridge) {
                     bridge = new MqttBridge(mqttClient, controller, uniqueId.c_str(), deviceName.c_str(), VERSION);
                     networkUpdater = new NetworkUpdater(*bridge);
-                    networkUpdater->setup();
                 }
 
                 bridge->setup();
+                networkUpdater->setup();
             } else {
                 delay(5000);
             }

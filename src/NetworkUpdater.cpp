@@ -25,6 +25,8 @@ namespace FujitsuAC {
 	}
 
 	void NetworkUpdater::setClock() {
+		this->bridge.debug("info", "NetworkUpdater: Updating clock");
+
 		uint32_t startMillis = millis();
 
         configTime(0, 0, "pool.ntp.org");
@@ -35,13 +37,17 @@ namespace FujitsuAC {
 			if ((millis() - startMillis) >= 10000) {
 				sntp_stop();
 
+				this->bridge.debug("info", "NetworkUpdater: Terminate updating clock");
+
 		        return;
 		    }
 
+		    this->bridge.debug("info", "NetworkUpdater: Waiting for time");
 			delay(500);
 			nowSecs = time(nullptr);
 		}
 
+		this->bridge.debug("info", "NetworkUpdater: Clock updated");
 		this->versionCheckerState = VersionCheckerState::TIME_OBTAINED;
 	}
 
@@ -56,6 +62,8 @@ namespace FujitsuAC {
 		}
 
 		if (VersionCheckerState::TIME_OBTAINED == this->versionCheckerState) {
+			this->bridge.debug("info", "NetworkUpdater: Check last version start");
+
 			this->lastVersionCheckInitiatedAtMillis = millis();
 
 			client = new WiFiClientSecure();
@@ -65,6 +73,8 @@ namespace FujitsuAC {
 				client->stop();
 			    client = nullptr;
 				
+				this->bridge.debug("info", "NetworkUpdater: Check last version ERR1");
+
 				this->versionCheckerState = VersionCheckerState::ERROR;
 
 			    return;
@@ -77,11 +87,13 @@ namespace FujitsuAC {
 			);
 
 			if (client->connected()) {
+				this->bridge.debug("info", "NetworkUpdater: Check last version connected");
 				this->versionCheckerState = VersionCheckerState::HTTPS_DOWNLOADING;
 			} else {
 				client->stop();
 			    client = nullptr;
 
+			    this->bridge.debug("info", "NetworkUpdater: Check last version ERR2");
 				this->versionCheckerState = VersionCheckerState::ERROR;
 			}
 
@@ -107,6 +119,8 @@ namespace FujitsuAC {
 
 			client->stop();
 		    client = nullptr;
+
+		    this->bridge.debug("info", "NetworkUpdater: Check last version ERR3");
 			this->versionCheckerState = VersionCheckerState::ERROR;
 
 			return;
