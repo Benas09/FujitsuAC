@@ -68,6 +68,8 @@ namespace FujitsuAC {
             int ledRPin;
             int resetButtonPin;
 
+            uint32_t fallbackApCreatedAt = 0;
+
             void generateUniqueId();
             void initIO();
 
@@ -79,6 +81,7 @@ namespace FujitsuAC {
 
             void handleResetButton();
 
+            bool isAPState();
             bool createAP();
             void handleHttp();
 

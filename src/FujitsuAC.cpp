@@ -6,7 +6,9 @@
 */
 #include "FujitsuAC.h"
 
-#define VERSION "1.1.9"
+#define VERSION "1.1.10"
+
+RTC_NOINIT_ATTR bool isFallbackAp;
 
 namespace FujitsuAC {
 
@@ -46,8 +48,14 @@ namespace FujitsuAC {
     void FujitsuAC::loop() {
         this->handleResetButton();
 
-        if (wifiSsid == "") {
+        if (this->isAPState()) {
             this->handleHttp();
+
+            if (isFallbackAp && millis() - fallbackApCreatedAt > 300000) {
+                isFallbackAp = false;
+
+                ESP.restart();
+            }
 
             return;
         }
@@ -91,6 +99,12 @@ namespace FujitsuAC {
     }
 
     void FujitsuAC::loadConfig() {
+        esp_reset_reason_t reason = esp_reset_reason();
+        
+        if (reason == ESP_RST_POWERON) {
+            isFallbackAp = false;
+        }
+
         preferences.begin("fujitsu_ac", false);
 
         wifiSsid = preferences.getString("wifi-ssid", "");
@@ -118,6 +132,8 @@ namespace FujitsuAC {
         preferences.putString("ota-pw", "");
 
         preferences.end();
+
+        isFallbackAp = false;
 
         delay(1000);
         ESP.restart();
@@ -173,6 +189,8 @@ namespace FujitsuAC {
         preferences.putString("ota-pw", getConfigValue(content, "ota-pw"));
 
         preferences.end();
+
+        isFallbackAp = false;
     }
 
     void FujitsuAC::handleResetButton() {
@@ -181,8 +199,12 @@ namespace FujitsuAC {
         }
     }
 
+    bool FujitsuAC::isAPState() {
+        return isFallbackAp || wifiSsid == "";
+    }
+
     bool FujitsuAC::createAP() {
-        if (wifiSsid != "") {
+        if (!this->isAPState()) {
             return false;
         }
 
@@ -200,6 +222,10 @@ namespace FujitsuAC {
         }
 
         this->server.begin();
+
+        if (isFallbackAp) {
+            fallbackApCreatedAt = millis();
+        }
 
         return true;
     }
@@ -254,8 +280,10 @@ namespace FujitsuAC {
                 delay(50);
             }
 
-            if (millis() - start > 600000) {
-                this->clearConfig();
+            if (millis() - start > 60000) {
+                isFallbackAp = true;
+
+                ESP.restart();
             }
         }
     }
@@ -468,6 +496,7 @@ namespace FujitsuAC {
 
                             client.flush();
                             client.stop();
+
                             delay(200);
 
                             ESP.restart();

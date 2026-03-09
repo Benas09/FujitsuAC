@@ -14,6 +14,11 @@ Using this library you can control your Fujitsu AC through:
   * ASYG09KMCC
   * ASYG12KGTB
   * ASYG09KGTB
+
+* 4 pin connector dedicated to UTY-TFSXZ1:
+  * ARXG18KLLAP
+    * not fully tested yet, basic functions like mode change, temp sensors work.
+    * pinout sequence is not confirmed yet, so check if it the same
   
 * USB-type connector dedicated to UTY-TFSXF3:
   * Tested with:
