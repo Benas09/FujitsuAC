@@ -24,6 +24,20 @@ Using this library you can control your Fujitsu AC through:
   * Tested with:
   * ASTG18KMTC
   * ASTG09KMTC
+ 
+Compatible dongles:
+* UTY-TFSXW1 (Global, confirmed)
+* Z series
+  * UTY-TFSXZ1 (confirmed. For: Europe)
+  * UTY-TFSXZ2 (not confirmed yet. For: North America, Australia, New Zealand, Thailand, India, Singapore)
+  * UTY-TFSXZ4 (not confirmed yet. For: China)
+* F series
+  * UTY-TFSXF1 (not confirmed yet. For: North America)
+  * UTY-TFSXF2 (not confirmed yet. For: Europe)
+  * UTY-TFSXF3 (confirmed. For: Oceania)
+* H Series:
+  * UTY-TFSXH4 (not confirmed yet. For: USA, Canada (sold as direct replacement for FGLair UTY-TFSXF1)
+  * UTY-TFSXH3 (not confirmed yet. For: every other regions)
 
 # Support
 
