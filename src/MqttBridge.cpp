@@ -198,6 +198,21 @@ namespace FujitsuAC {
         this->mqttClient.publish(topic, p.c_str(), true);
 
         p = "{";
+        p += "\"name\": \"mac\",";
+        p += "\"icon\": \"mdi:identifier\",";
+        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"payload_available\": \"online\",";
+        p += "\"payload_not_available\": \"offline\",";
+        p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/mac\",";
+        p += "\"entity_category\": \"diagnostic\",";
+        p += "\"unique_id\": \"" + this->uniqueId + "_mac\",";
+        p += this->deviceConfig;
+        p += "}";
+
+        snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_mac/config", this->uniqueId.c_str());
+        this->mqttClient.publish(topic, p.c_str(), true);
+
+        p = "{";
         p += "\"name\": \"version\",";
         p += "\"icon\": \"mdi:git\",";
         p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
@@ -531,6 +546,9 @@ namespace FujitsuAC {
 
         snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "ip");
         this->mqttClient.publish(topic, WiFi.localIP().toString().c_str(), true);
+
+        snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "mac");
+        this->mqttClient.publish(topic, WiFi.macAddress().c_str(), true);
 
         snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "version");
         this->mqttClient.publish(topic, this->version.c_str(), true);
