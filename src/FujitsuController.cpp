@@ -79,6 +79,7 @@ namespace FujitsuAC {
                     this->lastResponseReceived = false;
 
                     uint8_t payload[] = {0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFB};
+                    this->debug("status", "Init1 Send");
                     this->debug("send", this->toHexStr(payload, sizeof(payload)));
 
                     uart.write(payload, sizeof(payload));
@@ -91,6 +92,7 @@ namespace FujitsuAC {
                     this->lastResponseReceived = false;
 
                     uint8_t payload[] = {0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04, 0x00, 0x01, 0xFF, 0xF5};
+                    this->debug("status", "Init2 Send");
                     this->debug("send", this->toHexStr(payload, sizeof(payload)));
 
                     uart.write(payload, sizeof(payload));
@@ -297,6 +299,8 @@ namespace FujitsuAC {
                 this->terminated = true;
             } else {
                 this->lastResponseReceived = true;
+
+                this->debug("status", "Running");
             }
 
             return;
@@ -372,15 +376,34 @@ namespace FujitsuAC {
         return static_cast<uint16_t>(Enums::MinimumHeat::On) == reg->value;
     }
 
-    bool FujitsuController::isHorizontalSwingSupported() {
-        Register* reg = this->registryTable.getRegister(Address::HorizontalSwingSupported);
+    bool FujitsuController::isCoilDryEnabled() {
+        Register* reg = this->registryTable.getRegister(Address::CoilDry);
 
-        return 0x0015 == reg->value;
+        return 0x0001 == reg->value;
     }
 
-    bool FujitsuController::isHumanSensorSupported() {
-        Register* reg = this->registryTable.getRegister(Address::HumanSensorSupported);
+    int FujitsuController::getVerticalAirflowDirectionCount() {
+        Register* reg = this->registryTable.getRegister(Address::VerticalAirflowDirectionCount);
+
+        return reg->value;
+    }
+
+    int FujitsuController::getHorizontalAirflowDirectionCount() {
+        Register* reg = this->registryTable.getRegister(Address::HorizontalAirflowDirectionCount);
+
+        return reg->value;
+    }
+
+    bool FujitsuController::isFeatureSupported(Address address) {
+        Register* reg = this->registryTable.getRegister(address);
         
+        if (
+            address == Address::VerticalAirflowDirectionCount
+            || address == Address::HorizontalAirflowDirectionCount
+        ) {
+            return reg->value > 0x0000;
+        }
+
         return 0x0001 == reg->value;
     }
 
@@ -413,6 +436,12 @@ namespace FujitsuAC {
             return;
         }
 
+        if (this->isCoilDryEnabled()) {
+            this->debug("info", "Coil dry is on");
+
+            return;
+        }
+
         if (this->isMinimumHeatEnabled()) {
             this->debug("info", "Minimum heat is on");
 
@@ -426,6 +455,12 @@ namespace FujitsuAC {
 
     void FujitsuController::setFanSpeed(Enums::FanSpeed fanSpeed) {
         if (this->frameSendRegistries.size > 0) {
+            return;
+        }
+
+        if (this->isCoilDryEnabled()) {
+            this->debug("info", "Coil dry is on");
+
             return;
         }
 
@@ -445,6 +480,18 @@ namespace FujitsuAC {
             return;
         }
 
+        if (this->isCoilDryEnabled()) {
+            this->debug("info", "Coil dry is on");
+
+            return;
+        }
+
+        if (!this->isFeatureSupported(Address::VerticalAirflowDirectionCount)) {
+            this->debug("warning", "Vertical airflow is not supported");
+
+            return;
+        }
+
         this->frameSendRegistries.size = 2;
         this->frameSendRegistries.registries[0] = Address::VerticalSwing;
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(Enums::VerticalSwing::Off);
@@ -454,6 +501,18 @@ namespace FujitsuAC {
 
     void FujitsuController::setVerticalSwing(Enums::VerticalSwing verticalSwing) {
         if (this->frameSendRegistries.size > 0) {
+            return;
+        }
+
+        if (this->isCoilDryEnabled()) {
+            this->debug("info", "Coil dry is on");
+
+            return;
+        }
+
+        if (!this->isFeatureSupported(Address::VerticalSwingSupported)) {
+            this->debug("warning", "Vertical swing is not supported");
+
             return;
         }
 
@@ -467,8 +526,14 @@ namespace FujitsuAC {
             return;
         }
 
-        if (!this->isHorizontalSwingSupported()) {
-            this->debug("warning", "Horizontal swing is not supported");
+        if (this->isCoilDryEnabled()) {
+            this->debug("info", "Coil dry is on");
+
+            return;
+        }
+
+        if (!this->isFeatureSupported(Address::HorizontalAirflowDirectionCount)) {
+            this->debug("warning", "Horizontal airflow is not supported");
 
             return;
         }
@@ -485,7 +550,13 @@ namespace FujitsuAC {
             return;
         }
 
-        if (!this->isHorizontalSwingSupported()) {
+        if (this->isCoilDryEnabled()) {
+            this->debug("info", "Coil dry is on");
+
+            return;
+        }
+
+        if (!this->isFeatureSupported(Address::HorizontalSwingSupported)) {
             this->debug("warning", "Horizontal swing is not supported");
 
             return;
@@ -498,6 +569,12 @@ namespace FujitsuAC {
 
     void FujitsuController::setPowerful(Enums::Powerful powerful) {
         if (this->frameSendRegistries.size > 0) {
+            return;
+        }
+
+        if (this->isCoilDryEnabled()) {
+            this->debug("info", "Coil dry is on");
+
             return;
         }
 
@@ -514,6 +591,12 @@ namespace FujitsuAC {
 
     void FujitsuController::setEconomy(Enums::EconomyMode economy) {
         if (this->frameSendRegistries.size > 0) {
+            return;
+        }
+
+        if (this->isCoilDryEnabled()) {
+            this->debug("info", "Coil dry is on");
+
             return;
         }
 
@@ -554,12 +637,22 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(outdoorUnitLowNoise);
     }
 
+    void FujitsuController::setCoilDry(Enums::CoilDry coilDry) {
+        if (this->frameSendRegistries.size > 0) {
+            return;
+        }
+
+        this->frameSendRegistries.size = 1;
+        this->frameSendRegistries.registries[0] = Address::CoilDry;
+        this->frameSendRegistries.values[0] = static_cast<uint16_t>(coilDry);
+    }
+
     void FujitsuController::setHumanSensor(Enums::HumanSensor humanSensor) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
 
-        if (!this->isHumanSensorSupported()) {
+        if (!this->isFeatureSupported(Address::HumanSensorSupported)) {
             this->debug("warning", "Human sensor is not supported");
 
             return;
@@ -572,6 +665,12 @@ namespace FujitsuAC {
 
     void FujitsuController::setTemp(const char *temp) {
         if (this->frameSendRegistries.size > 0) {
+            return;
+        }
+
+        if (this->isCoilDryEnabled()) {
+            this->debug("info", "Coil dry is on");
+
             return;
         }
 

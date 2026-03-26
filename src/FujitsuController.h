@@ -35,12 +35,15 @@ namespace FujitsuAC {
         void setEconomy(Enums::EconomyMode economy);
         void setEnergySavingFan(Enums::EnergySavingFan energySavingFan);
         void setOutdoorUnitLowNoise(Enums::OutdoorUnitLowNoise outdoorUnitLowNoise);
+        void setCoilDry(Enums::CoilDry coilDry);
         void setHumanSensor(Enums::HumanSensor humanSensor);
         void setTemp(const char *temp);
 
         bool isPoweredOn();
-        bool isHorizontalSwingSupported();
-        bool isHumanSensorSupported();
+        bool isFeatureSupported(Address address);
+        
+        int getVerticalAirflowDirectionCount();
+        int getHorizontalAirflowDirectionCount();
 
         void setOnRegisterChangeCallback(std::function<void(const Register* reg)> onRegisterChangeCallback);
         void setDebugCallback(std::function<void(const char* name, const char* message)> debugCallback);
@@ -108,24 +111,24 @@ namespace FujitsuAC {
               Address::Initial9,  
               Address::Initial10,  
               Address::Initial11,  
-              Address::Initial12,  
-              Address::Initial13,  
-              Address::HorizontalSwingSupported,  
-              Address::Initial15,
+              Address::VerticalAirflowDirectionCount,  
+              Address::VerticalSwingSupported,  
+              Address::HorizontalAirflowDirectionCount,  
+              Address::HorizontalSwingSupported,
             }
         };
 
         Frame initialRegistries3 = {FrameType::InitialRegistries3, 10, {
-              Address::Initial16,
-              Address::Initial17,  
+              Address::EconomyModeSupported,
+              Address::MinimumHeatSupported,  
               Address::HumanSensorSupported,  
-              Address::Initial19,  
+              Address::EnergySavingFanSupported,  
               Address::Initial20,  
               Address::Initial21,  
               Address::Initial22,  
-              Address::Initial23,  
-              Address::Initial24,  
-              Address::Initial25,
+              Address::PowerfulSupported,  
+              Address::OutdoorUnitLowNoiseSupported,  
+              Address::CoilDrySupported,
             }
         };
 
@@ -159,7 +162,7 @@ namespace FujitsuAC {
               Address::Register23,  
               Address::Powerful,  
               Address::OutdoorUnitLowNoise,  
-              Address::Register26,  
+              Address::CoilDry,  
               Address::Register27,  
               Address::Register28,  
               Address::Register29,  
@@ -188,6 +191,7 @@ namespace FujitsuAC {
         FrameSendRegistries frameSendRegistries = {FrameType::SendRegistries, 0, {}, {}};
 
         bool isMinimumHeatEnabled();
+        bool isCoilDryEnabled();
 
         void sendRequest();
         void requestRegistries(Frame frame);

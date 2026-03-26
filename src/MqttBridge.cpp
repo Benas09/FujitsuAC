@@ -44,21 +44,7 @@ namespace FujitsuAC {
         this->sendDiagnosticData();
 
         this->registerBaseEntities();
-
-        static constexpr Address switches[] = {
-            Address::Power,
-            Address::VerticalAirflow,
-            Address::VerticalSwing,
-            Address::Powerful,
-            Address::EconomyMode,
-            Address::EnergySavingFan,
-            Address::OutdoorUnitLowNoise,
-            Address::MinimumHeat
-        };
-
-        for (const auto& switch_ : switches) {
-            this->registerSwitch(switch_);
-        }
+        this->registerSwitch(Address::Power);
 
         this->mqttClient.setCallback([this](char* topic, byte* payload, unsigned int length) {
             char message[length + 1];
@@ -118,6 +104,22 @@ namespace FujitsuAC {
         char topic[128];
 
         String p = "{";
+        p += "\"name\": \"status\",";
+        p += "\"icon\": \"mdi:information\",";
+        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"payload_available\": \"online\",";
+        p += "\"payload_not_available\": \"offline\",";
+        p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/status\",";
+        p += "\"device_class\": \"enum\",";
+        p += "\"entity_category\": \"diagnostic\",";
+        p += "\"unique_id\": \"" + this->uniqueId + "_status\",";
+        p += this->deviceConfig;
+        p += "}";
+
+        snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_status/config", this->uniqueId.c_str());
+        this->mqttClient.publish(topic, p.c_str(), true);
+
+        p = "{";
         p += "\"name\": \"restart\",";
         p += "\"icon\": \"mdi:restart\",";
         p += "\"unique_id\": \"" + this->uniqueId + "_restart\",";
@@ -345,7 +347,26 @@ namespace FujitsuAC {
             Address::VerticalAirflow == address
             || Address::HorizontalAirflow == address
         ) {
-            p += "\"options\": [\"1\", \"2\", \"3\", \"4\", \"5\", \"6\"],";
+            int count = Address::VerticalAirflow == address
+                ? this->controller.getVerticalAirflowDirectionCount()
+                : this->controller.getHorizontalAirflowDirectionCount()
+            ;
+
+            count = count > 6 ? 6 : count;
+
+            p += "\"options\": [";
+
+            for (int i = 1; i <= count; i++) {
+                p += '"';
+                p += char('0' + i);
+                p += '"';
+
+                if (i < count) {
+                    p += ",";
+                }
+            }
+
+            p += "],";
         } else {
             p += "\"payload_on\": \"on\",";
             p += "\"payload_off\": \"off\",";
@@ -490,6 +511,12 @@ namespace FujitsuAC {
 
             return;
         }
+
+        if (0 == strcmp(property, this->addressToString(Address::CoilDry))) {
+            this->controller.setCoilDry(this->stringToEnum(Enums::CoilDry::Off, payload));
+
+            return;
+        }
     }
 
     void MqttBridge::publishState(Address address, const char* value)
@@ -528,18 +555,40 @@ namespace FujitsuAC {
             this->publishState(modeRegister->address, this->valueToString(modeRegister));
         }
 
-        if (Address::HumanSensorSupported == reg->address && this->controller.isHumanSensorSupported()) {
-            this->registerSwitch(Address::HumanSensor);
-        }
+        struct FeatureRegistryRelation {
+            Address featureAddress;
+            Address registryAddress;
+        };
 
-        if (Address::HorizontalSwingSupported == reg->address && this->controller.isHorizontalSwingSupported()) {
-            this->registerSwitch(Address::HorizontalSwing);
-            this->registerSwitch(Address::HorizontalAirflow);
+        static constexpr FeatureRegistryRelation defaults[] = {
+            { Address::VerticalAirflowDirectionCount, Address::VerticalAirflow },
+            { Address::VerticalSwingSupported, Address::VerticalSwing },
+            { Address::HorizontalAirflowDirectionCount, Address::HorizontalAirflow },
+            { Address::HorizontalSwingSupported, Address::HorizontalSwing },
+            { Address::PowerfulSupported, Address::Powerful },
+            { Address::EconomyModeSupported, Address::EconomyMode },
+            { Address::EnergySavingFanSupported, Address::EnergySavingFan },
+            { Address::OutdoorUnitLowNoiseSupported, Address::OutdoorUnitLowNoise },
+            { Address::MinimumHeatSupported, Address::MinimumHeat },
+            { Address::CoilDrySupported, Address::CoilDry }
+        };
+
+        for (const auto& relation : defaults) {
+            if (relation.featureAddress == reg->address) {
+                if (this->controller.isFeatureSupported(relation.featureAddress)) {
+                    this->registerSwitch(relation.registryAddress);
+                }
+
+                break;
+            }
         }
     }
 
     void MqttBridge::sendInitialDiagnosticData() {
         char topic[64];
+
+        snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "status");
+        this->mqttClient.publish(topic, "MqttBridge started", true);
 
         snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), "name");
         this->mqttClient.publish(topic, this->name.c_str(), true);
@@ -609,6 +658,7 @@ namespace FujitsuAC {
             case Address::OutdoorTemp: return "outdoor_temp";
             case Address::HumanSensor: return "human_sensor";
             case Address::MinimumHeat: return "minimum_heat";
+            case Address::CoilDry: return "coil_dry";
             default: {
                 static char buffer[20];
                 snprintf(buffer, sizeof(buffer), "address_%04X", static_cast<uint16_t>(address));
@@ -732,6 +782,14 @@ namespace FujitsuAC {
                 switch (static_cast<Enums::OutdoorUnitLowNoise>(reg->value)) {
                     case Enums::OutdoorUnitLowNoise::On: return "on";
                     case Enums::OutdoorUnitLowNoise::Off: return "off";
+                    default: return "unknown";
+                }
+
+                break;
+            case Address::CoilDry:
+                switch (static_cast<Enums::CoilDry>(reg->value)) {
+                    case Enums::CoilDry::On: return "on";
+                    case Enums::CoilDry::Off: return "off";
                     default: return "unknown";
                 }
 
@@ -905,6 +963,14 @@ namespace FujitsuAC {
         return def;
     }
 
+    const Enums::CoilDry MqttBridge::stringToEnum(Enums::CoilDry def, const char *value) {
+        if (strcmp(value, "on") == 0) {
+            return Enums::CoilDry::On;
+        }
+
+        return def;
+    }
+
     const Enums::HumanSensor MqttBridge::stringToEnum(Enums::HumanSensor def, const char *value) {
         if (strcmp(value, "on") == 0) {
             return Enums::HumanSensor::On;
@@ -915,7 +981,12 @@ namespace FujitsuAC {
 
     void MqttBridge::debug(const char* name, const char* message) {
         char topic[64];
-        snprintf(topic, sizeof(topic), "fujitsu/%s/debug/%s", this->uniqueId.c_str(), name);
+
+        if (strcmp(name, "status") == 0) {
+            snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), name);
+        } else {
+            snprintf(topic, sizeof(topic), "fujitsu/%s/debug/%s", this->uniqueId.c_str(), name);
+        }
 
         this->mqttClient.publish(topic, message);
     }

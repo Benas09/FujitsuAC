@@ -89,6 +89,11 @@ namespace FujitsuAC {
             On = 0x0001,
         };
 
+        enum class CoilDry: uint16_t {
+            Off = 0x0000,
+            On = 0x0001,
+        };
+
         enum class HumanSensor: uint16_t {
             Off = 0x0000,
             On = 0x0001,

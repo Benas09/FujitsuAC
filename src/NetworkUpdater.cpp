@@ -131,6 +131,7 @@ namespace FujitsuAC {
 		char msg[128];
 
 		this->bridge.debug("info", "NetworkUpdater: Starting OTA update");
+		this->bridge.debug("status", "Updating");
 
 		NetworkClientSecure networkClient;
 		networkClient.setCACert(rootCACertificate);
@@ -170,6 +171,7 @@ namespace FujitsuAC {
 				);
 
 				this->bridge.debug("info", msg);
+				this->bridge.debug("status", msg);
 			
 				break;
 			case HTTP_UPDATE_NO_UPDATES: 

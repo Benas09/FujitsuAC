@@ -71,6 +71,7 @@ namespace FujitsuAC {
             const Enums::EconomyMode stringToEnum(Enums::EconomyMode def, const char *value);
             const Enums::EnergySavingFan stringToEnum(Enums::EnergySavingFan def, const char *value);
             const Enums::OutdoorUnitLowNoise stringToEnum(Enums::OutdoorUnitLowNoise def, const char *value);
+            const Enums::CoilDry stringToEnum(Enums::CoilDry def, const char *value);
             const Enums::HumanSensor stringToEnum(Enums::HumanSensor def, const char *value);
     };
 
