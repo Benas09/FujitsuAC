@@ -570,6 +570,7 @@ namespace FujitsuAC {
             { Address::EnergySavingFanSupported, Address::EnergySavingFan },
             { Address::OutdoorUnitLowNoiseSupported, Address::OutdoorUnitLowNoise },
             { Address::MinimumHeatSupported, Address::MinimumHeat },
+            { Address::HumanSensorSupported, Address::HumanSensor },
             { Address::CoilDrySupported, Address::CoilDry }
         };
 
