@@ -6,7 +6,7 @@
 */
 #include "FujitsuAC.h"
 
-#define VERSION "1.2.1"
+#define VERSION "1.2.2"
 
 RTC_NOINIT_ATTR bool isFallbackAp;
 
@@ -322,6 +322,8 @@ namespace FujitsuAC {
                 bridge->setup();
                 networkUpdater->setup();
             } else {
+                this->handleResetButton();
+
                 delay(5000);
             }
         }
