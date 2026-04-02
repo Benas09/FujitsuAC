@@ -512,6 +512,12 @@ namespace FujitsuAC {
             return;
         }
 
+        if (0 == strcmp(property, this->addressToString(Address::HumanSensor))) {
+            this->controller.setHumanSensor(this->stringToEnum(Enums::HumanSensor::Off, payload));
+
+            return;
+        }
+
         if (0 == strcmp(property, this->addressToString(Address::CoilDry))) {
             this->controller.setCoilDry(this->stringToEnum(Enums::CoilDry::Off, payload));
 
