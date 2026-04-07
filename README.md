@@ -154,3 +154,51 @@ Chip list for prebuilt firmwares:
 ![](/images/board_back.jpg)
 ![](/images/board_case.jpg)
 ![](/images/installed.jpg)
+
+# FAQ
+
+### Does the dongle disables the use of other controllers?
+Product has been tested with IR and wall controller (UTY-RLRY). Functionality of these controllers remains available when using the dongle.
+IR is a one-way channel without feedback where UTY-RLRY is two-way and displays changes made by the dongle.
+
+### How can I reset the dongle configuration?
+There is a small hole in the enclosure. Click the button through that hole with a toothpick and all credentials will be cleared.
+When building DIY dongle, you have attach a button to the RESET_BUTTON pin to use that feature.
+
+### What do the LED statues mean?
+When building DIY dongle, you have attach LEDS to the correspinding pins (Red - 19, White - 18 for esp32) that feature.
+* Only red blinking - connecting to wifi
+* Only red shining - AP is created
+* Red + White shining - connected to wifi and mqtt
+
+### What's AP fallback mode?
+When wifi gets disconnected, the dongle reboots to AP mode for several minutes (credentials are not cleared yet, they just are not shown in AP webpage). If Wifi becomes available when AP is enabled, the dongle reboots after a couple minutes to normal mode and connects to it.
+
+### I'm missing some features to control my AC.
+The dongle reads the AC information and only displays available options. When you believe you are missing options, please create an issue and post your logfile.
+
+### How to collect a logfile?
+‎SSH to your MQTT setup and use these commands.
+* mosquitto_sub -h 192.168.1.100 -t fujitsu/# -v for all your dongles
+* mosquitto_sub -h 192.168.1.100 -t fujitsu/80f3dabb15f0/# -v for exact one, just change with your unique id
+
+### The total number of swing positions is incorrectly displayed.
+There is a registry which reports how many louver grille positions available. When you believe number of positions are incorrect, please send us your logfile.
+You'll be able to override the displayed value in a future release.
+
+### What does energy_saving_fan option do?
+Power saving function to control the indoor unit fan rotation when the outdoor unit is stopped during cooling operation. 
+Enabled, the indoor fan operates intermittently at a very low speed when outdoor unit is stopped.
+
+### I'm missing the OutdoorUnitLowNoise feature
+By manufacturer design, this option will not be available when using a multi-split system (multiple indoor units connected to one outdoor unit).
+
+### Available dongle status messages
+* MqttBridge started (connected to mqtt and HA configuration started)
+* Init1 Send - first stage of handshake between esp and aircon
+* Init2 Send - second stage of handshake between esp and aircon
+* Running - handshake successful and communication is running
+* Updating - when updating through network started
+
+
+
