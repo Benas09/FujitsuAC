@@ -7,26 +7,8 @@ This library reverse-engineers parts of the communication used by Fujitsu air co
 FGLair is a registered trademark of Fujitsu General Limited. This project is not affiliated with or endorsed by Fujitsu. 
 FGLair® app is not required when using this integration - **everything runs local here**.
 
-Using this library you can control your Fujitsu AC through:
-* 4 pin connector dedicated to UTY-TFSXW1:
-  * Tested with:
-  * ASYG09KMTB
-  * ASYG09KMCC
-  * ASYG12KGTB
-  * ASYG09KGTB
-
-* 4 pin connector dedicated to UTY-TFSXZ1:
-  * ARXG18KLLAP
-    * not fully tested yet, basic functions like mode change, temp sensors work.
-    * pinout sequence is not confirmed yet, so check if it the same
-  
-* USB-type connector dedicated to UTY-TFSXF3:
-  * Tested with:
-  * ASTG18KMTC
-  * ASTG09KMTC
- 
-Compatible dongles:
-* UTY-TFSXW1 (Global, confirmed)
+This library can be used to replace these dongles:
+* UTY-TFSXW1
 * Z series
   * UTY-TFSXZ1 (confirmed. For: Europe)
   * UTY-TFSXZ2 (not confirmed yet. For: North America, Australia, New Zealand, Thailand, India, Singapore)
@@ -38,6 +20,8 @@ Compatible dongles:
 * H Series:
   * UTY-TFSXH4 (not confirmed yet. For: USA, Canada (sold as direct replacement for FGLair UTY-TFSXF1)
   * UTY-TFSXH3 (not confirmed yet. For: every other regions)
+
+Tested aircons list: https://github.com/Benas09/FujitsuAC/discussions/24
 
 # Support
 
