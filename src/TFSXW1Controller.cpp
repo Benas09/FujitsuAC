@@ -5,26 +5,27 @@
   Project home: https://github.com/Benas09/FujitsuAC
 */
 
-#include "FujitsuController.h"
+#pragma once
+
+#include "TFSXW1Controller.h"
 
 namespace FujitsuAC {
 
-    FujitsuController::FujitsuController(Stream &uart) : 
-        uart(uart),
-        registryTable(),
-        buffer(uart) {
-    }
+    TFSXW1Controller::TFSXW1Controller(Stream &uart): 
+        IFujitsuController(uart),
+        buffer(uart)
+    {}
 
-    bool FujitsuController::setup() {
+    void TFSXW1Controller::setup() {
+        this->initRegistryTable();
+
         this->initialized = true;
         this->lastRequestMillis = millis();
-
-        return true;
     }
 
-    bool FujitsuController::loop() {
+    void TFSXW1Controller::loop() {
         if (!this->initialized) {
-            return true;
+            return;
         }
 
         this->sendRequest();
@@ -32,19 +33,17 @@ namespace FujitsuAC {
         this->buffer.loop([this](uint8_t buffer[128], int size, bool isValid) {
             this->onFrame(buffer, size, isValid);
         });
-
-        return true;
     }
 
-    const Register* FujitsuController::getAllRegisters(size_t &outSize) const {
-        return this->registryTable.getAllRegisters(outSize);
+    const RegistryTable::Register* TFSXW1Controller::getAllRegisters(size_t &outSize) const {
+        return this->registryTable->getAllRegisters(outSize);
     }
 
-    Register* FujitsuController::getRegister(Address address) {
-        return this->registryTable.getRegister(address);
+    RegistryTable::Register* TFSXW1Controller::getRegister(Address address) {
+        return this->registryTable->getRegister(address);
     }
 
-    void FujitsuController::sendRequest() {
+    void TFSXW1Controller::sendRequest() {
         if (this->terminated) {
             return;
         }
@@ -62,6 +61,7 @@ namespace FujitsuAC {
             } else if (!this->noResponseNotified) {
                 this->noResponseNotified = true;
                 this->debug("error", "No response for 200 ms");
+                this->debug("status", "No response for 200 ms");
             }
 
             return;
@@ -159,7 +159,7 @@ namespace FujitsuAC {
         }
     }
 
-    void FujitsuController::requestRegistries(Frame frame) {
+    void TFSXW1Controller::requestRegistries(Frame frame) {
         this->lastFrameSent = frame.type;
         this->lastResponseReceived = false;
 
@@ -196,7 +196,7 @@ namespace FujitsuAC {
         uart.write(request, bufferSize);
     }
 
-    void FujitsuController::sendRegistries() {
+    void TFSXW1Controller::sendRegistries() {
         FrameSendRegistries frame = this->frameSendRegistries;
 
         this->lastFrameSent = frame.type;
@@ -241,7 +241,7 @@ namespace FujitsuAC {
         uart.write(request, bufferSize);
     }
 
-    void FujitsuController::onFrame(uint8_t buffer[128], int size, bool isValid) {
+    void TFSXW1Controller::onFrame(uint8_t buffer[128], int size, bool isValid) {
         if (!this->initialized) {
             return;
         }
@@ -280,6 +280,7 @@ namespace FujitsuAC {
             if (size != sizeof(expectedResponse) || memcmp(buffer, expectedResponse, sizeof(expectedResponse)) > 0) {
                 this->debug("received", this->toHexStr(buffer, size));
                 this->debug("error", "Unexpected response. Terminate");
+                this->debug("status", "Terminated Init1");
 
                 this->terminated = true;
             } else {
@@ -295,6 +296,7 @@ namespace FujitsuAC {
             if (size != sizeof(expectedResponse) || memcmp(buffer, expectedResponse, sizeof(expectedResponse)) > 0) {
                 this->debug("received", this->toHexStr(buffer, size));
                 this->debug("error", "Unexpected response. Terminate");
+                this->debug("status", "Terminated Init2");
 
                 this->terminated = true;
             } else {
@@ -332,7 +334,7 @@ namespace FujitsuAC {
         }
     }
 
-    void FujitsuController::updateRegistries(uint8_t buffer[128], int size) {
+    void TFSXW1Controller::updateRegistries(uint8_t buffer[128], int size) {
         int registriesCount = buffer[4] / 4;
 
         for (int i = 0; i < registriesCount; i++) {
@@ -347,7 +349,7 @@ namespace FujitsuAC {
             uint16_t newValue = (static_cast<uint16_t>(valueHigh) << 8) | valueLow;
 
             Address address = static_cast<Address>((static_cast<uint16_t>(addrHigh) << 8) | addrLow);
-            Register* reg = this->registryTable.getRegister(address);
+            RegistryTable::Register* reg = this->registryTable->getRegister(address);
 
             if (reg->value != newValue) {
                 char hexStr[32];
@@ -364,38 +366,38 @@ namespace FujitsuAC {
         }
     }
 
-    bool FujitsuController::isPoweredOn() {
-        Register* reg = this->registryTable.getRegister(Address::Power);
+    bool TFSXW1Controller::isPoweredOn() {
+        RegistryTable::Register* reg = this->registryTable->getRegister(Address::Power);
         
         return static_cast<uint16_t>(Enums::Power::On) == reg->value;
     }
 
-    bool FujitsuController::isMinimumHeatEnabled() {
-        Register* reg = this->registryTable.getRegister(Address::MinimumHeat);
+    bool TFSXW1Controller::isMinimumHeatEnabled() {
+        RegistryTable::Register* reg = this->registryTable->getRegister(Address::MinimumHeat);
 
         return static_cast<uint16_t>(Enums::MinimumHeat::On) == reg->value;
     }
 
-    bool FujitsuController::isCoilDryEnabled() {
-        Register* reg = this->registryTable.getRegister(Address::CoilDry);
+    bool TFSXW1Controller::isCoilDryEnabled() {
+        RegistryTable::Register* reg = this->registryTable->getRegister(Address::CoilDry);
 
         return 0x0001 == reg->value;
     }
 
-    int FujitsuController::getVerticalAirflowDirectionCount() {
-        Register* reg = this->registryTable.getRegister(Address::VerticalAirflowDirectionCount);
+    int TFSXW1Controller::getVerticalAirflowDirectionCount() {
+        RegistryTable::Register* reg = this->registryTable->getRegister(Address::VerticalAirflowDirectionCount);
 
         return reg->value;
     }
 
-    int FujitsuController::getHorizontalAirflowDirectionCount() {
-        Register* reg = this->registryTable.getRegister(Address::HorizontalAirflowDirectionCount);
+    int TFSXW1Controller::getHorizontalAirflowDirectionCount() {
+        RegistryTable::Register* reg = this->registryTable->getRegister(Address::HorizontalAirflowDirectionCount);
 
         return reg->value;
     }
 
-    bool FujitsuController::isFeatureSupported(Address address) {
-        Register* reg = this->registryTable.getRegister(address);
+    bool TFSXW1Controller::isFeatureSupported(Address address) {
+        RegistryTable::Register* reg = this->registryTable->getRegister(address);
         
         if (
             address == Address::VerticalAirflowDirectionCount
@@ -407,7 +409,7 @@ namespace FujitsuAC {
         return 0x0001 == reg->value;
     }
 
-    void FujitsuController::setPower(Enums::Power power) {
+    void TFSXW1Controller::setPower(Enums::Power power) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -417,7 +419,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(power);
     }
 
-    void FujitsuController::setMinimumHeat(Enums::MinimumHeat minimumHeat) {
+    void TFSXW1Controller::setMinimumHeat(Enums::MinimumHeat minimumHeat) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -431,7 +433,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(minimumHeat);
     }
 
-    void FujitsuController::setMode(Enums::Mode mode) {
+    void TFSXW1Controller::setMode(Enums::Mode mode) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -453,7 +455,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(mode);
     }
 
-    void FujitsuController::setFanSpeed(Enums::FanSpeed fanSpeed) {
+    void TFSXW1Controller::setFanSpeed(Enums::FanSpeed fanSpeed) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -475,7 +477,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(fanSpeed);
     }
 
-    void FujitsuController::setVerticalAirflow(Enums::VerticalAirflow verticalAirflow) {
+    void TFSXW1Controller::setVerticalAirflow(Enums::VerticalAirflow verticalAirflow) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -499,7 +501,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[1] = static_cast<uint16_t>(verticalAirflow);
     }
 
-    void FujitsuController::setVerticalSwing(Enums::VerticalSwing verticalSwing) {
+    void TFSXW1Controller::setVerticalSwing(Enums::VerticalSwing verticalSwing) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -521,7 +523,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(verticalSwing);
     }
 
-    void FujitsuController::setHorizontalAirflow(Enums::HorizontalAirflow horizontalAirflow) {
+    void TFSXW1Controller::setHorizontalAirflow(Enums::HorizontalAirflow horizontalAirflow) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -545,7 +547,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[1] = static_cast<uint16_t>(horizontalAirflow);
     }
 
-    void FujitsuController::setHorizontalSwing(Enums::HorizontalSwing horizontalSwing) {
+    void TFSXW1Controller::setHorizontalSwing(Enums::HorizontalSwing horizontalSwing) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -567,7 +569,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(horizontalSwing);
     }
 
-    void FujitsuController::setPowerful(Enums::Powerful powerful) {
+    void TFSXW1Controller::setPowerful(Enums::Powerful powerful) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -589,7 +591,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(powerful);
     }
 
-    void FujitsuController::setEconomy(Enums::EconomyMode economy) {
+    void TFSXW1Controller::setEconomy(Enums::EconomyMode economy) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -611,7 +613,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(economy);
     }
 
-    void FujitsuController::setEnergySavingFan(Enums::EnergySavingFan energySavingFan) {
+    void TFSXW1Controller::setEnergySavingFan(Enums::EnergySavingFan energySavingFan) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -627,7 +629,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(energySavingFan);
     }
 
-    void FujitsuController::setOutdoorUnitLowNoise(Enums::OutdoorUnitLowNoise outdoorUnitLowNoise) {
+    void TFSXW1Controller::setOutdoorUnitLowNoise(Enums::OutdoorUnitLowNoise outdoorUnitLowNoise) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -637,7 +639,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(outdoorUnitLowNoise);
     }
 
-    void FujitsuController::setCoilDry(Enums::CoilDry coilDry) {
+    void TFSXW1Controller::setCoilDry(Enums::CoilDry coilDry) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -647,7 +649,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(coilDry);
     }
 
-    void FujitsuController::setHumanSensor(Enums::HumanSensor humanSensor) {
+    void TFSXW1Controller::setHumanSensor(Enums::HumanSensor humanSensor) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -663,7 +665,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(humanSensor);
     }
 
-    void FujitsuController::setTemp(const char *temp) {
+    void TFSXW1Controller::setTemp(const char *temp) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -680,7 +682,7 @@ namespace FujitsuAC {
             return;
         }
 
-        Register* modeRegistry = this->registryTable.getRegister(Address::Mode);
+        RegistryTable::Register* modeRegistry = this->registryTable->getRegister(Address::Mode);
 
         if (static_cast<uint16_t>(Enums::Mode::Fan) == modeRegistry->value) {
             this->debug("info", "Fan mode enabled");
@@ -711,36 +713,4 @@ namespace FujitsuAC {
         this->frameSendRegistries.registries[0] = Address::SetpointTemp;
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(result);
     }
-
-    void FujitsuController::setOnRegisterChangeCallback(std::function<void(const Register* reg)> onRegisterChangeCallback) {
-        this->onRegisterChangeCallback = onRegisterChangeCallback;
-    }
-
-    void FujitsuController::setDebugCallback(std::function<void(const char* name, const char* message)> debugCallback) {
-        this->debugCallback = debugCallback;
-    }
-
-    void FujitsuController::debug(const char* name, const char* message) {
-        if (this->debugCallback) {
-            this->debugCallback(name, message);
-        }
-    }
-
-    const char* FujitsuController::toHexStr(uint8_t buffer[128], int size) {
-        static char hexStr[384];
-        int offset = 0;
-
-        for (int i = 0; i < size && offset < sizeof(hexStr) - 3; ++i) {
-            offset += snprintf(
-                hexStr + offset, 
-                sizeof(hexStr) - offset,
-                (i < size - 1) 
-                    ? "%02X " 
-                    : "%02X", buffer[i]
-            );
-        }
-
-        return hexStr;
-    }
-
 }

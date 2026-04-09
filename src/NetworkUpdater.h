@@ -5,6 +5,8 @@
   Project home: https://github.com/Benas09/FujitsuAC
 */
 
+#pragma once
+
 //Version check
 #include "esp_chip_info.h"
 #include <lwip/apps/sntp.h>
@@ -13,10 +15,6 @@
 //OTA
 #include <HTTPClient.h>
 #include <HTTPUpdate.h>
-
-#include <MqttBridge.h>
-
-#pragma once
 
 namespace FujitsuAC {
 	enum VersionCheckerState {
@@ -29,17 +27,27 @@ namespace FujitsuAC {
 
     class NetworkUpdater {
     	public:
-    		NetworkUpdater(MqttBridge &bridge);
+    		NetworkUpdater();
 
             void setup();
 	        void loop();
+	        void updateFirmware();
+	        
+	        void setOnVersionReceivedCallback(std::function<void(const char*)> onVersionReceivedCallback) {
+	        	this->onVersionReceivedCallback = onVersionReceivedCallback;
+	        }
+
+	        void setDebugCallback(std::function<void(const char* name, const char* message)> debugCallback) {
+	        	this->debugCallback = debugCallback;
+	        }
 
         private:
-        	MqttBridge &bridge;
         	WiFiClientSecure* client = nullptr;
         	VersionCheckerState versionCheckerState = VersionCheckerState::NO_TIME;
-
         	uint32_t lastVersionCheckInitiatedAtMillis = 0;
+
+        	std::function<void(const char*)> onVersionReceivedCallback;
+        	std::function<void(const char* name, const char* message)> debugCallback;
 
 			const char *rootCACertificate = R"string_literal(
 -----BEGIN CERTIFICATE-----
@@ -77,6 +85,6 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
 
 			void setClock();
 			void requestVersion();
-			void updateFirmware();
+			void debug(const char* name, const char* message);
     };
 }

@@ -5,6 +5,8 @@
   Project home: https://github.com/Benas09/FujitsuAC
 */
 
+#pragma once
+
 //EEPROM
 #include <Preferences.h>
 
@@ -24,13 +26,9 @@
 #include <PubSubClient.h>
 
 #include <Uart.h>
-
-#include <FujitsuController.h>
-#include <MqttBridge.h>
+#include <IMqttBridge.h>
 
 #include <NetworkUpdater.h>
-
-#pragma once
 
 namespace FujitsuAC {
 
@@ -46,13 +44,11 @@ namespace FujitsuAC {
             NetworkServer server;
 
             Uart uart;
-            FujitsuController controller;
             
             WiFiClient espClient;
             PubSubClient mqttClient;
 
-            MqttBridge* bridge = nullptr;
-            NetworkUpdater* networkUpdater = nullptr;
+            IMqttBridge* bridge = nullptr;
 
             String uniqueId;
             String wifiSsid;
@@ -63,6 +59,7 @@ namespace FujitsuAC {
             String mqttPw;
             String deviceName;
             String otaPw;
+            String protocol;
 
             int ledWPin;
             int ledRPin;

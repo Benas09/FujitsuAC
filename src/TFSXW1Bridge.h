@@ -5,59 +5,49 @@
   Project home: https://github.com/Benas09/FujitsuAC
 */
 
-#include "PubSubClient.h"
-#include "FujitsuController.h"
-#include "Enums.h"
-
 #pragma once
+
+#include "IMqttBridge.h"
+#include <Arduino.h>
+#include "RegistryTable.h"
+#include "Enums.h"
+#include "TFSXW1Controller.h"
 
 namespace FujitsuAC {
 
-    class MqttBridge {
+    class TFSXW1Bridge: public IMqttBridge {
         public:
-            MqttBridge(
+            TFSXW1Bridge(
                 PubSubClient &mqttClient,
-                FujitsuController &controller,
+                Stream &uart,
                 const char* uniqueId,
                 const char* name,
                 const char* version
             );
 
-            bool setup();
-            bool loop();
-            void registerSwitch(Address address);
-            void onVersionReceived(const char* version);
-            void debug(const char* name, const char* message);
-            void setOnFirmwareUpdateRequestCallback(std::function<void()> onFirmwareUpdateRequestCallback);
+            void setup() override;
+            void loop() override;
+
+            void onRegisterChange(const RegistryTable::Register *reg);
+
+        protected:
+            const char* getProtocolName() override {
+                return "UTY-TFSXW1";
+            }
+
+            void handleMqttCommand(const char *command, const char *property) override;
 
         private:
-            PubSubClient &mqttClient;
-            FujitsuController &controller;
-
-            String uniqueId;
-            String name;
-            String version;
-            String deviceConfig;
+            TFSXW1Controller controller;
             uint32_t lastTempReportMillis = -180000;
-            uint32_t lastDiagnosticReportMillis = -30000;
-
             bool isPoweringOn = false;
 
-            std::function<void()> onFirmwareUpdateRequestCallback;
-
-            void createDeviceConfig();
-            void registerDiagnosticEntities();
             void registerBaseEntities();
+            void registerSwitch(TFSXW1Controller::Address address);
+            void publishState(uint16_t address, const char* value);
 
-            void sendInitialDiagnosticData();
-            void sendDiagnosticData();
-            void onRegisterChange(const Register *reg);
-            void publishState(Address address, const char* value);
-            void onMqtt(char* topic, char* payload);
-            
-            static const char* getResetReason();
-            static const char* addressToString(Address address);
-            const char* valueToString(const Register *reg);
+            static const char* addressToString(uint16_t address);
+            const char* valueToString(const RegistryTable::Register *reg);
 
             const Enums::Power stringToEnum(Enums::Power def, const char *value);
             const Enums::MinimumHeat stringToEnum(Enums::MinimumHeat def, const char *value);

@@ -1,403 +1,403 @@
-/*
-  FujitsuAC - ESP32 libary for controlling FujitsuAC through MQTT
-  Copyright (c) 2025 Benas Ragauskas. All rights reserved.
+// /*
+//   FujitsuAC - ESP32 libary for controlling FujitsuAC through MQTT
+//   Copyright (c) 2025 Benas Ragauskas. All rights reserved.
   
-  Project home: https://github.com/Benas09/FujitsuAC
-*/
+//   Project home: https://github.com/Benas09/FujitsuAC
+// */
 
-#include "DummyUnit.h"
-#include <Arduino.h>
+// #include "DummyUnit.h"
+// #include <Arduino.h>
 
-namespace FujitsuAC {
+// namespace FujitsuAC {
 
-    DummyUnit::DummyUnit(Stream &uart)
-        : uart(uart),
-          registryTable(),
-          buffer(uart)
-    {}
+//     DummyUnit::DummyUnit(Stream &uart)
+//         : uart(uart),
+//           registryTable(),
+//           buffer(uart)
+//     {}
 
-    bool DummyUnit::setup() {
-        this->createDefaultRegistryValues();
+//     bool DummyUnit::setup() {
+//         this->createDefaultRegistryValues();
         
-        Serial.println("DummyUnit setup done");
+//         Serial.println("DummyUnit setup done");
 
-        return true;
-    }
+//         return true;
+//     }
 
-    bool DummyUnit::loop() {
-        this->buffer.loop([this](uint8_t buffer[128], int size, bool isValid) {
-            this->onFrame(buffer, size, isValid);
-        });
+//     bool DummyUnit::loop() {
+//         this->buffer.loop([this](uint8_t buffer[128], int size, bool isValid) {
+//             this->onFrame(buffer, size, isValid);
+//         });
 
-        return true;
-    }
+//         return true;
+//     }
 
-    void DummyUnit::onFrame(uint8_t buffer[128], int size, bool isValid) {
-        switch (buffer[0]) {
-            case 0x00: {
-                Serial.println("Controller initialized connection");
+//     void DummyUnit::onFrame(uint8_t buffer[128], int size, bool isValid) {
+//         switch (buffer[0]) {
+//             case 0x00: {
+//                 Serial.println("Controller initialized connection");
 
-                uint8_t response[8] = {0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0xFF, 0xFD};
-                uart.write(response, 8);
-                break;
-            }
+//                 uint8_t response[8] = {0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0xFF, 0xFD};
+//                 uart.write(response, 8);
+//                 break;
+//             }
                 
-            case 0x01: {
-                uint8_t response[8] = {0x01, 0x00, 0x00, 0x00, 0x01, 0x01, 0xFF, 0xFC};
+//             case 0x01: {
+//                 uint8_t response[8] = {0x01, 0x00, 0x00, 0x00, 0x01, 0x01, 0xFF, 0xFC};
 
-                Serial.println("Controller connected");
+//                 Serial.println("Controller connected");
 
-                uart.write(response, 8);
-                break;
-            }
+//                 uart.write(response, 8);
+//                 break;
+//             }
 
-            case 0x02: 
-                this->setRegistryValues(buffer, size);
-                break;
+//             case 0x02: 
+//                 this->setRegistryValues(buffer, size);
+//                 break;
 
-            case 0x03:
-                this->sendRegistryValues(buffer, size);
+//             case 0x03:
+//                 this->sendRegistryValues(buffer, size);
 
-                break;
-        }
-    }
+//                 break;
+//         }
+//     }
 
-    bool DummyUnit::setRegistryValues(uint8_t buffer[128], int size) {
-        String hexStr = String("");
+//     bool DummyUnit::setRegistryValues(uint8_t buffer[128], int size) {
+//         String hexStr = String("");
 
-        for (int i = 0; i < size; i++) {
-            hexStr += String(buffer[i], HEX);
+//         for (int i = 0; i < size; i++) {
+//             hexStr += String(buffer[i], HEX);
 
-            if (i < size - 1) {hexStr += " ";}
-        }
+//             if (i < size - 1) {hexStr += " ";}
+//         }
 
-        hexStr.toUpperCase();
+//         hexStr.toUpperCase();
 
-        Serial.println(hexStr);
+//         Serial.println(hexStr);
 
-        int registriesCount = buffer[4] / 4;
+//         int registriesCount = buffer[4] / 4;
 
-        for (int i = 0; i < registriesCount; i++) {
-            int index = 5 + i * 4;
+//         for (int i = 0; i < registriesCount; i++) {
+//             int index = 5 + i * 4;
 
-            uint8_t addrHigh = buffer[index];
-            uint8_t addrLow = buffer[index + 1];
+//             uint8_t addrHigh = buffer[index];
+//             uint8_t addrLow = buffer[index + 1];
 
-            uint8_t valueHigh = buffer[index + 2];
-            uint8_t valueLow = buffer[index + 3];
+//             uint8_t valueHigh = buffer[index + 2];
+//             uint8_t valueLow = buffer[index + 3];
 
-            uint16_t newValue = (static_cast<uint16_t>(valueHigh) << 8) | valueLow;
+//             uint16_t newValue = (static_cast<uint16_t>(valueHigh) << 8) | valueLow;
 
-            Address address = static_cast<Address>((static_cast<uint16_t>(addrHigh) << 8) | addrLow);
-            Register* reg = this->registryTable.getRegister(address);
-            reg->value = newValue;
-        }
+//             Address address = static_cast<Address>((static_cast<uint16_t>(addrHigh) << 8) | addrLow);
+//             Register* reg = this->registryTable.getRegister(address);
+//             reg->value = newValue;
+//         }
 
-        uint8_t response[8] = {0x02, 0x00, 0x00, 0x00, 0x01, 0x01, 0xFF, 0xFB};
-        uart.write(response, 8);
+//         uint8_t response[8] = {0x02, 0x00, 0x00, 0x00, 0x01, 0x01, 0xFF, 0xFB};
+//         uart.write(response, 8);
 
-        return true;
-    }
+//         return true;
+//     }
 
-    bool DummyUnit::sendRegistryValues(uint8_t buffer[128], int size) {
-        int registriesCount = buffer[4] / 2;
-        int responseSize = 4 * registriesCount + 8;
+//     bool DummyUnit::sendRegistryValues(uint8_t buffer[128], int size) {
+//         int registriesCount = buffer[4] / 2;
+//         int responseSize = 4 * registriesCount + 8;
 
-        uint8_t response[128] = {
-            0x03, 
-            0x00, 
-            0x00, 
-            0x00, 
-            4 * registriesCount + 1, 
-            0x01
-        };
+//         uint8_t response[128] = {
+//             0x03, 
+//             0x00, 
+//             0x00, 
+//             0x00, 
+//             4 * registriesCount + 1, 
+//             0x01
+//         };
 
-        uint16_t checksum = 
-            0xFFFF 
-            - 0x03
-            - (4 * registriesCount + 1)
-            - 0x01
-        ;
+//         uint16_t checksum = 
+//             0xFFFF 
+//             - 0x03
+//             - (4 * registriesCount + 1)
+//             - 0x01
+//         ;
 
-        for (int i = 0; i < registriesCount; i++) {
-            uint8_t addrHigh = buffer[5 + i * 2];
-            uint8_t addrLow = buffer[5 + i * 2 + 1];
+//         for (int i = 0; i < registriesCount; i++) {
+//             uint8_t addrHigh = buffer[5 + i * 2];
+//             uint8_t addrLow = buffer[5 + i * 2 + 1];
 
-            Address address = static_cast<Address>((static_cast<uint16_t>(addrHigh) << 8) | addrLow);
-            Register* reg = this->registryTable.getRegister(address);
+//             Address address = static_cast<Address>((static_cast<uint16_t>(addrHigh) << 8) | addrLow);
+//             Register* reg = this->registryTable.getRegister(address);
 
-            int index = 6 + i * 4;
+//             int index = 6 + i * 4;
 
-            response[index] = addrHigh;
-            response[index + 1] = addrLow;
-            response[index + 2] = (reg->value >> 8) & 0xFF;
-            response[index + 3] = reg->value & 0xFF;
+//             response[index] = addrHigh;
+//             response[index + 1] = addrLow;
+//             response[index + 2] = (reg->value >> 8) & 0xFF;
+//             response[index + 3] = reg->value & 0xFF;
 
-            checksum -= response[index];
-            checksum -= response[index + 1];
-            checksum -= response[index + 2];
-            checksum -= response[index + 3];
-        }
+//             checksum -= response[index];
+//             checksum -= response[index + 1];
+//             checksum -= response[index + 2];
+//             checksum -= response[index + 3];
+//         }
 
-        response[responseSize - 2] = (checksum >> 8) & 0xFF;
-        response[responseSize - 1] = checksum & 0xFF;
+//         response[responseSize - 2] = (checksum >> 8) & 0xFF;
+//         response[responseSize - 1] = checksum & 0xFF;
 
-        uart.write(response, responseSize);
+//         uart.write(response, responseSize);
 
-        return true;
-    }
+//         return true;
+//     }
 
-    void DummyUnit::createDefaultRegistryValues() {
-        struct RegVal {
-            Address address;
-            uint16_t value;
-        };
+//     void DummyUnit::createDefaultRegistryValues() {
+//         struct RegVal {
+//             Address address;
+//             uint16_t value;
+//         };
 
-        // static constexpr RegVal defaults[] = {
-        //     { Address::Initial0, 0x0000 },
-        //     { Address::Initial1, 0x0000 },
+//         // static constexpr RegVal defaults[] = {
+//         //     { Address::Initial0, 0x0000 },
+//         //     { Address::Initial1, 0x0000 },
 
-        //     { Address::Initial2, 0x0001 },
-        //     { Address::Initial3, 0x0001 },
-        //     { Address::Initial4, 0x0001 },
-        //     { Address::Initial5, 0x0001 },
-        //     { Address::Initial6, 0x0001 },
-        //     { Address::Initial7, 0x0001 },
-        //     { Address::Initial8, 0x0001 },
-        //     { Address::Initial9, 0x0001 },
-        //     { Address::Initial10, 0x0001 },
-        //     { Address::Initial11, 0x0001 },
-        //     { Address::VerticalAirflowDirectionCount, 0x0006 },
-        //     { Address::VerticalSwingSupported, 0x0001 },
-        //     { Address::HorizontalAirflowDirectionCount, 0x0000 },
-        //     { Address::HorizontalSwingSupported, 0x0000 },
+//         //     { Address::Initial2, 0x0001 },
+//         //     { Address::Initial3, 0x0001 },
+//         //     { Address::Initial4, 0x0001 },
+//         //     { Address::Initial5, 0x0001 },
+//         //     { Address::Initial6, 0x0001 },
+//         //     { Address::Initial7, 0x0001 },
+//         //     { Address::Initial8, 0x0001 },
+//         //     { Address::Initial9, 0x0001 },
+//         //     { Address::Initial10, 0x0001 },
+//         //     { Address::Initial11, 0x0001 },
+//         //     { Address::VerticalAirflowDirectionCount, 0x0006 },
+//         //     { Address::VerticalSwingSupported, 0x0001 },
+//         //     { Address::HorizontalAirflowDirectionCount, 0x0000 },
+//         //     { Address::HorizontalSwingSupported, 0x0000 },
 
-        //     { Address::EconomyModeSupported, 0x0001 },
-        //     { Address::MinimumHeatSupported, 0x0001 },
-        //     { Address::HumanSensorSupported, 0x0000 },
-        //     { Address::EnergySavingFanSupported, 0x0001 },
-        //     { Address::Initial20, 0x0000 },
-        //     { Address::Initial21, 0x0000 },
-        //     { Address::Initial22, 0x0000 },
-        //     { Address::PowerfulSupported, 0x0001 },
-        //     { Address::OutdoorUnitLowNoiseSupported, 0x0001 },
-        //     { Address::CoilDrySupported, 0x0000 },
+//         //     { Address::EconomyModeSupported, 0x0001 },
+//         //     { Address::MinimumHeatSupported, 0x0001 },
+//         //     { Address::HumanSensorSupported, 0x0000 },
+//         //     { Address::EnergySavingFanSupported, 0x0001 },
+//         //     { Address::Initial20, 0x0000 },
+//         //     { Address::Initial21, 0x0000 },
+//         //     { Address::Initial22, 0x0000 },
+//         //     { Address::PowerfulSupported, 0x0001 },
+//         //     { Address::OutdoorUnitLowNoiseSupported, 0x0001 },
+//         //     { Address::CoilDrySupported, 0x0000 },
 
-        //     { Address::Power, 0x0001 },
-        //     { Address::Mode, 0x0001 },
-        //     { Address::SetpointTemp, 0x00FA },
-        //     { Address::FanSpeed, 0x0002 },
-        //     { Address::VerticalAirflow, 0x0001 },
-        //     { Address::VerticalSwing, 0x0000 },
-        //     { Address::Register7, 0x0001 },
-        //     { Address::HorizontalAirflow, 0xFFFF },
-        //     { Address::HorizontalSwing, 0xFFFF },
-        //     { Address::Register10, 0xFFFF },
-        //     { Address::Register11, 0x0181 },
-        //     { Address::ActualTemp, 0x1B71 }, //0x1D97 25.5, is praeito batcho 0x1C6B -> 22.5, 0x1B71 -> 20.0
-        //     { Address::Register13, 0x0000 },
+//         //     { Address::Power, 0x0001 },
+//         //     { Address::Mode, 0x0001 },
+//         //     { Address::SetpointTemp, 0x00FA },
+//         //     { Address::FanSpeed, 0x0002 },
+//         //     { Address::VerticalAirflow, 0x0001 },
+//         //     { Address::VerticalSwing, 0x0000 },
+//         //     { Address::Register7, 0x0001 },
+//         //     { Address::HorizontalAirflow, 0xFFFF },
+//         //     { Address::HorizontalSwing, 0xFFFF },
+//         //     { Address::Register10, 0xFFFF },
+//         //     { Address::Register11, 0x0181 },
+//         //     { Address::ActualTemp, 0x1B71 }, //0x1D97 25.5, is praeito batcho 0x1C6B -> 22.5, 0x1B71 -> 20.0
+//         //     { Address::Register13, 0x0000 },
 
-        //     { Address::EconomyMode, 0x0000 },
-        //     { Address::MinimumHeat, 0x0000 },
-        //     { Address::HumanSensor, 0xFFFF },
-        //     { Address::Register17, 0xFFFF },
-        //     { Address::Register18, 0xFFFF },
-        //     { Address::Register19, 0xFFFF },
-        //     { Address::Register20, 0xFFFF },
-        //     { Address::Register21, 0xFFFF },
-        //     { Address::EnergySavingFan, 0x0001 },
-        //     { Address::Register23, 0x0000 },
-        //     { Address::Powerful, 0x0000 },
-        //     { Address::OutdoorUnitLowNoise, 0x0000 },
-        //     { Address::CoilDry, 0xFFFF },
-        //     { Address::Register27, 0x0000 },
-        //     { Address::Register28, 0x0000 },
-        //     { Address::Register29, 0x0000 },
-        //     { Address::Register30, 0x0000 },
-        //     { Address::Register31, 0x0000 },
-        //     { Address::Register32, 0xFFFF },
+//         //     { Address::EconomyMode, 0x0000 },
+//         //     { Address::MinimumHeat, 0x0000 },
+//         //     { Address::HumanSensor, 0xFFFF },
+//         //     { Address::Register17, 0xFFFF },
+//         //     { Address::Register18, 0xFFFF },
+//         //     { Address::Register19, 0xFFFF },
+//         //     { Address::Register20, 0xFFFF },
+//         //     { Address::Register21, 0xFFFF },
+//         //     { Address::EnergySavingFan, 0x0001 },
+//         //     { Address::Register23, 0x0000 },
+//         //     { Address::Powerful, 0x0000 },
+//         //     { Address::OutdoorUnitLowNoise, 0x0000 },
+//         //     { Address::CoilDry, 0xFFFF },
+//         //     { Address::Register27, 0x0000 },
+//         //     { Address::Register28, 0x0000 },
+//         //     { Address::Register29, 0x0000 },
+//         //     { Address::Register30, 0x0000 },
+//         //     { Address::Register31, 0x0000 },
+//         //     { Address::Register32, 0xFFFF },
 
-        //     { Address::Register33, 0x0000 },
-        //     { Address::Register34, 0x0000 },
-        //     { Address::Register35, 0x0000 },
-        //     { Address::Register36, 0x0000 },
-        //     { Address::Register37, 0x0000 },
-        //     { Address::Register38, 0x0000 },
-        //     { Address::Register39, 0x0000 },
-        //     { Address::Register40, 0x0000 },
-        //     { Address::Register41, 0xFFFF },
-        //     { Address::OutdoorTemp, 0x1964 },
-        //     { Address::Register43, 0x0000 },
-        //     { Address::Register44, 0x0000 }
-        // };
+//         //     { Address::Register33, 0x0000 },
+//         //     { Address::Register34, 0x0000 },
+//         //     { Address::Register35, 0x0000 },
+//         //     { Address::Register36, 0x0000 },
+//         //     { Address::Register37, 0x0000 },
+//         //     { Address::Register38, 0x0000 },
+//         //     { Address::Register39, 0x0000 },
+//         //     { Address::Register40, 0x0000 },
+//         //     { Address::Register41, 0xFFFF },
+//         //     { Address::OutdoorTemp, 0x1964 },
+//         //     { Address::Register43, 0x0000 },
+//         //     { Address::Register44, 0x0000 }
+//         // };
 
-        // static constexpr RegVal defaults[] = {
-        //     { Address::Initial0, 0x0000 },
-        //     { Address::Initial1, 0x0000 },
+//         // static constexpr RegVal defaults[] = {
+//         //     { Address::Initial0, 0x0000 },
+//         //     { Address::Initial1, 0x0000 },
 
-        //     { Address::Initial2, 0x0001 },
-        //     { Address::Initial3, 0x0001 },
-        //     { Address::Initial4, 0x0001 },
-        //     { Address::Initial5, 0x0001 },
-        //     { Address::Initial6, 0x0001 },
-        //     { Address::Initial7, 0x0001 },
-        //     { Address::Initial8, 0x0001 },
-        //     { Address::Initial9, 0x0001 },
-        //     { Address::Initial10, 0x0001 },
-        //     { Address::Initial11, 0x0001 },
-        //     { Address::VerticalAirflowDirectionCount, 0x0006 },
-        //     { Address::VerticalSwingSupported, 0x0001 },
-        //     { Address::HorizontalAirflowDirectionCount, 0x0000 }, //0 nera horizontal, 15 yra 5 horizontal
-        //     { Address::HorizontalSwingSupported, 0x0000 },
+//         //     { Address::Initial2, 0x0001 },
+//         //     { Address::Initial3, 0x0001 },
+//         //     { Address::Initial4, 0x0001 },
+//         //     { Address::Initial5, 0x0001 },
+//         //     { Address::Initial6, 0x0001 },
+//         //     { Address::Initial7, 0x0001 },
+//         //     { Address::Initial8, 0x0001 },
+//         //     { Address::Initial9, 0x0001 },
+//         //     { Address::Initial10, 0x0001 },
+//         //     { Address::Initial11, 0x0001 },
+//         //     { Address::VerticalAirflowDirectionCount, 0x0006 },
+//         //     { Address::VerticalSwingSupported, 0x0001 },
+//         //     { Address::HorizontalAirflowDirectionCount, 0x0000 }, //0 nera horizontal, 15 yra 5 horizontal
+//         //     { Address::HorizontalSwingSupported, 0x0000 },
 
-        //     { Address::EconomyModeSupported, 0x0001 },
-        //     { Address::MinimumHeatSupported, 0x0001 },
-        //     { Address::HumanSensorSupported, 0x0000 },
-        //     { Address::EnergySavingFanSupported, 0x0001 },
-        //     { Address::Initial20, 0x0000 },
-        //     { Address::Initial21, 0x0000 },
-        //     { Address::Initial22, 0x0000 },
-        //     { Address::PowerfulSupported, 0x0001 },
-        //     { Address::OutdoorUnitLowNoiseSupported, 0x0001 },
-        //     { Address::CoilDrySupported, 0x0000 },
+//         //     { Address::EconomyModeSupported, 0x0001 },
+//         //     { Address::MinimumHeatSupported, 0x0001 },
+//         //     { Address::HumanSensorSupported, 0x0000 },
+//         //     { Address::EnergySavingFanSupported, 0x0001 },
+//         //     { Address::Initial20, 0x0000 },
+//         //     { Address::Initial21, 0x0000 },
+//         //     { Address::Initial22, 0x0000 },
+//         //     { Address::PowerfulSupported, 0x0001 },
+//         //     { Address::OutdoorUnitLowNoiseSupported, 0x0001 },
+//         //     { Address::CoilDrySupported, 0x0000 },
 
-        //     { Address::Power, 0x0001 },
-        //     { Address::Mode, 0x0001 },
-        //     { Address::SetpointTemp, 0x00FA },
-        //     { Address::FanSpeed, 0x0002 },
-        //     { Address::VerticalAirflowSetterRegistry, 0x0001 },
-        //     { Address::VerticalSwing, 0x0000 },
-        //     { Address::VerticalAirflow, 0x0000 },
-        //     { Address::HorizontalAirflowSetterRegistry, 0x0003 },
-        //     { Address::HorizontalSwing, 0x0000 },
-        //     { Address::HorizontalAirflow, 0xFFFF },
-        //     { Address::Register11, 0x0181 },
-        //     { Address::ActualTemp, 0x1B71 },
-        //     { Address::Register13, 0x0000 },
+//         //     { Address::Power, 0x0001 },
+//         //     { Address::Mode, 0x0001 },
+//         //     { Address::SetpointTemp, 0x00FA },
+//         //     { Address::FanSpeed, 0x0002 },
+//         //     { Address::VerticalAirflowSetterRegistry, 0x0001 },
+//         //     { Address::VerticalSwing, 0x0000 },
+//         //     { Address::VerticalAirflow, 0x0000 },
+//         //     { Address::HorizontalAirflowSetterRegistry, 0x0003 },
+//         //     { Address::HorizontalSwing, 0x0000 },
+//         //     { Address::HorizontalAirflow, 0xFFFF },
+//         //     { Address::Register11, 0x0181 },
+//         //     { Address::ActualTemp, 0x1B71 },
+//         //     { Address::Register13, 0x0000 },
 
-        //     { Address::EconomyMode, 0x0000 },
-        //     { Address::MinimumHeat, 0x0000 },
-        //     { Address::HumanSensor, 0x0000 },
-        //     { Address::Register17, 0x0014 },
-        //     { Address::Register18, 0x0000 },
-        //     { Address::Register19, 0x0000 },
-        //     { Address::Register20, 0xFFFF },
-        //     { Address::Register21, 0xFFFF },
-        //     { Address::EnergySavingFan, 0x0001 },
-        //     { Address::Register23, 0x0000 },
-        //     { Address::Powerful, 0x0000 },
-        //     { Address::OutdoorUnitLowNoise, 0x0000 },
-        //     { Address::CoilDry, 0xFFFF },
-        //     { Address::Register27, 0x0000 },
-        //     { Address::Register28, 0x0000 },
-        //     { Address::Register29, 0x0000 },
-        //     { Address::Register30, 0x0000 },
-        //     { Address::Register31, 0x0000 },
-        //     { Address::Register32, 0xFFFF },
+//         //     { Address::EconomyMode, 0x0000 },
+//         //     { Address::MinimumHeat, 0x0000 },
+//         //     { Address::HumanSensor, 0x0000 },
+//         //     { Address::Register17, 0x0014 },
+//         //     { Address::Register18, 0x0000 },
+//         //     { Address::Register19, 0x0000 },
+//         //     { Address::Register20, 0xFFFF },
+//         //     { Address::Register21, 0xFFFF },
+//         //     { Address::EnergySavingFan, 0x0001 },
+//         //     { Address::Register23, 0x0000 },
+//         //     { Address::Powerful, 0x0000 },
+//         //     { Address::OutdoorUnitLowNoise, 0x0000 },
+//         //     { Address::CoilDry, 0xFFFF },
+//         //     { Address::Register27, 0x0000 },
+//         //     { Address::Register28, 0x0000 },
+//         //     { Address::Register29, 0x0000 },
+//         //     { Address::Register30, 0x0000 },
+//         //     { Address::Register31, 0x0000 },
+//         //     { Address::Register32, 0xFFFF },
 
-        //     { Address::Register33, 0x0000 },
-        //     { Address::Register34, 0x0000 },
-        //     { Address::Register35, 0x0000 },
-        //     { Address::Register36, 0x0000 },
-        //     { Address::Register37, 0x0000 },
-        //     { Address::Register38, 0x0000 },
-        //     { Address::Register39, 0x0000 },
-        //     { Address::Register40, 0x0000 },
-        //     { Address::Register41, 0xFFFF },
-        //     { Address::OutdoorTemp, 0x15E0 },
-        //     { Address::Register43, 0x0000 },
-        //     { Address::Register44, 0x0000 }
-        // };
+//         //     { Address::Register33, 0x0000 },
+//         //     { Address::Register34, 0x0000 },
+//         //     { Address::Register35, 0x0000 },
+//         //     { Address::Register36, 0x0000 },
+//         //     { Address::Register37, 0x0000 },
+//         //     { Address::Register38, 0x0000 },
+//         //     { Address::Register39, 0x0000 },
+//         //     { Address::Register40, 0x0000 },
+//         //     { Address::Register41, 0xFFFF },
+//         //     { Address::OutdoorTemp, 0x15E0 },
+//         //     { Address::Register43, 0x0000 },
+//         //     { Address::Register44, 0x0000 }
+//         // };
 
-        // 15:53:09.392 -> 2 0 0 0 4 11 44 0 1 FF A3 coil dry enable. 
-        // kol ijungtas - negalima keisti economy, airflow direction, powerful, mode, temperaturos
-        // 15:53:19.836 -> 2 0 0 0 4 11 44 0 0 FF A4 coil dry disable
+//         // 15:53:09.392 -> 2 0 0 0 4 11 44 0 1 FF A3 coil dry enable. 
+//         // kol ijungtas - negalima keisti economy, airflow direction, powerful, mode, temperaturos
+//         // 15:53:19.836 -> 2 0 0 0 4 11 44 0 0 FF A4 coil dry disable
 
-        static constexpr RegVal defaults[] = {
-            { Address::Initial0, 0x0000 },
-            { Address::Initial1, 0x0000 },
+//         static constexpr RegVal defaults[] = {
+//             { Address::Initial0, 0x0000 },
+//             { Address::Initial1, 0x0000 },
 
-            { Address::Initial2, 0x0001 },
-            { Address::Initial3, 0x0001 },
-            { Address::Initial4, 0x0001 },
-            { Address::Initial5, 0x0001 },
-            { Address::Initial6, 0x0001 },
-            { Address::Initial7, 0x0001 },
-            { Address::Initial8, 0x0001 },
-            { Address::Initial9, 0x0001 },
-            { Address::Initial10, 0x0001 },
-            { Address::Initial11, 0x0001 },
-            { Address::VerticalAirflowDirectionCount, 0x0006 },
-            { Address::VerticalSwingSupported, 0x0001 },
-            { Address::HorizontalAirflowDirectionCount, 0x0015 },
-            { Address::HorizontalSwingSupported, 0x0001 },
+//             { Address::Initial2, 0x0001 },
+//             { Address::Initial3, 0x0001 },
+//             { Address::Initial4, 0x0001 },
+//             { Address::Initial5, 0x0001 },
+//             { Address::Initial6, 0x0001 },
+//             { Address::Initial7, 0x0001 },
+//             { Address::Initial8, 0x0001 },
+//             { Address::Initial9, 0x0001 },
+//             { Address::Initial10, 0x0001 },
+//             { Address::Initial11, 0x0001 },
+//             { Address::VerticalAirflowDirectionCount, 0x0006 },
+//             { Address::VerticalSwingSupported, 0x0001 },
+//             { Address::HorizontalAirflowDirectionCount, 0x0015 },
+//             { Address::HorizontalSwingSupported, 0x0001 },
 
-            { Address::EconomyModeSupported, 0x0001 },
-            { Address::MinimumHeatSupported, 0x0001 },
-            { Address::HumanSensorSupported, 0x0001 },
-            { Address::EnergySavingFanSupported, 0x0001 },
-            { Address::Initial20, 0x0000 }, //neaiskus
-            { Address::Initial21, 0x0000 }, //neaiskus
-            { Address::Initial22, 0x0000 }, //neaiskus
-            { Address::PowerfulSupported, 0x0001 },
-            { Address::OutdoorUnitLowNoiseSupported, 0x0001 },
-            { Address::CoilDrySupported, 0x0001 },
+//             { Address::EconomyModeSupported, 0x0001 },
+//             { Address::MinimumHeatSupported, 0x0001 },
+//             { Address::HumanSensorSupported, 0x0001 },
+//             { Address::EnergySavingFanSupported, 0x0001 },
+//             { Address::Initial20, 0x0000 }, //neaiskus
+//             { Address::Initial21, 0x0000 }, //neaiskus
+//             { Address::Initial22, 0x0000 }, //neaiskus
+//             { Address::PowerfulSupported, 0x0001 },
+//             { Address::OutdoorUnitLowNoiseSupported, 0x0001 },
+//             { Address::CoilDrySupported, 0x0001 },
 
-            { Address::Power, 0x0001 },
-            { Address::Mode, 0x0001 },
-            { Address::SetpointTemp, 0x00FA },
-            { Address::FanSpeed, 0x0002 },
-            { Address::VerticalAirflowSetterRegistry, 0x0001 },
-            { Address::VerticalSwing, 0x0000 },
-            { Address::VerticalAirflow, 0x0001 },
-            { Address::HorizontalAirflowSetterRegistry, 0xFFFF },
-            { Address::HorizontalSwing, 0xFFFF },
-            { Address::HorizontalAirflow, 0xFFFF },
-            { Address::Register11, 0x0181 }, //keiciasi i 0
-            { Address::ActualTemp, 0x1B71 },
-            { Address::Register13, 0x0000 },
+//             { Address::Power, 0x0001 },
+//             { Address::Mode, 0x0001 },
+//             { Address::SetpointTemp, 0x00FA },
+//             { Address::FanSpeed, 0x0002 },
+//             { Address::VerticalAirflowSetterRegistry, 0x0001 },
+//             { Address::VerticalSwing, 0x0000 },
+//             { Address::VerticalAirflow, 0x0001 },
+//             { Address::HorizontalAirflowSetterRegistry, 0xFFFF },
+//             { Address::HorizontalSwing, 0xFFFF },
+//             { Address::HorizontalAirflow, 0xFFFF },
+//             { Address::Register11, 0x0181 }, //keiciasi i 0
+//             { Address::ActualTemp, 0x1B71 },
+//             { Address::Register13, 0x0000 },
 
-            { Address::EconomyMode, 0x0000 },
-            { Address::MinimumHeat, 0x0000 },
-            { Address::HumanSensor, 0xFFFF },
-            { Address::Register17, 0xFFFF },
-            { Address::Register18, 0xFFFF },
-            { Address::Register19, 0xFFFF },
-            { Address::Register20, 0xFFFF },
-            { Address::Register21, 0xFFFF },
-            { Address::EnergySavingFan, 0x0001 },
-            { Address::Register23, 0x0000 },
-            { Address::Powerful, 0x0000 },
-            { Address::OutdoorUnitLowNoise, 0x0000 },
-            { Address::CoilDry, 0xFFFF },
-            { Address::Register27, 0x0000 },
-            { Address::Register28, 0x0000 },
-            { Address::Register29, 0x0000 },
-            { Address::Register30, 0x0000 },
-            { Address::Register31, 0x0000 },
-            { Address::Register32, 0xFFFF },
+//             { Address::EconomyMode, 0x0000 },
+//             { Address::MinimumHeat, 0x0000 },
+//             { Address::HumanSensor, 0xFFFF },
+//             { Address::Register17, 0xFFFF },
+//             { Address::Register18, 0xFFFF },
+//             { Address::Register19, 0xFFFF },
+//             { Address::Register20, 0xFFFF },
+//             { Address::Register21, 0xFFFF },
+//             { Address::EnergySavingFan, 0x0001 },
+//             { Address::Register23, 0x0000 },
+//             { Address::Powerful, 0x0000 },
+//             { Address::OutdoorUnitLowNoise, 0x0000 },
+//             { Address::CoilDry, 0xFFFF },
+//             { Address::Register27, 0x0000 },
+//             { Address::Register28, 0x0000 },
+//             { Address::Register29, 0x0000 },
+//             { Address::Register30, 0x0000 },
+//             { Address::Register31, 0x0000 },
+//             { Address::Register32, 0xFFFF },
 
-            { Address::Register33, 0x0000 },
-            { Address::Register34, 0x0000 },
-            { Address::Register35, 0x0000 },
-            { Address::Register36, 0x0000 },
-            { Address::Register37, 0x0000 },
-            { Address::Register38, 0x0000 },
-            { Address::Register39, 0x0000 },
-            { Address::Register40, 0x0000 },
-            { Address::Register41, 0xFFFF },
-            { Address::OutdoorTemp, 0x1964 },
-            { Address::Register43, 0x0000 },
-            { Address::Register44, 0x0000 }
-        };
+//             { Address::Register33, 0x0000 },
+//             { Address::Register34, 0x0000 },
+//             { Address::Register35, 0x0000 },
+//             { Address::Register36, 0x0000 },
+//             { Address::Register37, 0x0000 },
+//             { Address::Register38, 0x0000 },
+//             { Address::Register39, 0x0000 },
+//             { Address::Register40, 0x0000 },
+//             { Address::Register41, 0xFFFF },
+//             { Address::OutdoorTemp, 0x1964 },
+//             { Address::Register43, 0x0000 },
+//             { Address::Register44, 0x0000 }
+//         };
 
-        for (const auto& rv : defaults) {
-            Register* reg = this->registryTable.getRegister(rv.address);
+//         for (const auto& rv : defaults) {
+//             Register* reg = this->registryTable.getRegister(rv.address);
 
-            if (reg) {
-                reg->value = rv.value;
-            }
-        }
-    }
+//             if (reg) {
+//                 reg->value = rv.value;
+//             }
+//         }
+//     }
 
-}
+// }

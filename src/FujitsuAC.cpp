@@ -4,9 +4,12 @@
   
   Project home: https://github.com/Benas09/FujitsuAC
 */
+#pragma once
 #include "FujitsuAC.h"
+#include "TFSXW1Bridge.h"
+// #include "TFSXJ4Bridge.h"
 
-#define VERSION "1.2.3"
+#define VERSION "1.3.0"
 
 RTC_NOINIT_ATTR bool isFallbackAp;
 
@@ -16,7 +19,6 @@ namespace FujitsuAC {
         preferences(),
         server(80),
         uart(UART_NUM_2, rxPin, txPin),
-        controller(uart),
         espClient(),
         mqttClient(espClient),
         ledWPin(ledWPin),
@@ -34,7 +36,6 @@ namespace FujitsuAC {
             return;
         }
 
-        this->controller.setup();
         this->connectToWifi();
 
         ArduinoOTA.setHostname(deviceName.c_str());
@@ -70,8 +71,6 @@ namespace FujitsuAC {
 
         this->mqttClient.loop();
         this->bridge->loop();
-        this->networkUpdater->loop();
-        this->controller.loop();
     }
 
     void FujitsuAC::generateUniqueId() {
@@ -115,6 +114,7 @@ namespace FujitsuAC {
         mqttPw = preferences.getString("mqtt-pw", "");
         deviceName = preferences.getString("device-name", "");
         otaPw = preferences.getString("ota-pw", "");
+        protocol = preferences.getString("protocol", "");
 
         preferences.end();
     }
@@ -130,6 +130,7 @@ namespace FujitsuAC {
         preferences.putString("mqtt-pw", ""); 
         preferences.putString("device-name", ""); 
         preferences.putString("ota-pw", "");
+        preferences.putString("protocol", "");
 
         preferences.end();
 
@@ -187,6 +188,7 @@ namespace FujitsuAC {
         preferences.putString("mqtt-pw", getConfigValue(content, "mqtt-pw")); 
         preferences.putString("device-name", getConfigValue(content, "device-name")); 
         preferences.putString("ota-pw", getConfigValue(content, "ota-pw"));
+        preferences.putString("protocol", getConfigValue(content, "protocol"));
 
         preferences.end();
 
@@ -215,7 +217,7 @@ namespace FujitsuAC {
         WiFi.softAPConfig(apIP, apGateway, apSubnet);
 
         char accessPointName[64];
-        snprintf(accessPointName, sizeof(accessPointName), "fAir-%s", uniqueId.c_str());
+        snprintf(accessPointName, sizeof(accessPointName), "faircon-%s", uniqueId.c_str());
 
         if (!WiFi.softAP(accessPointName)) {
             ESP.restart();
@@ -315,12 +317,14 @@ namespace FujitsuAC {
                 }
 
                 if (nullptr == bridge) {
-                    bridge = new MqttBridge(mqttClient, controller, uniqueId.c_str(), deviceName.c_str(), VERSION);
-                    networkUpdater = new NetworkUpdater(*bridge);
+                    if (this->protocol == "UTY-TFSXJ4") {
+                        // bridge = new TFSXJ4Bridge(mqttClient, uart, uniqueId.c_str(), deviceName.c_str(), VERSION);
+                        // bridge->setup();
+                    } else {
+                        bridge = new TFSXW1Bridge(mqttClient, uart, uniqueId.c_str(), deviceName.c_str(), VERSION);
+                        bridge->setup();
+                    }
                 }
-
-                bridge->setup();
-                networkUpdater->setup();
             } else {
                 this->handleResetButton();
 
@@ -336,7 +340,7 @@ namespace FujitsuAC {
             const char *contentStart = R"rawliteral(
                 <html>
                     <head>
-                        <title>fAir</title>
+                        <title>faircon</title>
 
                         <style>
                             * {
@@ -379,7 +383,7 @@ namespace FujitsuAC {
                                 font-size: 14px;
                             }
 
-                            input[type="text"] {
+                            input[type="text"], select {
                                 width: 100%;
                                 padding: 8px 10px;
                                 margin-bottom: 14px;
@@ -388,7 +392,7 @@ namespace FujitsuAC {
                                 font-size: 14px;
                             }
 
-                            input[type="text"]:focus {
+                            input[type="text"]:focus, select:focus {
                                 outline: none;
                                 border-color: #4a90e2;
                             }
@@ -429,7 +433,7 @@ namespace FujitsuAC {
                         <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     </head>
                     <body>
-                        <h1>fAir</h1>
+                        <h1>faircon</h1>
             )rawliteral";
 
             const char *formBody = R"rawliteral(
@@ -457,6 +461,12 @@ namespace FujitsuAC {
 
                     <label>Device password</label>
                     <input type="text" name="ota-pw" value="living_room_ac" required>
+                    
+                    <label>Protocol</label>
+                    <select name="protocol">
+                        <option value="UTY-TFSXW1">UTY-TFSXW1</option>
+                        <option value="UTY-TFSXJ4">UTY-TFSXJ4</option>
+                    </select>
 
                     <input type="submit" value="Submit">
                 </form>
@@ -468,7 +478,7 @@ namespace FujitsuAC {
 
             const char *contentEnd = R"rawliteral(
                         <br/>
-                        <span><a href="https://github.com/Benas09/FujitsuAC">fAir</a></span>
+                        <span><a href="https://faircon.lt">faircon</a></span>
                     </body>
                 </html>
             )rawliteral";

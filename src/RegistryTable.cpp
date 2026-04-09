@@ -11,30 +11,31 @@
 
 namespace FujitsuAC {
 
-	RegistryTable::RegistryTable() {
+	RegistryTable::RegistryTable(size_t size, Register *registerTable):
+		_size(size),
+		_registerTable(registerTable)
+	{
 		std::sort(
-			this->registerTable, 
-			this->registerTable + sizeof(this->registerTable) / sizeof(this->registerTable[0]),
+			_registerTable, 
+			_registerTable + _size,
 			[](const Register& a, const Register& b) {
 				return a.address < b.address;
 			}
 		);
 	};
 
-	Register* RegistryTable::getRegister(Address address) {
-		size_t size = sizeof(this->registerTable) / sizeof(this->registerTable[0]);
-
+	RegistryTable::Register* RegistryTable::getRegister(uint16_t address) {
 		auto it = std::lower_bound(
-			this->registerTable, 
-			this->registerTable + size,
+			_registerTable, 
+			_registerTable + _size,
 			address,
-			[](const Register& reg, Address val) {
+			[](const Register& reg, uint16_t val) {
 				return reg.address < val;
 			}
 		);
 
 		if (
-			it != registerTable + sizeof(registerTable) / sizeof(registerTable[0]) 
+			it != _registerTable + _size 
 			&& it->address == address
 		) {
 			return it;
@@ -43,10 +44,10 @@ namespace FujitsuAC {
 		return nullptr;
 	}
 
-	const Register* RegistryTable::getAllRegisters(size_t &outSize) const {
-		outSize = sizeof(registerTable) / sizeof(registerTable[0]);
+	const RegistryTable::Register* RegistryTable::getAllRegisters(size_t &outSize) const {
+		outSize = _size;
 
-		return registerTable;
+		return _registerTable;
 	}
 
 }
