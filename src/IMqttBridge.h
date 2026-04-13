@@ -10,6 +10,7 @@
 #include "PubSubClient.h"
 #include <WiFi.h>
 #include "esp_system.h"
+#include "Config.h"
 #include "NetworkUpdater.h"
 
 namespace FujitsuAC {
@@ -17,22 +18,18 @@ namespace FujitsuAC {
     class IMqttBridge {
         public:
             IMqttBridge(
-                PubSubClient &mqttClient,
-                const char* uniqueId,
-                const char* name,
-                const char* version
+                Config &config,
+                PubSubClient &mqttClient
             ): 
-                mqttClient(mqttClient),
-                uniqueId(uniqueId),
-                name(name),
-                version(version) 
+                _config(config),
+                mqttClient(mqttClient)
             {}
 
             virtual ~IMqttBridge() = default;
 
             virtual void setup() {
                 char topic[128];
-                snprintf(topic, sizeof(topic), "fujitsu/%s/status", this->uniqueId.c_str());
+                snprintf(topic, sizeof(topic), "fujitsu/%s/status", _config.getUniqueId().c_str());
                 this->mqttClient.publish(topic, "online", true);
 
                 this->debug("info", "MQTT Connected");
@@ -50,7 +47,7 @@ namespace FujitsuAC {
                     this->onMqtt(topic, message);
                 });
 
-                snprintf(topic, sizeof(topic), "fujitsu/%s/#", this->uniqueId.c_str());
+                snprintf(topic, sizeof(topic), "fujitsu/%s/#", _config.getUniqueId().c_str());
                 this->mqttClient.subscribe(topic);
 
                 this->networkUpdater = new NetworkUpdater();
@@ -72,7 +69,7 @@ namespace FujitsuAC {
             void publishState(const char* name, const char* value) {
                 char topic[64];
 
-                snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", this->uniqueId.c_str(), name);
+                snprintf(topic, sizeof(topic), "fujitsu/%s/state/%s", _config.getUniqueId().c_str(), name);
                 this->mqttClient.publish(topic, value, true);
             }
 
@@ -84,16 +81,13 @@ namespace FujitsuAC {
                 }
 
                 char topic[64];
-                snprintf(topic, sizeof(topic), "fujitsu/%s/debug/%s", this->uniqueId.c_str(), name);
+                snprintf(topic, sizeof(topic), "fujitsu/%s/debug/%s", _config.getUniqueId().c_str(), name);
                 this->mqttClient.publish(topic, message);
             }
 
         protected:
+            Config &_config;
             PubSubClient &mqttClient;
-
-            String uniqueId;
-            String name;
-            String version;
             String deviceConfig;
 
             virtual const char* getProtocolName() = 0;
@@ -107,10 +101,10 @@ namespace FujitsuAC {
             void createDeviceConfig() {
                 if (0 == this->deviceConfig.length()) {
                     this->deviceConfig = "\"device\": {";
-                    this->deviceConfig += "\"identifiers\": [\"" + this->uniqueId + "\"],";
+                    this->deviceConfig += "\"identifiers\": [\"" + _config.getUniqueId() + "\"],";
                     this->deviceConfig += "\"manufacturer\": \"bepro.lt\",";
                     this->deviceConfig += "\"model\": \"faircon\",";
-                    this->deviceConfig += "\"name\": \"" + this->name + "\"";
+                    this->deviceConfig += "\"name\": \"" + _config.getDeviceName() + "\"";
                     this->deviceConfig += "}";
                 }
             }
@@ -121,173 +115,190 @@ namespace FujitsuAC {
                 String p = "{";
                 p += "\"name\": \"status\",";
                 p += "\"icon\": \"mdi:information\",";
-                p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
                 p += "\"payload_available\": \"online\",";
                 p += "\"payload_not_available\": \"offline\",";
-                p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/status\",";
+                p += "\"state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/status\",";
                 p += "\"device_class\": \"enum\",";
                 p += "\"entity_category\": \"diagnostic\",";
-                p += "\"unique_id\": \"" + this->uniqueId + "_status\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_status\",";
                 p += this->deviceConfig;
                 p += "}";
 
-                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_status/config", this->uniqueId.c_str());
+                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_status/config", _config.getUniqueId().c_str());
                 this->mqttClient.publish(topic, p.c_str(), true);
 
                 p = "{";
                 p += "\"name\": \"restart\",";
                 p += "\"icon\": \"mdi:restart\",";
-                p += "\"unique_id\": \"" + this->uniqueId + "_restart\",";
-                p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_restart\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
                 p += "\"payload_available\": \"online\",";
                 p += "\"payload_not_available\": \"offline\",";
-                p += "\"command_topic\": \"fujitsu/" + this->uniqueId + "/set/restart\",";
+                p += "\"command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/restart\",";
                 p += "\"entity_category\": \"diagnostic\",";
                 p += "\"payload_press\": \"restart\",";
                 p += this->deviceConfig;
                 p += "}";
 
-                snprintf(topic, sizeof(topic), "homeassistant/button/%s_%s/config", this->uniqueId.c_str(), "restart");
+                snprintf(topic, sizeof(topic), "homeassistant/button/%s_%s/config", _config.getUniqueId().c_str(), "restart");
                 this->mqttClient.publish(topic, p.c_str(), true);
 
                 p = "{";
                 p += "\"name\": \"update_firmware\",";
                 p += "\"icon\": \"mdi:update\",";
-                p += "\"unique_id\": \"" + this->uniqueId + "_update_firmware\",";
-                p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_update_firmware\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
                 p += "\"payload_available\": \"online\",";
                 p += "\"payload_not_available\": \"offline\",";
-                p += "\"command_topic\": \"fujitsu/" + this->uniqueId + "/set/update_firmware\",";
+                p += "\"command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/update_firmware\",";
                 p += "\"entity_category\": \"diagnostic\",";
                 p += "\"payload_press\": \"update_firmware\",";
                 
                 p += this->deviceConfig;
                 p += "}";
 
-                snprintf(topic, sizeof(topic), "homeassistant/button/%s_%s/config", this->uniqueId.c_str(), "update_firmware");
+                snprintf(topic, sizeof(topic), "homeassistant/button/%s_%s/config", _config.getUniqueId().c_str(), "update_firmware");
+                this->mqttClient.publish(topic, p.c_str(), true);
+
+                p = "{";
+                p += "\"name\": \"clear_credentials\",";
+                p += "\"icon\": \"mdi:delete-alert\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_clear_credentials\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
+                p += "\"payload_available\": \"online\",";
+                p += "\"payload_not_available\": \"offline\",";
+                p += "\"command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/clear_credentials\",";
+                p += "\"entity_category\": \"diagnostic\",";
+                p += "\"payload_press\": \"clear_credentials\",";
+                
+                p += this->deviceConfig;
+                p += "}";
+
+                snprintf(topic, sizeof(topic), "homeassistant/button/%s_%s/config", _config.getUniqueId().c_str(), "clear_credentials");
                 this->mqttClient.publish(topic, p.c_str(), true);
 
                 p = "{";
                 p += "\"name\": \"name\",";
                 p += "\"icon\": \"mdi:text-recognition\",";
-                p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
                 p += "\"payload_available\": \"online\",";
                 p += "\"payload_not_available\": \"offline\",";
-                p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/name\",";
+                p += "\"state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/name\",";
                 p += "\"entity_category\": \"diagnostic\",";
-                p += "\"unique_id\": \"" + this->uniqueId + "_name\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_name\",";
                 p += this->deviceConfig;
                 p += "}";
 
-                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_name/config", this->uniqueId.c_str());
+                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_name/config", _config.getUniqueId().c_str());
                 this->mqttClient.publish(topic, p.c_str(), true);
 
                 p = "{";
                 p += "\"name\": \"wifi_rssi\",";
                 p += "\"icon\": \"mdi:wifi\",";
-                p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
                 p += "\"payload_available\": \"online\",";
                 p += "\"payload_not_available\": \"offline\",";
-                p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/wifi_rssi\",";
+                p += "\"state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/wifi_rssi\",";
                 p += "\"device_class\": \"signal_strength\",";
                 p += "\"entity_category\": \"diagnostic\",";
                 p += "\"unit_of_measurement\": \"dB\",";
-                p += "\"unique_id\": \"" + this->uniqueId + "_wifi_rssi\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_wifi_rssi\",";
                 p += this->deviceConfig;
                 p += "}";
 
-                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_wifi_rssi/config", this->uniqueId.c_str());
+                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_wifi_rssi/config", _config.getUniqueId().c_str());
                 this->mqttClient.publish(topic, p.c_str(), true);
 
                 p = "{";
                 p += "\"name\": \"ip\",";
                 p += "\"icon\": \"mdi:ip\",";
-                p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
                 p += "\"payload_available\": \"online\",";
                 p += "\"payload_not_available\": \"offline\",";
-                p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/ip\",";
+                p += "\"state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/ip\",";
                 p += "\"entity_category\": \"diagnostic\",";
-                p += "\"unique_id\": \"" + this->uniqueId + "_ip\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_ip\",";
                 p += this->deviceConfig;
                 p += "}";
 
-                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_ip/config", this->uniqueId.c_str());
+                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_ip/config", _config.getUniqueId().c_str());
                 this->mqttClient.publish(topic, p.c_str(), true);
 
                 p = "{";
                 p += "\"name\": \"mac\",";
                 p += "\"icon\": \"mdi:identifier\",";
-                p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
                 p += "\"payload_available\": \"online\",";
                 p += "\"payload_not_available\": \"offline\",";
-                p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/mac\",";
+                p += "\"state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/mac\",";
                 p += "\"entity_category\": \"diagnostic\",";
-                p += "\"unique_id\": \"" + this->uniqueId + "_mac\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_mac\",";
                 p += this->deviceConfig;
                 p += "}";
 
-                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_mac/config", this->uniqueId.c_str());
+                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_mac/config", _config.getUniqueId().c_str());
                 this->mqttClient.publish(topic, p.c_str(), true);
 
                 p = "{";
                 p += "\"name\": \"version\",";
                 p += "\"icon\": \"mdi:git\",";
-                p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
                 p += "\"payload_available\": \"online\",";
                 p += "\"payload_not_available\": \"offline\",";
-                p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/version\",";
+                p += "\"state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/version\",";
                 p += "\"entity_category\": \"diagnostic\",";
-                p += "\"unique_id\": \"" + this->uniqueId + "_version\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_version\",";
                 p += this->deviceConfig;
                 p += "}";
 
-                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_version/config", this->uniqueId.c_str());
+                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_version/config", _config.getUniqueId().c_str());
                 this->mqttClient.publish(topic, p.c_str(), true);
 
                 p = "{";
                 p += "\"name\": \"latest_version\",";
                 p += "\"icon\": \"mdi:git\",";
-                p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
                 p += "\"payload_available\": \"online\",";
                 p += "\"payload_not_available\": \"offline\",";
-                p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/latest_version\",";
+                p += "\"state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/latest_version\",";
                 p += "\"entity_category\": \"diagnostic\",";
-                p += "\"unique_id\": \"" + this->uniqueId + "_latest_version\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_latest_version\",";
                 p += this->deviceConfig;
                 p += "}";
 
-                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_latest_version/config", this->uniqueId.c_str());
+                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_latest_version/config", _config.getUniqueId().c_str());
                 this->mqttClient.publish(topic, p.c_str(), true);
 
                 p = "{";
                 p += "\"name\": \"protocol\",";
                 p += "\"icon\": \"mdi:git\",";
-                p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
                 p += "\"payload_available\": \"online\",";
                 p += "\"payload_not_available\": \"offline\",";
-                p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/protocol\",";
+                p += "\"state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/protocol\",";
                 p += "\"entity_category\": \"diagnostic\",";
-                p += "\"unique_id\": \"" + this->uniqueId + "_protocol\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_protocol\",";
                 p += this->deviceConfig;
                 p += "}";
 
-                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_protocol/config", this->uniqueId.c_str());
+                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_protocol/config", _config.getUniqueId().c_str());
                 this->mqttClient.publish(topic, p.c_str(), true);
 
                 p = "{";
                 p += "\"name\": \"reset_reason\",";
                 p += "\"icon\": \"mdi:restart\",";
-                p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
                 p += "\"payload_available\": \"online\",";
                 p += "\"payload_not_available\": \"offline\",";
-                p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/reset_reason\",";
+                p += "\"state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/reset_reason\",";
                 p += "\"device_class\": \"enum\",";
                 p += "\"entity_category\": \"diagnostic\",";
-                p += "\"unique_id\": \"" + this->uniqueId + "_reset_reason\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_reset_reason\",";
                 p += this->deviceConfig;
                 p += "}";
 
-                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_reset_reason/config", this->uniqueId.c_str());
+                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_reset_reason/config", _config.getUniqueId().c_str());
                 this->mqttClient.publish(topic, p.c_str(), true);
 
                 this->debug("info", "Diagnostic entities registered");
@@ -295,10 +306,10 @@ namespace FujitsuAC {
 
             void sendInitialDiagnosticData() {
                 this->publishState("status", "MqttBridge started");
-                this->publishState("name", this->name.c_str());
+                this->publishState("name", _config.getDeviceName().c_str());
                 this->publishState("ip", WiFi.localIP().toString().c_str());
                 this->publishState("mac", WiFi.macAddress().c_str());
-                this->publishState("version", this->version.c_str());
+                this->publishState("version", _config.getVersion());
                 this->publishState("protocol", this->getProtocolName());
                 this->publishState("reset_reason", this->getResetReason());
             }

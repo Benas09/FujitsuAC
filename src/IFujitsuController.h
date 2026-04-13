@@ -9,13 +9,15 @@
 
 #include <Arduino.h>
 #include "RegistryTable.h"
+#include "Buffer.h"
 
 namespace FujitsuAC {
 
     class IFujitsuController {
     	public:
     		IFujitsuController(Stream &uart):
-    			uart(uart)
+    			uart(uart),
+    			buffer(uart)
     		{}
 
     		virtual ~IFujitsuController() = default;
@@ -31,8 +33,18 @@ namespace FujitsuAC {
 		        this->onRegisterChangeCallback = onRegisterChangeCallback;
 		    }
 
+		    const RegistryTable::Register* getAllRegisters(size_t &outSize) const {
+		        return this->registryTable->getAllRegisters(outSize);
+		    }
+
+		    RegistryTable::Register* getRegister(uint8_t address) {
+		        return this->registryTable->getRegister(address);
+		    }
+
 	    protected:
 	    	Stream &uart;
+	    	Buffer buffer;
+	    	RegistryTable *registryTable;
 
 	    	std::function<void(const char* name, const char* message)> debugCallback;
 	    	std::function<void(const RegistryTable::Register *reg)> onRegisterChangeCallback;

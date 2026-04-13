@@ -9,10 +9,99 @@
 
 #include <IFujitsuController.h>
 #include <stdint.h>
-#include "Buffer.h"
-#include "Enums.h"
 
 namespace FujitsuAC {
+
+    namespace TFSXW1Enums {
+        enum class Power: uint16_t {
+            On = 0x0001,
+            Off = 0x0000
+        };
+
+        enum class Mode: uint16_t {
+            Auto = 0x0000,
+            Cool = 0x0001,
+            Dry = 0x0002,
+            Fan = 0x0003,
+            Heat = 0x0004,
+
+            None = 0x0005, //internal
+          //    MinimumHeat = 0x0001 adresas 17 1/
+        };
+
+        enum class MinimumHeat: uint16_t {
+            On = 0x0001,
+            Off = 0x0000
+        };
+
+        enum class FanSpeed: uint16_t {
+            Auto = 0x0000,
+            Quiet = 0x0002,
+            Low = 0x0005,
+            Medium = 0x0008,
+            High = 0x000B,
+        };
+
+        enum class VerticalAirflow: uint16_t {
+            Position1 = 0x0001,
+            Position2 = 0x0002,
+            Position3 = 0x0003,
+            Position4 = 0x0004,
+            Position5 = 0x0005,
+            Position6 = 0x0006,
+            Swing = 0x0020,
+        };
+
+        enum class VerticalSwing: uint16_t {
+            Off = 0x0000,
+            On = 0x0001,
+        };
+
+        enum class HorizontalSwing: uint16_t {
+            Off = 0x0000,
+            On = 0x0001,
+        };
+
+        enum class HorizontalAirflow: uint16_t {
+            Position1 = 0x0001,
+            Position2 = 0x0002,
+            Position3 = 0x0003,
+            Position4 = 0x0004,
+            Position5 = 0x0005,
+            Position6 = 0x0006,
+            Swing = 0x0020,
+        };
+
+        enum class Powerful: uint16_t {
+            Off = 0x0000,
+            On = 0x0001,
+        };
+
+        enum class EconomyMode: uint16_t {
+            Off = 0x0000,
+            On = 0x0001,
+        };
+
+        enum class EnergySavingFan: uint16_t {
+            Off = 0x0000,
+            On = 0x0001,
+        };
+
+        enum class OutdoorUnitLowNoise: uint16_t {
+            Off = 0x0000,
+            On = 0x0001,
+        };
+
+        enum class CoilDry: uint16_t {
+            Off = 0x0000,
+            On = 0x0001,
+        };
+
+        enum class HumanSensor: uint16_t {
+            Off = 0x0000,
+            On = 0x0001,
+        };
+    }
 
     class TFSXW1Controller: public IFujitsuController {
 
@@ -94,26 +183,26 @@ namespace FujitsuAC {
                 Register43 = 0x2021,  
                 Register44 = 0xF001,
             };
-            
+
             TFSXW1Controller(Stream &uart);
 
             void setup() override;
             void loop() override;
 
-            void setPower(Enums::Power power);
-            void setMinimumHeat(Enums::MinimumHeat minimumHeat);
-            void setMode(Enums::Mode mode);
-            void setFanSpeed(Enums::FanSpeed fanSpeed);
-            void setVerticalAirflow(Enums::VerticalAirflow verticalAirflow);
-            void setVerticalSwing(Enums::VerticalSwing verticalSwing);
-            void setHorizontalAirflow(Enums::HorizontalAirflow horizontalAirflow);
-            void setHorizontalSwing(Enums::HorizontalSwing horizontalSwing);
-            void setPowerful(Enums::Powerful powerful);
-            void setEconomy(Enums::EconomyMode economy);
-            void setEnergySavingFan(Enums::EnergySavingFan energySavingFan);
-            void setOutdoorUnitLowNoise(Enums::OutdoorUnitLowNoise outdoorUnitLowNoise);
-            void setCoilDry(Enums::CoilDry coilDry);
-            void setHumanSensor(Enums::HumanSensor humanSensor);
+            void setPower(TFSXW1Enums::Power power);
+            void setMinimumHeat(TFSXW1Enums::MinimumHeat minimumHeat);
+            void setMode(TFSXW1Enums::Mode mode);
+            void setFanSpeed(TFSXW1Enums::FanSpeed fanSpeed);
+            void setVerticalAirflow(TFSXW1Enums::VerticalAirflow verticalAirflow);
+            void setVerticalSwing(TFSXW1Enums::VerticalSwing verticalSwing);
+            void setHorizontalAirflow(TFSXW1Enums::HorizontalAirflow horizontalAirflow);
+            void setHorizontalSwing(TFSXW1Enums::HorizontalSwing horizontalSwing);
+            void setPowerful(TFSXW1Enums::Powerful powerful);
+            void setEconomy(TFSXW1Enums::EconomyMode economy);
+            void setEnergySavingFan(TFSXW1Enums::EnergySavingFan energySavingFan);
+            void setOutdoorUnitLowNoise(TFSXW1Enums::OutdoorUnitLowNoise outdoorUnitLowNoise);
+            void setCoilDry(TFSXW1Enums::CoilDry coilDry);
+            void setHumanSensor(TFSXW1Enums::HumanSensor humanSensor);
             void setTemp(const char *temp);
 
             bool isPoweredOn();
@@ -122,19 +211,12 @@ namespace FujitsuAC {
             int getVerticalAirflowDirectionCount();
             int getHorizontalAirflowDirectionCount();
 
-            const RegistryTable::Register* getAllRegisters(size_t &outSize) const;
-            RegistryTable::Register* getRegister(Address address);
-
         private:
-            RegistryTable *registryTable;
-            Buffer buffer;
             uint32_t lastRequestMillis = 0;
             bool lastResponseReceived = true;
             bool noResponseNotified = false;
             bool initialized = false;
             bool terminated = false;
-
-            bool humanSensorSupported = false;
 
             enum class FrameType: int {
                 None = -1,

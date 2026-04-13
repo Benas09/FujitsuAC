@@ -11,10 +11,7 @@
 
 namespace FujitsuAC {
 
-    TFSXW1Controller::TFSXW1Controller(Stream &uart): 
-        IFujitsuController(uart),
-        buffer(uart)
-    {}
+    TFSXW1Controller::TFSXW1Controller(Stream &uart): IFujitsuController(uart) {}
 
     void TFSXW1Controller::setup() {
         this->initRegistryTable();
@@ -33,14 +30,6 @@ namespace FujitsuAC {
         this->buffer.loop([this](uint8_t buffer[128], int size, bool isValid) {
             this->onFrame(buffer, size, isValid);
         });
-    }
-
-    const RegistryTable::Register* TFSXW1Controller::getAllRegisters(size_t &outSize) const {
-        return this->registryTable->getAllRegisters(outSize);
-    }
-
-    RegistryTable::Register* TFSXW1Controller::getRegister(Address address) {
-        return this->registryTable->getRegister(address);
     }
 
     void TFSXW1Controller::sendRequest() {
@@ -369,13 +358,13 @@ namespace FujitsuAC {
     bool TFSXW1Controller::isPoweredOn() {
         RegistryTable::Register* reg = this->registryTable->getRegister(Address::Power);
         
-        return static_cast<uint16_t>(Enums::Power::On) == reg->value;
+        return static_cast<uint16_t>(TFSXW1Enums::Power::On) == reg->value;
     }
 
     bool TFSXW1Controller::isMinimumHeatEnabled() {
         RegistryTable::Register* reg = this->registryTable->getRegister(Address::MinimumHeat);
 
-        return static_cast<uint16_t>(Enums::MinimumHeat::On) == reg->value;
+        return static_cast<uint16_t>(TFSXW1Enums::MinimumHeat::On) == reg->value;
     }
 
     bool TFSXW1Controller::isCoilDryEnabled() {
@@ -409,7 +398,7 @@ namespace FujitsuAC {
         return 0x0001 == reg->value;
     }
 
-    void TFSXW1Controller::setPower(Enums::Power power) {
+    void TFSXW1Controller::setPower(TFSXW1Enums::Power power) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -419,7 +408,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(power);
     }
 
-    void TFSXW1Controller::setMinimumHeat(Enums::MinimumHeat minimumHeat) {
+    void TFSXW1Controller::setMinimumHeat(TFSXW1Enums::MinimumHeat minimumHeat) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -433,7 +422,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(minimumHeat);
     }
 
-    void TFSXW1Controller::setMode(Enums::Mode mode) {
+    void TFSXW1Controller::setMode(TFSXW1Enums::Mode mode) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -455,7 +444,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(mode);
     }
 
-    void TFSXW1Controller::setFanSpeed(Enums::FanSpeed fanSpeed) {
+    void TFSXW1Controller::setFanSpeed(TFSXW1Enums::FanSpeed fanSpeed) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -477,7 +466,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(fanSpeed);
     }
 
-    void TFSXW1Controller::setVerticalAirflow(Enums::VerticalAirflow verticalAirflow) {
+    void TFSXW1Controller::setVerticalAirflow(TFSXW1Enums::VerticalAirflow verticalAirflow) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -496,12 +485,12 @@ namespace FujitsuAC {
 
         this->frameSendRegistries.size = 2;
         this->frameSendRegistries.registries[0] = Address::VerticalSwing;
-        this->frameSendRegistries.values[0] = static_cast<uint16_t>(Enums::VerticalSwing::Off);
+        this->frameSendRegistries.values[0] = static_cast<uint16_t>(TFSXW1Enums::VerticalSwing::Off);
         this->frameSendRegistries.registries[1] = Address::VerticalAirflowSetterRegistry;
         this->frameSendRegistries.values[1] = static_cast<uint16_t>(verticalAirflow);
     }
 
-    void TFSXW1Controller::setVerticalSwing(Enums::VerticalSwing verticalSwing) {
+    void TFSXW1Controller::setVerticalSwing(TFSXW1Enums::VerticalSwing verticalSwing) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -523,7 +512,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(verticalSwing);
     }
 
-    void TFSXW1Controller::setHorizontalAirflow(Enums::HorizontalAirflow horizontalAirflow) {
+    void TFSXW1Controller::setHorizontalAirflow(TFSXW1Enums::HorizontalAirflow horizontalAirflow) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -542,12 +531,12 @@ namespace FujitsuAC {
 
         this->frameSendRegistries.size = 2;
         this->frameSendRegistries.registries[0] = Address::HorizontalSwing;
-        this->frameSendRegistries.values[0] = static_cast<uint16_t>(Enums::HorizontalSwing::Off);
+        this->frameSendRegistries.values[0] = static_cast<uint16_t>(TFSXW1Enums::HorizontalSwing::Off);
         this->frameSendRegistries.registries[1] = Address::HorizontalAirflowSetterRegistry;
         this->frameSendRegistries.values[1] = static_cast<uint16_t>(horizontalAirflow);
     }
 
-    void TFSXW1Controller::setHorizontalSwing(Enums::HorizontalSwing horizontalSwing) {
+    void TFSXW1Controller::setHorizontalSwing(TFSXW1Enums::HorizontalSwing horizontalSwing) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -569,7 +558,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(horizontalSwing);
     }
 
-    void TFSXW1Controller::setPowerful(Enums::Powerful powerful) {
+    void TFSXW1Controller::setPowerful(TFSXW1Enums::Powerful powerful) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -591,7 +580,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(powerful);
     }
 
-    void TFSXW1Controller::setEconomy(Enums::EconomyMode economy) {
+    void TFSXW1Controller::setEconomy(TFSXW1Enums::EconomyMode economy) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -613,7 +602,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(economy);
     }
 
-    void TFSXW1Controller::setEnergySavingFan(Enums::EnergySavingFan energySavingFan) {
+    void TFSXW1Controller::setEnergySavingFan(TFSXW1Enums::EnergySavingFan energySavingFan) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -629,7 +618,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(energySavingFan);
     }
 
-    void TFSXW1Controller::setOutdoorUnitLowNoise(Enums::OutdoorUnitLowNoise outdoorUnitLowNoise) {
+    void TFSXW1Controller::setOutdoorUnitLowNoise(TFSXW1Enums::OutdoorUnitLowNoise outdoorUnitLowNoise) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -639,7 +628,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(outdoorUnitLowNoise);
     }
 
-    void TFSXW1Controller::setCoilDry(Enums::CoilDry coilDry) {
+    void TFSXW1Controller::setCoilDry(TFSXW1Enums::CoilDry coilDry) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -649,7 +638,7 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(coilDry);
     }
 
-    void TFSXW1Controller::setHumanSensor(Enums::HumanSensor humanSensor) {
+    void TFSXW1Controller::setHumanSensor(TFSXW1Enums::HumanSensor humanSensor) {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
@@ -684,13 +673,13 @@ namespace FujitsuAC {
 
         RegistryTable::Register* modeRegistry = this->registryTable->getRegister(Address::Mode);
 
-        if (static_cast<uint16_t>(Enums::Mode::Fan) == modeRegistry->value) {
+        if (static_cast<uint16_t>(TFSXW1Enums::Mode::Fan) == modeRegistry->value) {
             this->debug("info", "Fan mode enabled");
 
             return;
         }
 
-        int minTemp = static_cast<uint16_t>(Enums::Mode::Heat) == modeRegistry->value
+        int minTemp = static_cast<uint16_t>(TFSXW1Enums::Mode::Heat) == modeRegistry->value
             ? 160
             : 180
         ;

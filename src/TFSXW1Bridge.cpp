@@ -11,18 +11,14 @@
 
 namespace FujitsuAC {
     TFSXW1Bridge::TFSXW1Bridge(
+        Config &config,
         PubSubClient &mqttClient,
-        Stream &uart,
-        const char* uniqueId,
-        const char* name,
-        const char* version
+        Stream &uart
     ):
         controller(uart),
         IMqttBridge(
-            mqttClient,
-            uniqueId, 
-            name, 
-            version
+            config,
+            mqttClient
         )
     {}
 
@@ -63,7 +59,7 @@ namespace FujitsuAC {
         this->controller.loop();
 
         if (this->isPoweringOn && !this->controller.isPoweredOn()) {
-            this->controller.setPower(Enums::Power::On);
+            this->controller.setPower(TFSXW1Enums::Power::On);
         }
     }
 
@@ -72,24 +68,24 @@ namespace FujitsuAC {
 
         String p = "{";
         p += "\"name\": \"climate\",";
-        p += "\"unique_id\": \"" + this->uniqueId + "_climate\",";
+        p += "\"unique_id\": \"" + _config.getUniqueId() + "_climate\",";
         p += "\"icon\": \"mdi:air-conditioner\",";
 
-        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
         p += "\"payload_available\": \"online\",";
         p += "\"payload_not_available\": \"offline\",";
 
-        p += "\"mode_command_topic\": \"fujitsu/" + this->uniqueId + "/set/mode\",";
-        p += "\"mode_state_topic\": \"fujitsu/" + this->uniqueId + "/state/mode\",";
+        p += "\"mode_command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/mode\",";
+        p += "\"mode_state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/mode\",";
 
-        p += "\"temperature_command_topic\": \"fujitsu/" + this->uniqueId + "/set/temp\",";
-        p += "\"temperature_state_topic\": \"fujitsu/" + this->uniqueId + "/state/temp\",";
+        p += "\"temperature_command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/temp\",";
+        p += "\"temperature_state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/temp\",";
 
-        p += "\"fan_mode_command_topic\": \"fujitsu/" + this->uniqueId + "/set/fan\",";
-        p += "\"fan_mode_state_topic\": \"fujitsu/" + this->uniqueId + "/state/fan\",";
+        p += "\"fan_mode_command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/fan\",";
+        p += "\"fan_mode_state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/fan\",";
 
-        p += "\"current_temperature_topic\": \"fujitsu/" + this->uniqueId + "/state/actual_temp\",";
-        p += "\"current_humidity_topic\": \"fujitsu/" + this->uniqueId + "/state/humidity\",";
+        p += "\"current_temperature_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/actual_temp\",";
+        p += "\"current_humidity_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/humidity\",";
 
         p += "\"min_temp\": 18,";
         p += "\"max_temp\": 30,";
@@ -99,37 +95,37 @@ namespace FujitsuAC {
         p += this->deviceConfig;
         p += "}";
 
-        snprintf(topic, sizeof(topic), "homeassistant/climate/%s_climate/config", this->uniqueId.c_str());
+        snprintf(topic, sizeof(topic), "homeassistant/climate/%s_climate/config", _config.getUniqueId().c_str());
         this->mqttClient.publish(topic, p.c_str(), true);
 
         p = "{";
         p += "\"name\": \"actual_temp\",";
-        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
         p += "\"payload_available\": \"online\",";
         p += "\"payload_not_available\": \"offline\",";
-        p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/actual_temp\",";
+        p += "\"state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/actual_temp\",";
         p += "\"unit_of_measurement\": \"°C\",";
-        p += "\"unique_id\": \"" + this->uniqueId + "_actual_temp\",";
+        p += "\"unique_id\": \"" + _config.getUniqueId() + "_actual_temp\",";
         p += "\"device_class\": \"temperature\",";
         p += this->deviceConfig;
         p += "}";
 
-        snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_actual_temp/config", this->uniqueId.c_str());
+        snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_actual_temp/config", _config.getUniqueId().c_str());
         this->mqttClient.publish(topic, p.c_str(), true);
 
         p = "{";
         p += "\"name\": \"outdoor_temp\",";
-        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
         p += "\"payload_available\": \"online\",";
         p += "\"payload_not_available\": \"offline\",";
-        p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/outdoor_temp\",";
+        p += "\"state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/outdoor_temp\",";
         p += "\"unit_of_measurement\": \"°C\",";
-        p += "\"unique_id\": \"" + this->uniqueId + "_outdoor_temp\",";
+        p += "\"unique_id\": \"" + _config.getUniqueId() + "_outdoor_temp\",";
         p += "\"device_class\": \"temperature\",";
         p += this->deviceConfig;
         p += "}";
 
-        snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_outdoor_temp/config", this->uniqueId.c_str());
+        snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_outdoor_temp/config", _config.getUniqueId().c_str());
         this->mqttClient.publish(topic, p.c_str(), true);
 
         this->debug("info", "Base entities registered");
@@ -140,12 +136,12 @@ namespace FujitsuAC {
         
         String p = "{";
         p += "\"name\": \"" + propertyName + "\",";
-        p += "\"unique_id\": \"" + this->uniqueId + "_" + propertyName + "\",";
-        p += "\"availability_topic\": \"fujitsu/" + this->uniqueId + "/status\",";
+        p += "\"unique_id\": \"" + _config.getUniqueId() + "_" + propertyName + "\",";
+        p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
         p += "\"payload_available\": \"online\",";
         p += "\"payload_not_available\": \"offline\",";
-        p += "\"state_topic\": \"fujitsu/" + this->uniqueId + "/state/" + propertyName + "\",";
-        p += "\"command_topic\": \"fujitsu/" + this->uniqueId + "/set/" + propertyName + "\",";
+        p += "\"state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/" + propertyName + "\",";
+        p += "\"command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/" + propertyName + "\",";
 
         if (
             TFSXW1Controller::Address::VerticalAirflow == address
@@ -185,9 +181,9 @@ namespace FujitsuAC {
             TFSXW1Controller::Address::VerticalAirflow == address
             || TFSXW1Controller::Address::HorizontalAirflow == address
         ) {
-            snprintf(topic, sizeof(topic), "homeassistant/select/%s_%s/config", this->uniqueId.c_str(), propertyName.c_str());
+            snprintf(topic, sizeof(topic), "homeassistant/select/%s_%s/config", _config.getUniqueId().c_str(), propertyName.c_str());
         } else {
-            snprintf(topic, sizeof(topic), "homeassistant/switch/%s_%s/config", this->uniqueId.c_str(), propertyName.c_str());
+            snprintf(topic, sizeof(topic), "homeassistant/switch/%s_%s/config", _config.getUniqueId().c_str(), propertyName.c_str());
         }
 
         this->mqttClient.publish(topic, p.c_str(), true);
@@ -200,25 +196,25 @@ namespace FujitsuAC {
 
     void TFSXW1Bridge::handleMqttCommand(const char *property, const char* payload) {
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::Power))) {
-            this->controller.setPower(this->stringToEnum(Enums::Power::Off, payload));
+            this->controller.setPower(this->stringToEnum(TFSXW1Enums::Power::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::MinimumHeat))) {
-            this->controller.setMinimumHeat(this->stringToEnum(Enums::MinimumHeat::Off, payload));
+            this->controller.setMinimumHeat(this->stringToEnum(TFSXW1Enums::MinimumHeat::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::Mode))) {
             if (0 == strcmp(payload, "off")) {
-                this->controller.setPower(Enums::Power::Off);
+                this->controller.setPower(TFSXW1Enums::Power::Off);
 
                 return;
             }
 
-            this->controller.setMode(this->stringToEnum(Enums::Mode::Auto, payload));
+            this->controller.setMode(this->stringToEnum(TFSXW1Enums::Mode::Auto, payload));
 
             if (!this->controller.isPoweredOn()) {
                 this->isPoweringOn = true;
@@ -234,67 +230,67 @@ namespace FujitsuAC {
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::FanSpeed))) {
-            this->controller.setFanSpeed(this->stringToEnum(Enums::FanSpeed::Auto, payload));
+            this->controller.setFanSpeed(this->stringToEnum(TFSXW1Enums::FanSpeed::Auto, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::VerticalAirflow))) {
-            this->controller.setVerticalAirflow(this->stringToEnum(Enums::VerticalAirflow::Position1, payload));
+            this->controller.setVerticalAirflow(this->stringToEnum(TFSXW1Enums::VerticalAirflow::Position1, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::VerticalSwing))) {
-            this->controller.setVerticalSwing(this->stringToEnum(Enums::VerticalSwing::Off, payload));
+            this->controller.setVerticalSwing(this->stringToEnum(TFSXW1Enums::VerticalSwing::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::HorizontalAirflow))) {
-            this->controller.setHorizontalAirflow(this->stringToEnum(Enums::HorizontalAirflow::Position1, payload));
+            this->controller.setHorizontalAirflow(this->stringToEnum(TFSXW1Enums::HorizontalAirflow::Position1, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::HorizontalSwing))) {
-            this->controller.setHorizontalSwing(this->stringToEnum(Enums::HorizontalSwing::Off, payload));
+            this->controller.setHorizontalSwing(this->stringToEnum(TFSXW1Enums::HorizontalSwing::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::Powerful))) {
-            this->controller.setPowerful(this->stringToEnum(Enums::Powerful::Off, payload));
+            this->controller.setPowerful(this->stringToEnum(TFSXW1Enums::Powerful::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::EconomyMode))) {
-            this->controller.setEconomy(this->stringToEnum(Enums::EconomyMode::Off, payload));
+            this->controller.setEconomy(this->stringToEnum(TFSXW1Enums::EconomyMode::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::EnergySavingFan))) {
-            this->controller.setEnergySavingFan(this->stringToEnum(Enums::EnergySavingFan::Off, payload));
+            this->controller.setEnergySavingFan(this->stringToEnum(TFSXW1Enums::EnergySavingFan::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::OutdoorUnitLowNoise))) {
-            this->controller.setOutdoorUnitLowNoise(this->stringToEnum(Enums::OutdoorUnitLowNoise::Off, payload));
+            this->controller.setOutdoorUnitLowNoise(this->stringToEnum(TFSXW1Enums::OutdoorUnitLowNoise::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::HumanSensor))) {
-            this->controller.setHumanSensor(this->stringToEnum(Enums::HumanSensor::Off, payload));
+            this->controller.setHumanSensor(this->stringToEnum(TFSXW1Enums::HumanSensor::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::CoilDry))) {
-            this->controller.setCoilDry(this->stringToEnum(Enums::CoilDry::Off, payload));
+            this->controller.setCoilDry(this->stringToEnum(TFSXW1Enums::CoilDry::Off, payload));
 
             return;
         }
@@ -319,7 +315,7 @@ namespace FujitsuAC {
         this->publishState(reg->address, this->valueToString(reg));
 
         if (TFSXW1Controller::Address::Power == reg->address) {
-            if (static_cast<uint16_t>(Enums::Power::On) == reg->value) {
+            if (static_cast<uint16_t>(TFSXW1Enums::Power::On) == reg->value) {
                 this->isPoweringOn = false;
             }
 
@@ -394,17 +390,17 @@ namespace FujitsuAC {
     const char* TFSXW1Bridge::valueToString(const RegistryTable::Register *reg) {
         switch (reg->address) {
             case TFSXW1Controller::Address::Power:
-                switch (static_cast<Enums::Power>(reg->value)) {
-                    case Enums::Power::On: return "on";
-                    case Enums::Power::Off: return "off";
+                switch (static_cast<TFSXW1Enums::Power>(reg->value)) {
+                    case TFSXW1Enums::Power::On: return "on";
+                    case TFSXW1Enums::Power::Off: return "off";
                     default: return "unknown";
                 }
 
                 break;
             case TFSXW1Controller::Address::MinimumHeat:
-                switch (static_cast<Enums::MinimumHeat>(reg->value)) {
-                    case Enums::MinimumHeat::On: return "on";
-                    case Enums::MinimumHeat::Off: return "off";
+                switch (static_cast<TFSXW1Enums::MinimumHeat>(reg->value)) {
+                    case TFSXW1Enums::MinimumHeat::On: return "on";
+                    case TFSXW1Enums::MinimumHeat::Off: return "off";
                     default: return "unknown";
                 }
 
@@ -414,113 +410,113 @@ namespace FujitsuAC {
                     return "off";
                 }
 
-                switch (static_cast<Enums::Mode>(reg->value)) {
-                    case Enums::Mode::Auto: return "auto";
-                    case Enums::Mode::Cool: return "cool";
-                    case Enums::Mode::Dry: return "dry";
-                    case Enums::Mode::Fan: return "fan_only";
-                    case Enums::Mode::Heat: return "heat";
+                switch (static_cast<TFSXW1Enums::Mode>(reg->value)) {
+                    case TFSXW1Enums::Mode::Auto: return "auto";
+                    case TFSXW1Enums::Mode::Cool: return "cool";
+                    case TFSXW1Enums::Mode::Dry: return "dry";
+                    case TFSXW1Enums::Mode::Fan: return "fan_only";
+                    case TFSXW1Enums::Mode::Heat: return "heat";
                     default: return "unknown";
                 }
 
                 break;
             case TFSXW1Controller::Address::FanSpeed:
-                switch (static_cast<Enums::FanSpeed>(reg->value)) {
-                    case Enums::FanSpeed::Auto: return "auto";
-                    case Enums::FanSpeed::Quiet: return "quiet";
-                    case Enums::FanSpeed::Low: return "low";
-                    case Enums::FanSpeed::Medium: return "medium";
-                    case Enums::FanSpeed::High: return "high";
+                switch (static_cast<TFSXW1Enums::FanSpeed>(reg->value)) {
+                    case TFSXW1Enums::FanSpeed::Auto: return "auto";
+                    case TFSXW1Enums::FanSpeed::Quiet: return "quiet";
+                    case TFSXW1Enums::FanSpeed::Low: return "low";
+                    case TFSXW1Enums::FanSpeed::Medium: return "medium";
+                    case TFSXW1Enums::FanSpeed::High: return "high";
                     default: return "unknown";
                 }
 
                 break;
             case TFSXW1Controller::Address::VerticalSwing:
-                switch (static_cast<Enums::VerticalSwing>(reg->value)) {
-                    case Enums::VerticalSwing::On: return "on";
-                    case Enums::VerticalSwing::Off: return "off";
+                switch (static_cast<TFSXW1Enums::VerticalSwing>(reg->value)) {
+                    case TFSXW1Enums::VerticalSwing::On: return "on";
+                    case TFSXW1Enums::VerticalSwing::Off: return "off";
                     default: return "unknown";
                 }
 
                 break;
             case TFSXW1Controller::Address::VerticalAirflow:
-                switch (static_cast<Enums::VerticalAirflow>(reg->value)) {
-                    case Enums::VerticalAirflow::Position1: return "1";
-                    case Enums::VerticalAirflow::Position2: return "2";
-                    case Enums::VerticalAirflow::Position3: return "3";
-                    case Enums::VerticalAirflow::Position4: return "4";
-                    case Enums::VerticalAirflow::Position5: return "5";
-                    case Enums::VerticalAirflow::Position6: return "6";
-                    case Enums::VerticalAirflow::Swing: return "1";
+                switch (static_cast<TFSXW1Enums::VerticalAirflow>(reg->value)) {
+                    case TFSXW1Enums::VerticalAirflow::Position1: return "1";
+                    case TFSXW1Enums::VerticalAirflow::Position2: return "2";
+                    case TFSXW1Enums::VerticalAirflow::Position3: return "3";
+                    case TFSXW1Enums::VerticalAirflow::Position4: return "4";
+                    case TFSXW1Enums::VerticalAirflow::Position5: return "5";
+                    case TFSXW1Enums::VerticalAirflow::Position6: return "6";
+                    case TFSXW1Enums::VerticalAirflow::Swing: return "1";
                     default: return "unknown";
                 }
 
                 break;
             case TFSXW1Controller::Address::HorizontalSwing:
-                switch (static_cast<Enums::HorizontalSwing>(reg->value)) {
-                    case Enums::HorizontalSwing::On: return "on";
-                    case Enums::HorizontalSwing::Off: return "off";
+                switch (static_cast<TFSXW1Enums::HorizontalSwing>(reg->value)) {
+                    case TFSXW1Enums::HorizontalSwing::On: return "on";
+                    case TFSXW1Enums::HorizontalSwing::Off: return "off";
                     default: return "unknown";
                 }
 
                 break;
             case TFSXW1Controller::Address::HorizontalAirflow:
-                switch (static_cast<Enums::HorizontalAirflow>(reg->value)) {
-                    case Enums::HorizontalAirflow::Position1: return "1";
-                    case Enums::HorizontalAirflow::Position2: return "2";
-                    case Enums::HorizontalAirflow::Position3: return "3";
-                    case Enums::HorizontalAirflow::Position4: return "4";
-                    case Enums::HorizontalAirflow::Position5: return "5";
-                    case Enums::HorizontalAirflow::Position6: return "6";
-                    case Enums::HorizontalAirflow::Swing: return "1";
+                switch (static_cast<TFSXW1Enums::HorizontalAirflow>(reg->value)) {
+                    case TFSXW1Enums::HorizontalAirflow::Position1: return "1";
+                    case TFSXW1Enums::HorizontalAirflow::Position2: return "2";
+                    case TFSXW1Enums::HorizontalAirflow::Position3: return "3";
+                    case TFSXW1Enums::HorizontalAirflow::Position4: return "4";
+                    case TFSXW1Enums::HorizontalAirflow::Position5: return "5";
+                    case TFSXW1Enums::HorizontalAirflow::Position6: return "6";
+                    case TFSXW1Enums::HorizontalAirflow::Swing: return "1";
                     default: return "unknown";
                 }
 
                 break;
             case TFSXW1Controller::Address::Powerful:
-                switch (static_cast<Enums::Powerful>(reg->value)) {
-                    case Enums::Powerful::On: return "on";
-                    case Enums::Powerful::Off: return "off";
+                switch (static_cast<TFSXW1Enums::Powerful>(reg->value)) {
+                    case TFSXW1Enums::Powerful::On: return "on";
+                    case TFSXW1Enums::Powerful::Off: return "off";
                     default: return "unknown";
                 }
 
                 break;
             case TFSXW1Controller::Address::EconomyMode:
-                switch (static_cast<Enums::EconomyMode>(reg->value)) {
-                    case Enums::EconomyMode::On: return "on";
-                    case Enums::EconomyMode::Off: return "off";
+                switch (static_cast<TFSXW1Enums::EconomyMode>(reg->value)) {
+                    case TFSXW1Enums::EconomyMode::On: return "on";
+                    case TFSXW1Enums::EconomyMode::Off: return "off";
                     default: return "unknown";
                 }
 
                 break;
             case TFSXW1Controller::Address::EnergySavingFan:
-                switch (static_cast<Enums::EnergySavingFan>(reg->value)) {
-                    case Enums::EnergySavingFan::On: return "on";
-                    case Enums::EnergySavingFan::Off: return "off";
+                switch (static_cast<TFSXW1Enums::EnergySavingFan>(reg->value)) {
+                    case TFSXW1Enums::EnergySavingFan::On: return "on";
+                    case TFSXW1Enums::EnergySavingFan::Off: return "off";
                     default: return "unknown";
                 }
 
                 break;
             case TFSXW1Controller::Address::OutdoorUnitLowNoise:
-                switch (static_cast<Enums::OutdoorUnitLowNoise>(reg->value)) {
-                    case Enums::OutdoorUnitLowNoise::On: return "on";
-                    case Enums::OutdoorUnitLowNoise::Off: return "off";
+                switch (static_cast<TFSXW1Enums::OutdoorUnitLowNoise>(reg->value)) {
+                    case TFSXW1Enums::OutdoorUnitLowNoise::On: return "on";
+                    case TFSXW1Enums::OutdoorUnitLowNoise::Off: return "off";
                     default: return "unknown";
                 }
 
                 break;
             case TFSXW1Controller::Address::CoilDry:
-                switch (static_cast<Enums::CoilDry>(reg->value)) {
-                    case Enums::CoilDry::On: return "on";
-                    case Enums::CoilDry::Off: return "off";
+                switch (static_cast<TFSXW1Enums::CoilDry>(reg->value)) {
+                    case TFSXW1Enums::CoilDry::On: return "on";
+                    case TFSXW1Enums::CoilDry::Off: return "off";
                     default: return "unknown";
                 }
 
                 break;
             case TFSXW1Controller::Address::HumanSensor:
-                switch (static_cast<Enums::HumanSensor>(reg->value)) {
-                    case Enums::HumanSensor::On: return "on";
-                    case Enums::HumanSensor::Off: return "off";
+                switch (static_cast<TFSXW1Enums::HumanSensor>(reg->value)) {
+                    case TFSXW1Enums::HumanSensor::On: return "on";
+                    case TFSXW1Enums::HumanSensor::Off: return "off";
                     default: return "unknown";
                 }
 
@@ -556,147 +552,147 @@ namespace FujitsuAC {
         }
     }
 
-    const Enums::Power TFSXW1Bridge::stringToEnum(Enums::Power def, const char *value) {
+    const TFSXW1Enums::Power TFSXW1Bridge::stringToEnum(TFSXW1Enums::Power def, const char *value) {
         if (0 == strcmp(value, "on")) {
-            return Enums::Power::On;
+            return TFSXW1Enums::Power::On;
         }
 
         return def;
     }
 
-    const Enums::MinimumHeat TFSXW1Bridge::stringToEnum(Enums::MinimumHeat def, const char *value) {
+    const TFSXW1Enums::MinimumHeat TFSXW1Bridge::stringToEnum(TFSXW1Enums::MinimumHeat def, const char *value) {
         if (0 == strcmp(value, "on")) {
-            return Enums::MinimumHeat::On;
+            return TFSXW1Enums::MinimumHeat::On;
         }
 
         return def;
     }
 
-    const Enums::Mode TFSXW1Bridge::stringToEnum(Enums::Mode def, const char *value) {
+    const TFSXW1Enums::Mode TFSXW1Bridge::stringToEnum(TFSXW1Enums::Mode def, const char *value) {
         if (0 == strcmp(value, "cool")) {
-            return Enums::Mode::Cool;
+            return TFSXW1Enums::Mode::Cool;
         } else if (0 == strcmp(value, "dry")) {
-            return Enums::Mode::Dry;
+            return TFSXW1Enums::Mode::Dry;
         } else if (0 == strcmp(value, "fan_only")) {
-            return Enums::Mode::Fan;
+            return TFSXW1Enums::Mode::Fan;
         } else if (0 == strcmp(value, "heat")) {
-            return Enums::Mode::Heat;
+            return TFSXW1Enums::Mode::Heat;
         }
 
         return def;
     }
 
-    const Enums::FanSpeed TFSXW1Bridge::stringToEnum(Enums::FanSpeed def, const char *value) {
+    const TFSXW1Enums::FanSpeed TFSXW1Bridge::stringToEnum(TFSXW1Enums::FanSpeed def, const char *value) {
         if (0 == strcmp(value, "auto")) {
-            return Enums::FanSpeed::Auto;
+            return TFSXW1Enums::FanSpeed::Auto;
         } else if (0 == strcmp(value, "quiet")) {
-            return Enums::FanSpeed::Quiet;
+            return TFSXW1Enums::FanSpeed::Quiet;
         } else if (0 == strcmp(value, "low")) {
-            return Enums::FanSpeed::Low;
+            return TFSXW1Enums::FanSpeed::Low;
         } else if (0 == strcmp(value, "medium")) {
-            return Enums::FanSpeed::Medium;
+            return TFSXW1Enums::FanSpeed::Medium;
         } else if (0 == strcmp(value, "high")) {
-            return Enums::FanSpeed::High;
+            return TFSXW1Enums::FanSpeed::High;
         }
 
         return def;
     }
 
-    const Enums::VerticalAirflow TFSXW1Bridge::stringToEnum(Enums::VerticalAirflow def, const char *value) {
+    const TFSXW1Enums::VerticalAirflow TFSXW1Bridge::stringToEnum(TFSXW1Enums::VerticalAirflow def, const char *value) {
         if (0 == strcmp(value, "1") ) {
-            return Enums::VerticalAirflow::Position1;
+            return TFSXW1Enums::VerticalAirflow::Position1;
         } else if (strcmp(value, "2") == 0) {
-            return Enums::VerticalAirflow::Position2;
+            return TFSXW1Enums::VerticalAirflow::Position2;
         } else if (strcmp(value, "3") == 0) {
-            return Enums::VerticalAirflow::Position3;
+            return TFSXW1Enums::VerticalAirflow::Position3;
         } else if (strcmp(value, "4") == 0) {
-            return Enums::VerticalAirflow::Position4;
+            return TFSXW1Enums::VerticalAirflow::Position4;
         } else if (strcmp(value, "5") == 0) {
-            return Enums::VerticalAirflow::Position5;
+            return TFSXW1Enums::VerticalAirflow::Position5;
         } else if (strcmp(value, "6") == 0) {
-            return Enums::VerticalAirflow::Position6;
+            return TFSXW1Enums::VerticalAirflow::Position6;
         }
 
         return def;
     }
 
-    const Enums::VerticalSwing TFSXW1Bridge::stringToEnum(Enums::VerticalSwing def, const char *value) {
+    const TFSXW1Enums::VerticalSwing TFSXW1Bridge::stringToEnum(TFSXW1Enums::VerticalSwing def, const char *value) {
         if (strcmp(value, "on") == 0) {
-            return Enums::VerticalSwing::On;
+            return TFSXW1Enums::VerticalSwing::On;
         }
 
         return def;
     }
 
-    const Enums::HorizontalAirflow TFSXW1Bridge::stringToEnum(Enums::HorizontalAirflow def, const char *value) {
+    const TFSXW1Enums::HorizontalAirflow TFSXW1Bridge::stringToEnum(TFSXW1Enums::HorizontalAirflow def, const char *value) {
         if (0 == strcmp(value, "1") ) {
-            return Enums::HorizontalAirflow::Position1;
+            return TFSXW1Enums::HorizontalAirflow::Position1;
         } else if (strcmp(value, "2") == 0) {
-            return Enums::HorizontalAirflow::Position2;
+            return TFSXW1Enums::HorizontalAirflow::Position2;
         } else if (strcmp(value, "3") == 0) {
-            return Enums::HorizontalAirflow::Position3;
+            return TFSXW1Enums::HorizontalAirflow::Position3;
         } else if (strcmp(value, "4") == 0) {
-            return Enums::HorizontalAirflow::Position4;
+            return TFSXW1Enums::HorizontalAirflow::Position4;
         } else if (strcmp(value, "5") == 0) {
-            return Enums::HorizontalAirflow::Position5;
+            return TFSXW1Enums::HorizontalAirflow::Position5;
         } else if (strcmp(value, "6") == 0) {
-            return Enums::HorizontalAirflow::Position6;
+            return TFSXW1Enums::HorizontalAirflow::Position6;
         }
 
         return def;
     }
 
-    const Enums::HorizontalSwing TFSXW1Bridge::stringToEnum(Enums::HorizontalSwing def, const char *value) {
+    const TFSXW1Enums::HorizontalSwing TFSXW1Bridge::stringToEnum(TFSXW1Enums::HorizontalSwing def, const char *value) {
         if (strcmp(value, "on") == 0) {
-            return Enums::HorizontalSwing::On;
+            return TFSXW1Enums::HorizontalSwing::On;
         }
 
         return def;
     }
 
-    const Enums::Powerful TFSXW1Bridge::stringToEnum(Enums::Powerful def, const char *value) {
+    const TFSXW1Enums::Powerful TFSXW1Bridge::stringToEnum(TFSXW1Enums::Powerful def, const char *value) {
         if (strcmp(value, "on") == 0) {
-            return Enums::Powerful::On;
+            return TFSXW1Enums::Powerful::On;
         }
 
         return def;
     }
 
-    const Enums::EconomyMode TFSXW1Bridge::stringToEnum(Enums::EconomyMode def, const char *value) {
+    const TFSXW1Enums::EconomyMode TFSXW1Bridge::stringToEnum(TFSXW1Enums::EconomyMode def, const char *value) {
         if (strcmp(value, "on") == 0) {
-            return Enums::EconomyMode::On;
+            return TFSXW1Enums::EconomyMode::On;
         }
 
         return def;
     }
 
-    const Enums::EnergySavingFan TFSXW1Bridge::stringToEnum(Enums::EnergySavingFan def, const char *value) {
+    const TFSXW1Enums::EnergySavingFan TFSXW1Bridge::stringToEnum(TFSXW1Enums::EnergySavingFan def, const char *value) {
         if (strcmp(value, "on") == 0) {
-            return Enums::EnergySavingFan::On;
+            return TFSXW1Enums::EnergySavingFan::On;
         }
 
         return def;
     }
 
-    const Enums::OutdoorUnitLowNoise TFSXW1Bridge::stringToEnum(Enums::OutdoorUnitLowNoise def, const char *value) {
+    const TFSXW1Enums::OutdoorUnitLowNoise TFSXW1Bridge::stringToEnum(TFSXW1Enums::OutdoorUnitLowNoise def, const char *value) {
         if (strcmp(value, "on") == 0) {
-            return Enums::OutdoorUnitLowNoise::On;
+            return TFSXW1Enums::OutdoorUnitLowNoise::On;
         }
 
         return def;
     }
 
-    const Enums::CoilDry TFSXW1Bridge::stringToEnum(Enums::CoilDry def, const char *value) {
+    const TFSXW1Enums::CoilDry TFSXW1Bridge::stringToEnum(TFSXW1Enums::CoilDry def, const char *value) {
         if (strcmp(value, "on") == 0) {
-            return Enums::CoilDry::On;
+            return TFSXW1Enums::CoilDry::On;
         }
 
         return def;
     }
 
-    const Enums::HumanSensor TFSXW1Bridge::stringToEnum(Enums::HumanSensor def, const char *value) {
+    const TFSXW1Enums::HumanSensor TFSXW1Bridge::stringToEnum(TFSXW1Enums::HumanSensor def, const char *value) {
         if (strcmp(value, "on") == 0) {
-            return Enums::HumanSensor::On;
+            return TFSXW1Enums::HumanSensor::On;
         }
 
         return def;

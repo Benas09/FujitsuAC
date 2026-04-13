@@ -16,7 +16,7 @@ RTC_NOINIT_ATTR bool isFallbackAp;
 namespace FujitsuAC {
 
     FujitsuAC::FujitsuAC(int rxPin, int txPin, int ledWPin, int ledRPin, int resetButtonPin): 
-        preferences(),
+        _config(VERSION, ledWPin, ledRPin),
         server(80),
         uart(UART_NUM_2, rxPin, txPin),
         espClient(),
@@ -27,10 +27,9 @@ namespace FujitsuAC {
     {}
 
     void FujitsuAC::setup() {
-        this->generateUniqueId();
         this->initIO();
-        this->loadConfig();
         this->handleResetButton();
+        this->generateUniqueId();
 
         if (this->createAP()) {
             return;
@@ -77,8 +76,10 @@ namespace FujitsuAC {
         char buf[13];
         snprintf(buf, sizeof(buf), "%012llX", ESP.getEfuseMac());
 
-        uniqueId = buf;
+        String uniqueId = buf;
         uniqueId.toLowerCase();
+
+        _config.setUniqueId(uniqueId);
     }
 
     void FujitsuAC::initIO() {
@@ -97,42 +98,8 @@ namespace FujitsuAC {
         }
     }
 
-    void FujitsuAC::loadConfig() {
-        esp_reset_reason_t reason = esp_reset_reason();
-        
-        if (reason == ESP_RST_POWERON) {
-            isFallbackAp = false;
-        }
-
-        preferences.begin("fujitsu_ac", false);
-
-        wifiSsid = preferences.getString("wifi-ssid", "");
-        wifiPw = preferences.getString("wifi-pw", "");
-        mqttIp = preferences.getString("mqtt-ip", "");
-        mqttPort = preferences.getString("mqtt-port", "");
-        mqttUser = preferences.getString("mqtt-user", "");
-        mqttPw = preferences.getString("mqtt-pw", "");
-        deviceName = preferences.getString("device-name", "");
-        otaPw = preferences.getString("ota-pw", "");
-        protocol = preferences.getString("protocol", "");
-
-        preferences.end();
-    }
-
     void FujitsuAC::clearConfig() {
-        preferences.begin("fujitsu_ac", false);
-
-        preferences.putString("wifi-ssid", ""); 
-        preferences.putString("wifi-pw", ""); 
-        preferences.putString("mqtt-ip", ""); 
-        preferences.putString("mqtt-port", ""); 
-        preferences.putString("mqtt-user", ""); 
-        preferences.putString("mqtt-pw", ""); 
-        preferences.putString("device-name", ""); 
-        preferences.putString("ota-pw", "");
-        preferences.putString("protocol", "");
-
-        preferences.end();
+        _config.clear();
 
         isFallbackAp = false;
 
@@ -178,19 +145,15 @@ namespace FujitsuAC {
     }
 
     void FujitsuAC::parseConfig(String content) {
-        preferences.begin("fujitsu_ac", false);
-
-        preferences.putString("wifi-ssid", getConfigValue(content, "wifi-ssid")); 
-        preferences.putString("wifi-pw", getConfigValue(content, "wifi-pw")); 
-        preferences.putString("mqtt-ip", getConfigValue(content, "mqtt-ip")); 
-        preferences.putString("mqtt-port", getConfigValue(content, "mqtt-port")); 
-        preferences.putString("mqtt-user", getConfigValue(content, "mqtt-user")); 
-        preferences.putString("mqtt-pw", getConfigValue(content, "mqtt-pw")); 
-        preferences.putString("device-name", getConfigValue(content, "device-name")); 
-        preferences.putString("ota-pw", getConfigValue(content, "ota-pw"));
-        preferences.putString("protocol", getConfigValue(content, "protocol"));
-
-        preferences.end();
+        _config.setValue("wifi-ssid", getConfigValue(content, "wifi-ssid"));
+        _config.setValue("wifi-pw", getConfigValue(content, "wifi-pw")); 
+        _config.setValue("mqtt-ip", getConfigValue(content, "mqtt-ip")); 
+        _config.setValue("mqtt-port", getConfigValue(content, "mqtt-port")); 
+        _config.setValue("mqtt-user", getConfigValue(content, "mqtt-user")); 
+        _config.setValue("mqtt-pw", getConfigValue(content, "mqtt-pw")); 
+        _config.setValue("device-name", getConfigValue(content, "device-name")); 
+        _config.setValue("ota-pw", getConfigValue(content, "ota-pw"));
+        _config.setValue("protocol", getConfigValue(content, "protocol"));
 
         isFallbackAp = false;
     }
@@ -202,10 +165,14 @@ namespace FujitsuAC {
     }
 
     bool FujitsuAC::isAPState() {
-        return isFallbackAp || wifiSsid == "";
+        return isFallbackAp || _config.isEmpty();
     }
 
     bool FujitsuAC::createAP() {
+        if (ESP_RST_POWERON == esp_reset_reason()) {
+            isFallbackAp = false;
+        }
+
         if (!this->isAPState()) {
             return false;
         }
@@ -217,7 +184,7 @@ namespace FujitsuAC {
         WiFi.softAPConfig(apIP, apGateway, apSubnet);
 
         char accessPointName[64];
-        snprintf(accessPointName, sizeof(accessPointName), "faircon-%s", uniqueId.c_str());
+        snprintf(accessPointName, sizeof(accessPointName), "faircon-%s", _config.getUniqueId().c_str());
 
         if (!WiFi.softAP(accessPointName)) {
             ESP.restart();
@@ -254,7 +221,7 @@ namespace FujitsuAC {
             int rssi = WiFi.RSSI(i);
 
             if (
-                WiFi.SSID(i) == wifiSsid
+                WiFi.SSID(i) == _config.getWifiSsid()
                 && rssi > bestRSSI
             ) {
                 bestRSSI = rssi;
@@ -266,7 +233,7 @@ namespace FujitsuAC {
             uint8_t* bestBssid = WiFi.BSSID(bestNetwork);
             int channel = WiFi.channel(bestNetwork);
 
-            WiFi.begin(wifiSsid, wifiPw, channel, bestBssid, true);
+            WiFi.begin(_config.getWifiSsid(), _config.getWifiPw(), channel, bestBssid, true);
         }
 
         while (WiFi.status() != WL_CONNECTED) {
@@ -301,14 +268,14 @@ namespace FujitsuAC {
             }
 
             char topic[64];
-            snprintf(topic, sizeof(topic), "fujitsu/%s/status", uniqueId.c_str());
+            snprintf(topic, sizeof(topic), "fujitsu/%s/status", _config.getUniqueId().c_str());
 
             bool connected = false;
 
-            if (mqttUser == "") {
-                connected = mqttClient.connect(deviceName.c_str(), topic, 0, true, "offline");
+            if (_config.getMqttUser() == "") {
+                connected = mqttClient.connect(_config.getDeviceName().c_str(), topic, 0, true, "offline");
             } else {
-                connected = mqttClient.connect(deviceName.c_str(), mqttUser.c_str(), mqttPw.c_str(), topic, 0, true, "offline");
+                connected = mqttClient.connect(_config.getDeviceName().c_str(), _config.getMqttUser().c_str(), _config.getMqttPw().c_str(), topic, 0, true, "offline");
             }
 
             if (connected) {
@@ -317,11 +284,11 @@ namespace FujitsuAC {
                 }
 
                 if (nullptr == bridge) {
-                    if (this->protocol == "UTY-TFSXJ4") {
-                        // bridge = new TFSXJ4Bridge(mqttClient, uart, uniqueId.c_str(), deviceName.c_str(), VERSION);
+                    if (_config.getProtocol() == "UTY-TFSXJ4") {
+                        // bridge = new TFSXJ4Bridge(_config, mqttClient, uart);
                         // bridge->setup();
                     } else {
-                        bridge = new TFSXW1Bridge(mqttClient, uart, uniqueId.c_str(), deviceName.c_str(), VERSION);
+                        bridge = new TFSXW1Bridge(_config, mqttClient, uart);
                         bridge->setup();
                     }
                 }

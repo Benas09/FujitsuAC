@@ -7,9 +7,6 @@
 
 #pragma once
 
-//EEPROM
-#include <Preferences.h>
-
 //WiFi
 #include <WiFi.h>
 
@@ -25,10 +22,9 @@
 //MQTT
 #include <PubSubClient.h>
 
+#include <Config.h>
 #include <Uart.h>
 #include <IMqttBridge.h>
-
-#include <NetworkUpdater.h>
 
 namespace FujitsuAC {
 
@@ -40,7 +36,7 @@ namespace FujitsuAC {
 	        void loop();
 
         private:
-            Preferences preferences;
+            Config _config;
             NetworkServer server;
 
             Uart uart;
@@ -50,7 +46,6 @@ namespace FujitsuAC {
 
             IMqttBridge* bridge = nullptr;
 
-            String uniqueId;
             String wifiSsid;
             String wifiPw;
             String mqttIp;
@@ -70,7 +65,6 @@ namespace FujitsuAC {
             void generateUniqueId();
             void initIO();
 
-            void loadConfig();
             void clearConfig();
             String getConfigValue(String qs, String key);
             String urlDecode(const String &s);
