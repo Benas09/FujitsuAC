@@ -37,32 +37,19 @@ namespace FujitsuAC {
 
         private:
             Config _config;
+            int resetButtonPin;
+
             NetworkServer server;
 
             Uart uart;
             
             WiFiClient espClient;
-            PubSubClient mqttClient;
+            PubSubClient _mqttClient;
 
             IMqttBridge* bridge = nullptr;
 
-            String wifiSsid;
-            String wifiPw;
-            String mqttIp;
-            String mqttPort;
-            String mqttUser;
-            String mqttPw;
-            String deviceName;
-            String otaPw;
-            String protocol;
-
-            int ledWPin;
-            int ledRPin;
-            int resetButtonPin;
-
             uint32_t fallbackApCreatedAt = 0;
 
-            void generateUniqueId();
             void initIO();
 
             void clearConfig();

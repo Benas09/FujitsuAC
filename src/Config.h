@@ -16,12 +16,9 @@ namespace FujitsuAC {
     		Config(const char *version, int ledWPin, int ledRPin);
     		~Config();
 
+            void load();
     		void clear();
     		bool isEmpty();
-
-    		void setUniqueId(String uniqueId) {
-    			_uniqueId = uniqueId;
-    		}
 
     		String getUniqueId() { return _uniqueId; }
 
@@ -59,7 +56,7 @@ namespace FujitsuAC {
             String _otaPw;
             String _protocol;
 
-            void load();
+            void generateUniqueId();
     };
 
 }

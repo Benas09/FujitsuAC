@@ -20,16 +20,15 @@ namespace FujitsuAC {
         server(80),
         uart(UART_NUM_2, rxPin, txPin),
         espClient(),
-        mqttClient(espClient),
-        ledWPin(ledWPin),
-        ledRPin(ledRPin),
+        _mqttClient(espClient),
         resetButtonPin(resetButtonPin)
     {}
 
     void FujitsuAC::setup() {
+        _config.load();
+
         this->initIO();
         this->handleResetButton();
-        this->generateUniqueId();
 
         if (this->createAP()) {
             return;
@@ -37,12 +36,15 @@ namespace FujitsuAC {
 
         this->connectToWifi();
 
-        ArduinoOTA.setHostname(deviceName.c_str());
-        ArduinoOTA.setPassword(otaPw.c_str());
+        ArduinoOTA.setHostname(_config.getDeviceName().c_str());
+        ArduinoOTA.setPassword(_config.getOtaPw().c_str());
         ArduinoOTA.begin();
 
-        this->mqttClient.setServer(mqttIp.c_str(), (uint16_t) mqttPort.toInt());
-        this->mqttClient.setBufferSize(2048);
+        IPAddress ip;
+        ip.fromString(_config.getMqttIp());
+
+        _mqttClient.setServer(ip, (uint16_t) _config.getMqttPort().toInt());
+        _mqttClient.setBufferSize(2048);
     }
 
     void FujitsuAC::loop() {
@@ -68,29 +70,19 @@ namespace FujitsuAC {
 
         this->connectToMqtt();
 
-        this->mqttClient.loop();
+        _mqttClient.loop();
         this->bridge->loop();
     }
 
-    void FujitsuAC::generateUniqueId() {
-        char buf[13];
-        snprintf(buf, sizeof(buf), "%012llX", ESP.getEfuseMac());
-
-        String uniqueId = buf;
-        uniqueId.toLowerCase();
-
-        _config.setUniqueId(uniqueId);
-    }
-
     void FujitsuAC::initIO() {
-        if (ledRPin > 0) {
-            ledcAttach(ledRPin, 12000, 10);
-            ledcWrite(ledRPin, 1020);
+        if (_config.getLedRPin() > 0) {
+            ledcAttach(_config.getLedRPin(), 12000, 10);
+            ledcWrite(_config.getLedRPin(), 1020);
         }
 
-        if (ledWPin > 0) {
-            ledcAttach(ledWPin, 12000, 10);
-            ledcWrite(ledWPin, 1023);
+        if (_config.getLedWPin() > 0) {
+            ledcAttach(_config.getLedWPin(), 12000, 10);
+            ledcWrite(_config.getLedWPin(), 1023);
         }
 
         if (resetButtonPin > 0) {
@@ -208,7 +200,7 @@ namespace FujitsuAC {
         uint32_t start = millis();
 
         WiFi.disconnect(true, true);
-        WiFi.setHostname(deviceName.c_str());
+        WiFi.setHostname(_config.getDeviceName().c_str());
         WiFi.mode(WIFI_STA);
 
         int bestNetwork = -1;
@@ -239,11 +231,11 @@ namespace FujitsuAC {
         while (WiFi.status() != WL_CONNECTED) {
             this->handleResetButton();
     
-            if (ledRPin > 0) {
-                ledcWrite(ledRPin, 1023);
+            if (_config.getLedRPin() > 0) {
+                ledcWrite(_config.getLedRPin(), 1023);
                 delay(500);
 
-                ledcWrite(ledRPin, 1020);
+                ledcWrite(_config.getLedRPin(), 1020);
                 delay(500);
             } else {
                 delay(50);
@@ -258,13 +250,13 @@ namespace FujitsuAC {
     }
 
     void FujitsuAC::connectToMqtt() {
-        while (!mqttClient.connected()) {
+        while (!_mqttClient.connected()) {
             if (WiFi.status() != WL_CONNECTED) {
                 ESP.restart();
             }
 
-            if (ledWPin > 0) {
-                ledcWrite(ledWPin, 1023);
+            if (_config.getLedWPin() > 0) {
+                ledcWrite(_config.getLedWPin(), 1023);
             }
 
             char topic[64];
@@ -273,14 +265,14 @@ namespace FujitsuAC {
             bool connected = false;
 
             if (_config.getMqttUser() == "") {
-                connected = mqttClient.connect(_config.getDeviceName().c_str(), topic, 0, true, "offline");
+                connected = _mqttClient.connect(_config.getDeviceName().c_str(), topic, 0, true, "offline");
             } else {
-                connected = mqttClient.connect(_config.getDeviceName().c_str(), _config.getMqttUser().c_str(), _config.getMqttPw().c_str(), topic, 0, true, "offline");
+                connected = _mqttClient.connect(_config.getDeviceName().c_str(), _config.getMqttUser().c_str(), _config.getMqttPw().c_str(), topic, 0, true, "offline");
             }
 
             if (connected) {
-                if (ledWPin > 0) {
-                    ledcWrite(ledWPin, 1020);
+                if (_config.getLedWPin() > 0) {
+                    ledcWrite(_config.getLedWPin(), 1020);
                 }
 
                 if (nullptr == bridge) {
@@ -288,7 +280,7 @@ namespace FujitsuAC {
                         // bridge = new TFSXJ4Bridge(_config, mqttClient, uart);
                         // bridge->setup();
                     } else {
-                        bridge = new TFSXW1Bridge(_config, mqttClient, uart);
+                        bridge = new TFSXW1Bridge(_config, _mqttClient, uart);
                         bridge->setup();
                     }
                 }
@@ -324,7 +316,7 @@ namespace FujitsuAC {
 
                             h1 {
                                 text-align: center;
-                                margin-bottom: 20px;
+                                margin-bottom: 5px;
                                 font-size: 24px;
                             }
 
@@ -332,6 +324,13 @@ namespace FujitsuAC {
                                 text-align: center;
                                 margin-bottom: 20px;
                                 font-size: 18px;
+                            }
+
+                            strong {
+                                display: block;
+                                text-align: center;
+                                margin-bottom: 20px;
+                                font-size: 12px;   
                             }
 
                             form {
@@ -402,6 +401,8 @@ namespace FujitsuAC {
                     <body>
                         <h1>faircon</h1>
             )rawliteral";
+
+            const char *versionBody = "<strong>" VERSION "</strong>";
 
             const char *formBody = R"rawliteral(
                 <form name="config" method="post">
@@ -488,6 +489,7 @@ namespace FujitsuAC {
                 client.println();
 
                 client.print(contentStart);
+                client.print(versionBody);
                 client.print(formBody);
                 client.print(contentEnd);
 

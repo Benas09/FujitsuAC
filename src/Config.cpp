@@ -17,16 +17,27 @@ namespace FujitsuAC {
     	_ledWPin(ledWPin),
     	_ledRPin(ledRPin)
 	{
-    	_preferences.begin("fujitsu_ac", false);
-
-    	this->load();
     }
 
 	Config::~Config() {
 	    _preferences.end();
 	}
 
+    void Config::generateUniqueId() {
+        char buf[13];
+        snprintf(buf, sizeof(buf), "%012llX", ESP.getEfuseMac());
+
+        String uniqueId = buf;
+        uniqueId.toLowerCase();
+
+        _uniqueId = uniqueId;
+    }
+
     void Config::load() {
+        this->generateUniqueId();
+        
+        _preferences.begin("fujitsu_ac", false);
+
         _wifiSsid = _preferences.getString("wifi-ssid", "");
         _wifiPw = _preferences.getString("wifi-pw", "");
         _mqttIp = _preferences.getString("mqtt-ip", "");
