@@ -290,7 +290,7 @@ namespace FujitsuAC {
         p += "\"min_temp\": 18,";
         p += "\"max_temp\": 30,";
         p += "\"temp_step\": 0.5,";
-        p += "\"temperature_unit\": \"°C\",";
+        p += "\"temperature_unit\": \"C\",";
         p += "\"modes\": [\"off\", \"auto\", \"cool\", \"dry\", \"fan_only\", \"heat\"],";
         p += "\"fan_modes\": [\"auto\", \"quiet\", \"low\", \"medium\", \"high\"],";
         p += this->deviceConfig;

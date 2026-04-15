@@ -6,7 +6,7 @@
 */
 #include "FujitsuAC.h"
 
-#define VERSION "1.2.4"
+#define VERSION "1.2.5"
 
 RTC_NOINIT_ATTR bool isFallbackAp;
 
