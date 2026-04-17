@@ -5,8 +5,7 @@
   Project home: https://github.com/Benas09/FujitsuAC
 */
 
-//EEPROM
-#include <Preferences.h>
+#pragma once
 
 //WiFi
 #include <WiFi.h>
@@ -23,14 +22,9 @@
 //MQTT
 #include <PubSubClient.h>
 
+#include <Config.h>
 #include <Uart.h>
-
-#include <FujitsuController.h>
-#include <MqttBridge.h>
-
-#include <NetworkUpdater.h>
-
-#pragma once
+#include <IMqttBridge.h>
 
 namespace FujitsuAC {
 
@@ -42,38 +36,22 @@ namespace FujitsuAC {
 	        void loop();
 
         private:
-            Preferences preferences;
+            Config _config;
+            int resetButtonPin;
+
             NetworkServer server;
 
             Uart uart;
-            FujitsuController controller;
             
             WiFiClient espClient;
-            PubSubClient mqttClient;
+            PubSubClient _mqttClient;
 
-            MqttBridge* bridge = nullptr;
-            NetworkUpdater* networkUpdater = nullptr;
-
-            String uniqueId;
-            String wifiSsid;
-            String wifiPw;
-            String mqttIp;
-            String mqttPort;
-            String mqttUser;
-            String mqttPw;
-            String deviceName;
-            String otaPw;
-
-            int ledWPin;
-            int ledRPin;
-            int resetButtonPin;
+            IMqttBridge* bridge = nullptr;
 
             uint32_t fallbackApCreatedAt = 0;
 
-            void generateUniqueId();
             void initIO();
 
-            void loadConfig();
             void clearConfig();
             String getConfigValue(String qs, String key);
             String urlDecode(const String &s);

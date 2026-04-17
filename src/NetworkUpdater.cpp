@@ -4,17 +4,13 @@
   
   Project home: https://github.com/Benas09/FujitsuAC
 */
+#pragma once
+
 #include "NetworkUpdater.h"
 
 namespace FujitsuAC {
 
-	NetworkUpdater::NetworkUpdater(
-        MqttBridge &bridge
-    ) : bridge(bridge) {
-		this->bridge.setOnFirmwareUpdateRequestCallback([this]() {
-            this->updateFirmware();
-        });
-    }
+	NetworkUpdater::NetworkUpdater() {}
 
 	void NetworkUpdater::setup() {
 		this->setClock();
@@ -25,7 +21,7 @@ namespace FujitsuAC {
 	}
 
 	void NetworkUpdater::setClock() {
-		this->bridge.debug("info", "NetworkUpdater: Updating clock");
+		this->debug("info", "NetworkUpdater: Updating clock");
 
 		uint32_t startMillis = millis();
 
@@ -37,17 +33,17 @@ namespace FujitsuAC {
 			if ((millis() - startMillis) >= 10000) {
 				sntp_stop();
 
-				this->bridge.debug("info", "NetworkUpdater: Terminate updating clock");
+				this->debug("info", "NetworkUpdater: Terminate updating clock");
 
 		        return;
 		    }
 
-		    this->bridge.debug("info", "NetworkUpdater: Waiting for time");
+		    this->debug("info", "NetworkUpdater: Waiting for time");
 			delay(500);
 			nowSecs = time(nullptr);
 		}
 
-		this->bridge.debug("info", "NetworkUpdater: Clock updated");
+		this->debug("info", "NetworkUpdater: Clock updated");
 		this->versionCheckerState = VersionCheckerState::TIME_OBTAINED;
 	}
 
@@ -62,7 +58,7 @@ namespace FujitsuAC {
 		}
 
 		if (VersionCheckerState::TIME_OBTAINED == this->versionCheckerState) {
-			this->bridge.debug("info", "NetworkUpdater: Check last version start");
+			this->debug("info", "NetworkUpdater: Check last version start");
 
 			this->lastVersionCheckInitiatedAtMillis = millis();
 
@@ -73,7 +69,7 @@ namespace FujitsuAC {
 				client->stop();
 			    client = nullptr;
 				
-				this->bridge.debug("info", "NetworkUpdater: Check last version ERR1");
+				this->debug("info", "NetworkUpdater: Check last version ERR1");
 
 				this->versionCheckerState = VersionCheckerState::ERROR;
 
@@ -87,13 +83,13 @@ namespace FujitsuAC {
 			);
 
 			if (client->connected()) {
-				this->bridge.debug("info", "NetworkUpdater: Check last version connected");
+				this->debug("info", "NetworkUpdater: Check last version connected");
 				this->versionCheckerState = VersionCheckerState::HTTPS_DOWNLOADING;
 			} else {
 				client->stop();
 			    client = nullptr;
 
-			    this->bridge.debug("info", "NetworkUpdater: Check last version ERR2");
+			    this->debug("info", "NetworkUpdater: Check last version ERR2");
 				this->versionCheckerState = VersionCheckerState::ERROR;
 			}
 
@@ -110,7 +106,7 @@ namespace FujitsuAC {
 					    client = nullptr;
 
 					    this->versionCheckerState = VersionCheckerState::VERSION_CHECKED;
-					    this->bridge.onVersionReceived(line.substring(8).c_str());
+					    this->onVersionReceivedCallback(line.substring(8).c_str());
 					}
 				}
 
@@ -120,7 +116,7 @@ namespace FujitsuAC {
 			client->stop();
 		    client = nullptr;
 
-		    this->bridge.debug("info", "NetworkUpdater: Check last version ERR3");
+		    this->debug("info", "NetworkUpdater: Check last version ERR3");
 			this->versionCheckerState = VersionCheckerState::ERROR;
 
 			return;
@@ -130,8 +126,8 @@ namespace FujitsuAC {
 	void NetworkUpdater::updateFirmware() {
 		char msg[128];
 
-		this->bridge.debug("info", "NetworkUpdater: Starting OTA update");
-		this->bridge.debug("status", "Updating");
+		this->debug("info", "NetworkUpdater: Starting OTA update");
+		this->debug("status", "Updating");
 
 		NetworkClientSecure networkClient;
 		networkClient.setCACert(rootCACertificate);
@@ -158,7 +154,7 @@ namespace FujitsuAC {
 		}
 
 		snprintf(msg, sizeof(msg), "NetworkUpdater: %s", chip.c_str());
-		this->bridge.debug("info", msg);
+		this->debug("info", msg);
 
 		String path = "/Benas09/FujitsuAC/refs/heads/master/fw/" + chip + ".bin";
 		t_httpUpdate_return ret = httpUpdate.update(networkClient, "raw.githubusercontent.com", 443, path.c_str());
@@ -170,20 +166,24 @@ namespace FujitsuAC {
 					httpUpdate.getLastErrorString().c_str()
 				);
 
-				this->bridge.debug("info", msg);
-				this->bridge.debug("status", msg);
+				this->debug("info", msg);
+				this->debug("status", msg);
 			
 				break;
 			case HTTP_UPDATE_NO_UPDATES: 
-				this->bridge.debug("info", "NetworkUpdater: No updates");
+				this->debug("info", "NetworkUpdater: No updates");
 
 				break;
 			case HTTP_UPDATE_OK: 
-				this->bridge.debug("info", "NetworkUpdater: Update OK");
+				this->debug("info", "NetworkUpdater: Update OK");
 
 				break;
 		}
 
-		this->bridge.debug("info", "NetworkUpdater: Finished");
+		this->debug("info", "NetworkUpdater: Finished");
 	}
+
+	void NetworkUpdater::debug(const char* name, const char* message) {
+        this->debugCallback(name, message);
+    }
 }

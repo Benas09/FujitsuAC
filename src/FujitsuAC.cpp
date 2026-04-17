@@ -4,45 +4,47 @@
   
   Project home: https://github.com/Benas09/FujitsuAC
 */
+#pragma once
 #include "FujitsuAC.h"
+#include "TFSXW1Bridge.h"
+// #include "TFSXJ4Bridge.h"
 
-#define VERSION "1.2.5"
+#define VERSION "1.3.0"
 
 RTC_NOINIT_ATTR bool isFallbackAp;
 
 namespace FujitsuAC {
 
     FujitsuAC::FujitsuAC(int rxPin, int txPin, int ledWPin, int ledRPin, int resetButtonPin): 
-        preferences(),
+        _config(VERSION, ledWPin, ledRPin),
         server(80),
         uart(UART_NUM_2, rxPin, txPin),
-        controller(uart),
         espClient(),
-        mqttClient(espClient),
-        ledWPin(ledWPin),
-        ledRPin(ledRPin),
+        _mqttClient(espClient),
         resetButtonPin(resetButtonPin)
     {}
 
     void FujitsuAC::setup() {
-        this->generateUniqueId();
+        _config.load();
+
         this->initIO();
-        this->loadConfig();
         this->handleResetButton();
 
         if (this->createAP()) {
             return;
         }
 
-        this->controller.setup();
         this->connectToWifi();
 
-        ArduinoOTA.setHostname(deviceName.c_str());
-        ArduinoOTA.setPassword(otaPw.c_str());
+        ArduinoOTA.setHostname(_config.getDeviceName().c_str());
+        ArduinoOTA.setPassword(_config.getOtaPw().c_str());
         ArduinoOTA.begin();
 
-        this->mqttClient.setServer(mqttIp.c_str(), (uint16_t) mqttPort.toInt());
-        this->mqttClient.setBufferSize(2048);
+        IPAddress ip;
+        ip.fromString(_config.getMqttIp());
+
+        _mqttClient.setServer(ip, (uint16_t) _config.getMqttPort().toInt());
+        _mqttClient.setBufferSize(2048);
     }
 
     void FujitsuAC::loop() {
@@ -68,70 +70,20 @@ namespace FujitsuAC {
 
         this->connectToMqtt();
 
-        this->mqttClient.loop();
+        _mqttClient.loop();
         this->bridge->loop();
-        this->networkUpdater->loop();
-        this->controller.loop();
-    }
-
-    void FujitsuAC::generateUniqueId() {
-        char buf[13];
-        snprintf(buf, sizeof(buf), "%012llX", ESP.getEfuseMac());
-
-        uniqueId = buf;
-        uniqueId.toLowerCase();
     }
 
     void FujitsuAC::initIO() {
-        if (ledRPin > 0) {
-            ledcAttach(ledRPin, 12000, 10);
-            ledcWrite(ledRPin, 1020);
-        }
-
-        if (ledWPin > 0) {
-            ledcAttach(ledWPin, 12000, 10);
-            ledcWrite(ledWPin, 1023);
-        }
+        _config.initLeds();
 
         if (resetButtonPin > 0) {
             pinMode(resetButtonPin, INPUT_PULLUP);
         }
     }
 
-    void FujitsuAC::loadConfig() {
-        esp_reset_reason_t reason = esp_reset_reason();
-        
-        if (reason == ESP_RST_POWERON) {
-            isFallbackAp = false;
-        }
-
-        preferences.begin("fujitsu_ac", false);
-
-        wifiSsid = preferences.getString("wifi-ssid", "");
-        wifiPw = preferences.getString("wifi-pw", "");
-        mqttIp = preferences.getString("mqtt-ip", "");
-        mqttPort = preferences.getString("mqtt-port", "");
-        mqttUser = preferences.getString("mqtt-user", "");
-        mqttPw = preferences.getString("mqtt-pw", "");
-        deviceName = preferences.getString("device-name", "");
-        otaPw = preferences.getString("ota-pw", "");
-
-        preferences.end();
-    }
-
     void FujitsuAC::clearConfig() {
-        preferences.begin("fujitsu_ac", false);
-
-        preferences.putString("wifi-ssid", ""); 
-        preferences.putString("wifi-pw", ""); 
-        preferences.putString("mqtt-ip", ""); 
-        preferences.putString("mqtt-port", ""); 
-        preferences.putString("mqtt-user", ""); 
-        preferences.putString("mqtt-pw", ""); 
-        preferences.putString("device-name", ""); 
-        preferences.putString("ota-pw", "");
-
-        preferences.end();
+        _config.clear();
 
         isFallbackAp = false;
 
@@ -177,18 +129,15 @@ namespace FujitsuAC {
     }
 
     void FujitsuAC::parseConfig(String content) {
-        preferences.begin("fujitsu_ac", false);
-
-        preferences.putString("wifi-ssid", getConfigValue(content, "wifi-ssid")); 
-        preferences.putString("wifi-pw", getConfigValue(content, "wifi-pw")); 
-        preferences.putString("mqtt-ip", getConfigValue(content, "mqtt-ip")); 
-        preferences.putString("mqtt-port", getConfigValue(content, "mqtt-port")); 
-        preferences.putString("mqtt-user", getConfigValue(content, "mqtt-user")); 
-        preferences.putString("mqtt-pw", getConfigValue(content, "mqtt-pw")); 
-        preferences.putString("device-name", getConfigValue(content, "device-name")); 
-        preferences.putString("ota-pw", getConfigValue(content, "ota-pw"));
-
-        preferences.end();
+        _config.setValue("wifi-ssid", getConfigValue(content, "wifi-ssid"));
+        _config.setValue("wifi-pw", getConfigValue(content, "wifi-pw")); 
+        _config.setValue("mqtt-ip", getConfigValue(content, "mqtt-ip")); 
+        _config.setValue("mqtt-port", getConfigValue(content, "mqtt-port")); 
+        _config.setValue("mqtt-user", getConfigValue(content, "mqtt-user")); 
+        _config.setValue("mqtt-pw", getConfigValue(content, "mqtt-pw")); 
+        _config.setValue("device-name", getConfigValue(content, "device-name")); 
+        _config.setValue("ota-pw", getConfigValue(content, "ota-pw"));
+        _config.setValue("protocol", getConfigValue(content, "protocol"));
 
         isFallbackAp = false;
     }
@@ -200,10 +149,14 @@ namespace FujitsuAC {
     }
 
     bool FujitsuAC::isAPState() {
-        return isFallbackAp || wifiSsid == "";
+        return isFallbackAp || _config.isEmpty();
     }
 
     bool FujitsuAC::createAP() {
+        if (ESP_RST_POWERON == esp_reset_reason()) {
+            isFallbackAp = false;
+        }
+
         if (!this->isAPState()) {
             return false;
         }
@@ -215,7 +168,7 @@ namespace FujitsuAC {
         WiFi.softAPConfig(apIP, apGateway, apSubnet);
 
         char accessPointName[64];
-        snprintf(accessPointName, sizeof(accessPointName), "fAir-%s", uniqueId.c_str());
+        snprintf(accessPointName, sizeof(accessPointName), "faircon-%s", _config.getUniqueId().c_str());
 
         if (!WiFi.softAP(accessPointName)) {
             ESP.restart();
@@ -239,7 +192,7 @@ namespace FujitsuAC {
         uint32_t start = millis();
 
         WiFi.disconnect(true, true);
-        WiFi.setHostname(deviceName.c_str());
+        WiFi.setHostname(_config.getDeviceName().c_str());
         WiFi.mode(WIFI_STA);
 
         int bestNetwork = -1;
@@ -252,7 +205,7 @@ namespace FujitsuAC {
             int rssi = WiFi.RSSI(i);
 
             if (
-                WiFi.SSID(i) == wifiSsid
+                WiFi.SSID(i) == _config.getWifiSsid()
                 && rssi > bestRSSI
             ) {
                 bestRSSI = rssi;
@@ -264,21 +217,17 @@ namespace FujitsuAC {
             uint8_t* bestBssid = WiFi.BSSID(bestNetwork);
             int channel = WiFi.channel(bestNetwork);
 
-            WiFi.begin(wifiSsid, wifiPw, channel, bestBssid, true);
+            WiFi.begin(_config.getWifiSsid(), _config.getWifiPw(), channel, bestBssid, true);
         }
 
         while (WiFi.status() != WL_CONNECTED) {
             this->handleResetButton();
-    
-            if (ledRPin > 0) {
-                ledcWrite(ledRPin, 1023);
-                delay(500);
+            
+            _config.toggleRLed(false);
+            delay(500);
 
-                ledcWrite(ledRPin, 1020);
-                delay(500);
-            } else {
-                delay(50);
-            }
+            _config.toggleRLed(true);
+            delay(500);
 
             if (millis() - start > 60000) {
                 isFallbackAp = true;
@@ -289,38 +238,36 @@ namespace FujitsuAC {
     }
 
     void FujitsuAC::connectToMqtt() {
-        while (!mqttClient.connected()) {
+        while (!_mqttClient.connected()) {
             if (WiFi.status() != WL_CONNECTED) {
                 ESP.restart();
             }
 
-            if (ledWPin > 0) {
-                ledcWrite(ledWPin, 1023);
-            }
+            _config.toggleWLed(false);
 
             char topic[64];
-            snprintf(topic, sizeof(topic), "fujitsu/%s/status", uniqueId.c_str());
+            snprintf(topic, sizeof(topic), "fujitsu/%s/status", _config.getUniqueId().c_str());
 
             bool connected = false;
 
-            if (mqttUser == "") {
-                connected = mqttClient.connect(deviceName.c_str(), topic, 0, true, "offline");
+            if (_config.getMqttUser() == "") {
+                connected = _mqttClient.connect(_config.getDeviceName().c_str(), topic, 0, true, "offline");
             } else {
-                connected = mqttClient.connect(deviceName.c_str(), mqttUser.c_str(), mqttPw.c_str(), topic, 0, true, "offline");
+                connected = _mqttClient.connect(_config.getDeviceName().c_str(), _config.getMqttUser().c_str(), _config.getMqttPw().c_str(), topic, 0, true, "offline");
             }
 
             if (connected) {
-                if (ledWPin > 0) {
-                    ledcWrite(ledWPin, 1020);
-                }
+                _config.toggleWLed(true);
 
                 if (nullptr == bridge) {
-                    bridge = new MqttBridge(mqttClient, controller, uniqueId.c_str(), deviceName.c_str(), VERSION);
-                    networkUpdater = new NetworkUpdater(*bridge);
+                    if (_config.getProtocol() == "UTY-TFSXJ4") {
+                        // bridge = new TFSXJ4Bridge(_config, mqttClient, uart);
+                        // bridge->setup();
+                    } else {
+                        bridge = new TFSXW1Bridge(_config, _mqttClient, uart);
+                        bridge->setup();
+                    }
                 }
-
-                bridge->setup();
-                networkUpdater->setup();
             } else {
                 this->handleResetButton();
 
@@ -336,7 +283,7 @@ namespace FujitsuAC {
             const char *contentStart = R"rawliteral(
                 <html>
                     <head>
-                        <title>fAir</title>
+                        <title>faircon</title>
 
                         <style>
                             * {
@@ -353,7 +300,7 @@ namespace FujitsuAC {
 
                             h1 {
                                 text-align: center;
-                                margin-bottom: 20px;
+                                margin-bottom: 5px;
                                 font-size: 24px;
                             }
 
@@ -361,6 +308,13 @@ namespace FujitsuAC {
                                 text-align: center;
                                 margin-bottom: 20px;
                                 font-size: 18px;
+                            }
+
+                            strong {
+                                display: block;
+                                text-align: center;
+                                margin-bottom: 20px;
+                                font-size: 12px;   
                             }
 
                             form {
@@ -379,7 +333,7 @@ namespace FujitsuAC {
                                 font-size: 14px;
                             }
 
-                            input[type="text"] {
+                            input[type="text"], select {
                                 width: 100%;
                                 padding: 8px 10px;
                                 margin-bottom: 14px;
@@ -388,7 +342,7 @@ namespace FujitsuAC {
                                 font-size: 14px;
                             }
 
-                            input[type="text"]:focus {
+                            input[type="text"]:focus, select:focus {
                                 outline: none;
                                 border-color: #4a90e2;
                             }
@@ -429,8 +383,10 @@ namespace FujitsuAC {
                         <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     </head>
                     <body>
-                        <h1>fAir</h1>
+                        <h1>faircon</h1>
             )rawliteral";
+
+            const char *versionBody = "<strong>" VERSION "</strong>";
 
             const char *formBody = R"rawliteral(
                 <form name="config" method="post">
@@ -457,6 +413,11 @@ namespace FujitsuAC {
 
                     <label>Device password</label>
                     <input type="text" name="ota-pw" value="living_room_ac" required>
+                    
+                    <label>Protocol</label>
+                    <select name="protocol">
+                        <option value="UTY-TFSXW1">UTY-TFSXW1</option>
+                    </select>
 
                     <input type="submit" value="Submit">
                 </form>
@@ -468,7 +429,7 @@ namespace FujitsuAC {
 
             const char *contentEnd = R"rawliteral(
                         <br/>
-                        <span><a href="https://github.com/Benas09/FujitsuAC">fAir</a></span>
+                        <span><a href="https://faircon.lt">faircon</a></span>
                     </body>
                 </html>
             )rawliteral";
@@ -511,6 +472,7 @@ namespace FujitsuAC {
                 client.println();
 
                 client.print(contentStart);
+                client.print(versionBody);
                 client.print(formBody);
                 client.print(contentEnd);
 
