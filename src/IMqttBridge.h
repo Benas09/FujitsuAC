@@ -129,56 +129,6 @@ namespace FujitsuAC {
                 this->mqttClient.publish(topic, p.c_str(), true);
 
                 p = "{";
-                p += "\"name\": \"restart\",";
-                p += "\"icon\": \"mdi:restart\",";
-                p += "\"unique_id\": \"" + _config.getUniqueId() + "_restart\",";
-                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
-                p += "\"payload_available\": \"online\",";
-                p += "\"payload_not_available\": \"offline\",";
-                p += "\"command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/restart\",";
-                p += "\"entity_category\": \"diagnostic\",";
-                p += "\"payload_press\": \"restart\",";
-                p += this->deviceConfig;
-                p += "}";
-
-                snprintf(topic, sizeof(topic), "homeassistant/button/%s_%s/config", _config.getUniqueId().c_str(), "restart");
-                this->mqttClient.publish(topic, p.c_str(), true);
-
-                p = "{";
-                p += "\"name\": \"update_firmware\",";
-                p += "\"icon\": \"mdi:update\",";
-                p += "\"unique_id\": \"" + _config.getUniqueId() + "_update_firmware\",";
-                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
-                p += "\"payload_available\": \"online\",";
-                p += "\"payload_not_available\": \"offline\",";
-                p += "\"command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/update_firmware\",";
-                p += "\"entity_category\": \"diagnostic\",";
-                p += "\"payload_press\": \"update_firmware\",";
-                
-                p += this->deviceConfig;
-                p += "}";
-
-                snprintf(topic, sizeof(topic), "homeassistant/button/%s_%s/config", _config.getUniqueId().c_str(), "update_firmware");
-                this->mqttClient.publish(topic, p.c_str(), true);
-
-                p = "{";
-                p += "\"name\": \"clear_credentials\",";
-                p += "\"icon\": \"mdi:delete-alert\",";
-                p += "\"unique_id\": \"" + _config.getUniqueId() + "_clear_credentials\",";
-                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
-                p += "\"payload_available\": \"online\",";
-                p += "\"payload_not_available\": \"offline\",";
-                p += "\"command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/clear_credentials\",";
-                p += "\"entity_category\": \"diagnostic\",";
-                p += "\"payload_press\": \"clear_credentials\",";
-                
-                p += this->deviceConfig;
-                p += "}";
-
-                snprintf(topic, sizeof(topic), "homeassistant/button/%s_%s/config", _config.getUniqueId().c_str(), "clear_credentials");
-                this->mqttClient.publish(topic, p.c_str(), true);
-
-                p = "{";
                 p += "\"name\": \"name\",";
                 p += "\"icon\": \"mdi:text-recognition\",";
                 p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
@@ -302,6 +252,78 @@ namespace FujitsuAC {
                 this->mqttClient.publish(topic, p.c_str(), true);
 
                 this->debug("info", "Diagnostic entities registered");
+
+                p = "{";
+                p += "\"name\": \"restart\",";
+                p += "\"icon\": \"mdi:restart\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_restart\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
+                p += "\"payload_available\": \"online\",";
+                p += "\"payload_not_available\": \"offline\",";
+                p += "\"command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/restart\",";
+                p += "\"entity_category\": \"config\",";
+                p += "\"payload_press\": \"restart\",";
+                p += this->deviceConfig;
+                p += "}";
+
+                snprintf(topic, sizeof(topic), "homeassistant/button/%s_%s/config", _config.getUniqueId().c_str(), "restart");
+                this->mqttClient.publish(topic, p.c_str(), true);
+
+                p = "{";
+                p += "\"name\": \"update_firmware\",";
+                p += "\"icon\": \"mdi:update\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_update_firmware\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
+                p += "\"payload_available\": \"online\",";
+                p += "\"payload_not_available\": \"offline\",";
+                p += "\"command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/update_firmware\",";
+                p += "\"entity_category\": \"config\",";
+                p += "\"payload_press\": \"update_firmware\",";
+                
+                p += this->deviceConfig;
+                p += "}";
+
+                snprintf(topic, sizeof(topic), "homeassistant/button/%s_%s/config", _config.getUniqueId().c_str(), "update_firmware");
+                this->mqttClient.publish(topic, p.c_str(), true);
+
+                if (_config.getLedRPin() > 0) {
+                    p = "{";
+                    p += "\"name\": \"leds\",";
+                    p += "\"icon\": \"mdi:led-outline\",";
+                    p += "\"unique_id\": \"" + _config.getUniqueId() + "_leds\",";
+                    p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
+                    p += "\"payload_available\": \"online\",";
+                    p += "\"payload_not_available\": \"offline\",";
+                    p += "\"command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/leds\",";
+                    p += "\"entity_category\": \"config\",";
+                    p += "\"payload_on\": \"on\",";
+                    p += "\"payload_off\": \"off\",";
+                    
+                    p += this->deviceConfig;
+                    p += "}";
+
+                    snprintf(topic, sizeof(topic), "homeassistant/switch/%s_%s/config", _config.getUniqueId().c_str(), "leds");
+                    this->mqttClient.publish(topic, p.c_str(), true);
+                }
+
+                p = "{";
+                p += "\"name\": \"clear_credentials\",";
+                p += "\"icon\": \"mdi:delete-alert\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_clear_credentials\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
+                p += "\"payload_available\": \"online\",";
+                p += "\"payload_not_available\": \"offline\",";
+                p += "\"command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/clear_credentials\",";
+                p += "\"entity_category\": \"config\",";
+                p += "\"payload_press\": \"clear_credentials\",";
+                
+                p += this->deviceConfig;
+                p += "}";
+
+                snprintf(topic, sizeof(topic), "homeassistant/button/%s_%s/config", _config.getUniqueId().c_str(), "clear_credentials");
+                this->mqttClient.publish(topic, p.c_str(), true);
+
+                this->debug("info", "Configuration entities registered");
             }
 
             void sendInitialDiagnosticData() {
@@ -312,6 +334,10 @@ namespace FujitsuAC {
                 this->publishState("version", _config.getVersion());
                 this->publishState("protocol", this->getProtocolName());
                 this->publishState("reset_reason", this->getResetReason());
+
+                if (_config.getLedRPin() > 0) {
+                    this->publishState("leds", _config.isLedsOn() ? "on" : "off");
+                }
             }
             
             void sendDiagnosticData() {
@@ -349,8 +375,24 @@ namespace FujitsuAC {
                     return;
                 }
 
+                if (0 == strcmp(property, "clear_credentials")) {
+                    _config.clear();
+
+                    delay(1000);
+                    ESP.restart();
+
+                    return;
+                }
+
                 if (0 == strcmp(property, "update_firmware")) {
                     this->networkUpdater->updateFirmware();
+
+                    return;
+                }
+
+                if (0 == strcmp(property, "leds")) {
+                    _config.toggleLeds(0 == strcmp(payload, "on"));
+                    this->publishState("leds", _config.isLedsOn() ? "on" : "off");
 
                     return;
                 }

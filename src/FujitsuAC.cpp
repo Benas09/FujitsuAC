@@ -417,7 +417,6 @@ namespace FujitsuAC {
                     <label>Protocol</label>
                     <select name="protocol">
                         <option value="UTY-TFSXW1">UTY-TFSXW1</option>
-                        <option value="UTY-TFSXJ4">UTY-TFSXJ4</option>
                     </select>
 
                     <input type="submit" value="Submit">

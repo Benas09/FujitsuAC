@@ -21,14 +21,18 @@ namespace FujitsuAC {
     		bool isEmpty();
             void initLeds();
 
-            void toggleWLed(bool on);
-            void toggleRLed(bool on);
+            void toggleWLed(bool status);
+            void toggleRLed(bool status);
 
     		String getUniqueId() { return _uniqueId; }
 
     		void setValue(const char* key, String value);
 
     		const char* getVersion() { return _version; }
+
+            bool isLedsOn();
+            void toggleLeds(bool status);
+
     		int getLedWPin() { return _ledWPin; }
     		int getLedRPin() { return _ledRPin; }
 
@@ -47,8 +51,12 @@ namespace FujitsuAC {
             
             String _uniqueId;
             const char *_version;
+            
             int _ledWPin;
             int _ledRPin;
+
+            bool _ledWStatus = false;
+            bool _ledRStatus = false;
             
             String _wifiSsid;
             String _wifiPw;

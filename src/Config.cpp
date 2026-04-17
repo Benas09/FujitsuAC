@@ -64,24 +64,35 @@ namespace FujitsuAC {
     void Config::initLeds() {
         if (_ledRPin > 0) {
             ledcAttach(_ledRPin, 12000, 10);
-            ledcWrite(_ledRPin, 1020);
+            this->toggleRLed(true);
         }
 
         if (_ledWPin > 0) {
             ledcAttach(_ledWPin, 12000, 10);
-            ledcWrite(_ledWPin, 1023);
+            this->toggleWLed(false);
         }
     }
 
-    void Config::toggleWLed(bool on) {
+    void Config::toggleWLed(bool status) {
         if (_ledWPin > 0) {
-            ledcWrite(_ledWPin, on ? 1020 : 1023);
+            ledcWrite(_ledWPin, status ? 1020 : 1023);
+            _ledWStatus = status;
         }
     }
 
-    void Config::toggleRLed(bool on) {
-        if (_ledWPin > 0) {
-            ledcWrite(_ledRPin, on ? 1020 : 1023);
+    void Config::toggleRLed(bool status) {
+        if (_ledRPin > 0) {
+            ledcWrite(_ledRPin, status ? 1020 : 1023);
+            _ledRStatus = status;
         }
+    }
+
+    void Config::toggleLeds(bool status) {
+        this->toggleWLed(status);
+        this->toggleRLed(status);
+    }
+
+    bool Config::isLedsOn() {
+        return _ledWStatus || _ledRStatus;
     }
 }
