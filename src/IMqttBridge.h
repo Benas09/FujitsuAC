@@ -63,6 +63,7 @@ namespace FujitsuAC {
             }
 
             virtual void loop() {
+                this->networkUpdater->loop();
                 this->sendDiagnosticData();
             }
 
