@@ -295,6 +295,7 @@ namespace FujitsuAC {
                     p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
                     p += "\"payload_available\": \"online\",";
                     p += "\"payload_not_available\": \"offline\",";
+                    p += "\"state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/leds\",";
                     p += "\"command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/leds\",";
                     p += "\"entity_category\": \"config\",";
                     p += "\"payload_on\": \"on\",";
