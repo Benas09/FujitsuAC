@@ -37,7 +37,7 @@ namespace FujitsuAC {
 		        return this->registryTable->getAllRegisters(outSize);
 		    }
 
-		    RegistryTable::Register* getRegister(uint8_t address) {
+		    RegistryTable::Register* getRegister(uint16_t address) {
 		        return this->registryTable->getRegister(address);
 		    }
 
