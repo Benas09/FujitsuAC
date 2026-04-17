@@ -60,4 +60,28 @@ namespace FujitsuAC {
 	void Config::setValue(const char* key, String value) {
 		_preferences.putString(key, value);
 	}
+
+    void Config::initLeds() {
+        if (_ledRPin > 0) {
+            ledcAttach(_ledRPin, 12000, 10);
+            ledcWrite(_ledRPin, 1020);
+        }
+
+        if (_ledWPin > 0) {
+            ledcAttach(_ledWPin, 12000, 10);
+            ledcWrite(_ledWPin, 1023);
+        }
+    }
+
+    void Config::toggleWLed(bool on) {
+        if (_ledWPin > 0) {
+            ledcWrite(_ledWPin, on ? 1020 : 1023);
+        }
+    }
+
+    void Config::toggleRLed(bool on) {
+        if (_ledWPin > 0) {
+            ledcWrite(_ledRPin, on ? 1020 : 1023);
+        }
+    }
 }

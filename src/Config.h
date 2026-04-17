@@ -19,6 +19,10 @@ namespace FujitsuAC {
             void load();
     		void clear();
     		bool isEmpty();
+            void initLeds();
+
+            void toggleWLed(bool on);
+            void toggleRLed(bool on);
 
     		String getUniqueId() { return _uniqueId; }
 

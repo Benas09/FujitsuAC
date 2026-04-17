@@ -75,15 +75,7 @@ namespace FujitsuAC {
     }
 
     void FujitsuAC::initIO() {
-        if (_config.getLedRPin() > 0) {
-            ledcAttach(_config.getLedRPin(), 12000, 10);
-            ledcWrite(_config.getLedRPin(), 1020);
-        }
-
-        if (_config.getLedWPin() > 0) {
-            ledcAttach(_config.getLedWPin(), 12000, 10);
-            ledcWrite(_config.getLedWPin(), 1023);
-        }
+        _config.initLeds();
 
         if (resetButtonPin > 0) {
             pinMode(resetButtonPin, INPUT_PULLUP);
@@ -230,16 +222,12 @@ namespace FujitsuAC {
 
         while (WiFi.status() != WL_CONNECTED) {
             this->handleResetButton();
-    
-            if (_config.getLedRPin() > 0) {
-                ledcWrite(_config.getLedRPin(), 1023);
-                delay(500);
+            
+            _config.toggleRLed(false);
+            delay(500);
 
-                ledcWrite(_config.getLedRPin(), 1020);
-                delay(500);
-            } else {
-                delay(50);
-            }
+            _config.toggleRLed(true);
+            delay(500);
 
             if (millis() - start > 60000) {
                 isFallbackAp = true;
@@ -255,9 +243,7 @@ namespace FujitsuAC {
                 ESP.restart();
             }
 
-            if (_config.getLedWPin() > 0) {
-                ledcWrite(_config.getLedWPin(), 1023);
-            }
+            _config.toggleWLed(false);
 
             char topic[64];
             snprintf(topic, sizeof(topic), "fujitsu/%s/status", _config.getUniqueId().c_str());
@@ -271,9 +257,7 @@ namespace FujitsuAC {
             }
 
             if (connected) {
-                if (_config.getLedWPin() > 0) {
-                    ledcWrite(_config.getLedWPin(), 1020);
-                }
+                _config.toggleWLed(true);
 
                 if (nullptr == bridge) {
                     if (_config.getProtocol() == "UTY-TFSXJ4") {
