@@ -123,10 +123,11 @@ namespace FujitsuAC {
 		}
 	}
 
-	void NetworkUpdater::updateFirmware() {
+	void NetworkUpdater::updateFirmware(const char *branch) {
 		char msg[128];
+		snprintf(msg, sizeof(msg), "NetworkUpdater: Starting OTA update from %s", branch);
 
-		this->debug("info", "NetworkUpdater: Starting OTA update");
+		this->debug("info", msg);
 		this->debug("status", "Updating");
 
 		NetworkClientSecure networkClient;
@@ -156,8 +157,10 @@ namespace FujitsuAC {
 		snprintf(msg, sizeof(msg), "NetworkUpdater: %s", chip.c_str());
 		this->debug("info", msg);
 
-		String path = "/Benas09/FujitsuAC/refs/heads/master/fw/" + chip + ".bin";
-		t_httpUpdate_return ret = httpUpdate.update(networkClient, "raw.githubusercontent.com", 443, path.c_str());
+		char path[128];
+		snprintf(path, sizeof(path), "/Benas09/FujitsuAC/refs/heads/%s/fw/%s.bin", branch, chip);
+
+		t_httpUpdate_return ret = httpUpdate.update(networkClient, "raw.githubusercontent.com", 443, path);
 
 		switch (ret) {
 			case HTTP_UPDATE_FAILED: 

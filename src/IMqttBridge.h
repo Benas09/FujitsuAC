@@ -279,7 +279,7 @@ namespace FujitsuAC {
                 p += "\"payload_not_available\": \"offline\",";
                 p += "\"command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/update_firmware\",";
                 p += "\"entity_category\": \"config\",";
-                p += "\"payload_press\": \"update_firmware\",";
+                p += "\"payload_press\": \"master\",";
                 
                 p += this->deviceConfig;
                 p += "}";
@@ -387,7 +387,7 @@ namespace FujitsuAC {
                 }
 
                 if (0 == strcmp(property, "update_firmware")) {
-                    this->networkUpdater->updateFirmware();
+                    this->networkUpdater->updateFirmware(payload);
 
                     return;
                 }
