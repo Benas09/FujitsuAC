@@ -5,17 +5,18 @@
   Project home: https://github.com/Benas09/FujitsuAC
 */
 
-#pragma once
-
 #include "Config.h"
 
 namespace FujitsuAC {
 
-    Config::Config(const char *version, int ledWPin, int ledRPin) : 
+    Config::Config(const char *version, int rxPin, int txPin, int ledWPin, int ledRPin, int resetButtonPin) : 
     	_preferences(),
     	_version(version),
+        _rxPin(rxPin),
+        _txPin(txPin),
     	_ledWPin(ledWPin),
-    	_ledRPin(ledRPin)
+    	_ledRPin(ledRPin),
+        _resetButtonPin(resetButtonPin)
 	{
     }
 
@@ -61,7 +62,7 @@ namespace FujitsuAC {
 		_preferences.putString(key, value);
 	}
 
-    void Config::initLeds() {
+    void Config::initIO() {
         if (_ledRPin > 0) {
             ledcAttach(_ledRPin, 12000, 10);
             this->toggleRLed(true);
@@ -70,6 +71,14 @@ namespace FujitsuAC {
         if (_ledWPin > 0) {
             ledcAttach(_ledWPin, 12000, 10);
             this->toggleWLed(false);
+        }
+
+        pinMode(_rxPin, INPUT_PULLUP);
+        pinMode(_txPin, OUTPUT);
+        digitalWrite(_txPin, LOW);
+
+        if (_resetButtonPin > 0) {
+            pinMode(_resetButtonPin, INPUT_PULLUP);
         }
     }
 

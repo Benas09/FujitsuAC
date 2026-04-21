@@ -5,17 +5,13 @@
   Project home: https://github.com/Benas09/FujitsuAC
 */
 
-#pragma once
-
 #include "TFSXW1Bridge.h"
 
 namespace FujitsuAC {
     TFSXW1Bridge::TFSXW1Bridge(
         Config &config,
-        PubSubClient &mqttClient,
-        Stream &uart
+        PubSubClient &mqttClient
     ):
-        controller(uart),
         IMqttBridge(
             config,
             mqttClient
@@ -23,24 +19,27 @@ namespace FujitsuAC {
     {}
 
     void TFSXW1Bridge::setup() {
+        _uart = new Uart(UART_NUM_2, _config.getRxPin(), _config.getTxPin());
+        _controller = new TFSXW1Controller(*_uart);
+
         IMqttBridge::setup();
 
         this->registerBaseEntities();
         this->registerSwitch(TFSXW1Controller::Address::Power);
 
-        this->controller.setOnRegisterChangeCallback([this](const RegistryTable::Register* reg) {
+        _controller->setOnRegisterChangeCallback([this](const RegistryTable::Register* reg) {
             this->onRegisterChange(reg);
         });
 
-        this->controller.setDebugCallback([this](const char* name, const char* message) {
+        _controller->setDebugCallback([this](const char* name, const char* message) {
             this->debug(name, message);
         });
 
-        this->controller.setup();
+        _controller->setup();
 
         //Send initial registry values after MQTT connection
         size_t registryCount;
-        const RegistryTable::Register* registers = this->controller.getAllRegisters(registryCount);
+        const RegistryTable::Register* registers = _controller->getAllRegisters(registryCount);
 
         for (size_t i = 0; i < registryCount; ++i) {
             if (
@@ -56,10 +55,10 @@ namespace FujitsuAC {
 
     void TFSXW1Bridge::loop() {
         IMqttBridge::loop();
-        this->controller.loop();
+        _controller->loop();
 
-        if (this->isPoweringOn && !this->controller.isPoweredOn()) {
-            this->controller.setPower(TFSXW1Enums::Power::On);
+        if (this->isPoweringOn && !_controller->isPoweredOn()) {
+            _controller->setPower(TFSXW1Enums::Power::On);
         }
     }
 
@@ -149,8 +148,8 @@ namespace FujitsuAC {
             || TFSXW1Controller::Address::HorizontalAirflow == address
         ) {
             int count = TFSXW1Controller::Address::VerticalAirflow == address
-                ? this->controller.getVerticalAirflowDirectionCount()
-                : this->controller.getHorizontalAirflowDirectionCount()
+                ? _controller->getVerticalAirflowDirectionCount()
+                : _controller->getHorizontalAirflowDirectionCount()
             ;
 
             count = count > 6 ? 6 : count;
@@ -197,27 +196,27 @@ namespace FujitsuAC {
 
     void TFSXW1Bridge::handleMqttCommand(const char *property, const char* payload) {
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::Power))) {
-            this->controller.setPower(this->stringToEnum(TFSXW1Enums::Power::Off, payload));
+            _controller->setPower(this->stringToEnum(TFSXW1Enums::Power::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::MinimumHeat))) {
-            this->controller.setMinimumHeat(this->stringToEnum(TFSXW1Enums::MinimumHeat::Off, payload));
+            _controller->setMinimumHeat(this->stringToEnum(TFSXW1Enums::MinimumHeat::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::Mode))) {
             if (0 == strcmp(payload, "off")) {
-                this->controller.setPower(TFSXW1Enums::Power::Off);
+                _controller->setPower(TFSXW1Enums::Power::Off);
 
                 return;
             }
 
-            this->controller.setMode(this->stringToEnum(TFSXW1Enums::Mode::Auto, payload));
+            _controller->setMode(this->stringToEnum(TFSXW1Enums::Mode::Auto, payload));
 
-            if (!this->controller.isPoweredOn()) {
+            if (!_controller->isPoweredOn()) {
                 this->isPoweringOn = true;
             }
 
@@ -225,73 +224,73 @@ namespace FujitsuAC {
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::SetpointTemp))) {
-            this->controller.setTemp(payload);
+            _controller->setTemp(payload);
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::FanSpeed))) {
-            this->controller.setFanSpeed(this->stringToEnum(TFSXW1Enums::FanSpeed::Auto, payload));
+            _controller->setFanSpeed(this->stringToEnum(TFSXW1Enums::FanSpeed::Auto, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::VerticalAirflow))) {
-            this->controller.setVerticalAirflow(this->stringToEnum(TFSXW1Enums::VerticalAirflow::Position1, payload));
+            _controller->setVerticalAirflow(this->stringToEnum(TFSXW1Enums::VerticalAirflow::Position1, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::VerticalSwing))) {
-            this->controller.setVerticalSwing(this->stringToEnum(TFSXW1Enums::VerticalSwing::Off, payload));
+            _controller->setVerticalSwing(this->stringToEnum(TFSXW1Enums::VerticalSwing::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::HorizontalAirflow))) {
-            this->controller.setHorizontalAirflow(this->stringToEnum(TFSXW1Enums::HorizontalAirflow::Position1, payload));
+            _controller->setHorizontalAirflow(this->stringToEnum(TFSXW1Enums::HorizontalAirflow::Position1, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::HorizontalSwing))) {
-            this->controller.setHorizontalSwing(this->stringToEnum(TFSXW1Enums::HorizontalSwing::Off, payload));
+            _controller->setHorizontalSwing(this->stringToEnum(TFSXW1Enums::HorizontalSwing::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::Powerful))) {
-            this->controller.setPowerful(this->stringToEnum(TFSXW1Enums::Powerful::Off, payload));
+            _controller->setPowerful(this->stringToEnum(TFSXW1Enums::Powerful::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::EconomyMode))) {
-            this->controller.setEconomy(this->stringToEnum(TFSXW1Enums::EconomyMode::Off, payload));
+            _controller->setEconomy(this->stringToEnum(TFSXW1Enums::EconomyMode::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::EnergySavingFan))) {
-            this->controller.setEnergySavingFan(this->stringToEnum(TFSXW1Enums::EnergySavingFan::Off, payload));
+            _controller->setEnergySavingFan(this->stringToEnum(TFSXW1Enums::EnergySavingFan::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::OutdoorUnitLowNoise))) {
-            this->controller.setOutdoorUnitLowNoise(this->stringToEnum(TFSXW1Enums::OutdoorUnitLowNoise::Off, payload));
+            _controller->setOutdoorUnitLowNoise(this->stringToEnum(TFSXW1Enums::OutdoorUnitLowNoise::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::HumanSensor))) {
-            this->controller.setHumanSensor(this->stringToEnum(TFSXW1Enums::HumanSensor::Off, payload));
+            _controller->setHumanSensor(this->stringToEnum(TFSXW1Enums::HumanSensor::Off, payload));
 
             return;
         }
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::CoilDry))) {
-            this->controller.setCoilDry(this->stringToEnum(TFSXW1Enums::CoilDry::Off, payload));
+            _controller->setCoilDry(this->stringToEnum(TFSXW1Enums::CoilDry::Off, payload));
 
             return;
         }
@@ -321,7 +320,7 @@ namespace FujitsuAC {
             }
 
             // Workaround to get shown required mode shown immediately after turn off
-            RegistryTable::Register* modeRegister = this->controller.getRegister(TFSXW1Controller::Address::Mode);
+            RegistryTable::Register* modeRegister = _controller->getRegister(TFSXW1Controller::Address::Mode);
             this->publishState(modeRegister->address, this->valueToString(modeRegister));
         }
 
@@ -346,7 +345,7 @@ namespace FujitsuAC {
 
         for (const auto& relation : defaults) {
             if (relation.featureAddress == reg->address) {
-                if (this->controller.isFeatureSupported(relation.featureAddress)) {
+                if (_controller->isFeatureSupported(relation.featureAddress)) {
                     this->registerSwitch(relation.registryAddress);
                 }
 
@@ -407,7 +406,7 @@ namespace FujitsuAC {
 
                 break;
             case TFSXW1Controller::Address::Mode:
-                if (!this->isPoweringOn && !this->controller.isPoweredOn()) {
+                if (!this->isPoweringOn && !_controller->isPoweredOn()) {
                     return "off";
                 }
 

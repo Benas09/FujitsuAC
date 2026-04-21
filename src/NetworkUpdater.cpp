@@ -4,7 +4,6 @@
   
   Project home: https://github.com/Benas09/FujitsuAC
 */
-#pragma once
 
 #include "NetworkUpdater.h"
 

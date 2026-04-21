@@ -11,6 +11,7 @@
 #include <Arduino.h>
 #include "RegistryTable.h"
 #include "TFSXW1Controller.h"
+#include <Uart.h>
 
 namespace FujitsuAC {
 
@@ -18,8 +19,7 @@ namespace FujitsuAC {
         public:
             TFSXW1Bridge(
                 Config &config,
-                PubSubClient &mqttClient,
-                Stream &uart
+                PubSubClient &mqttClient
             );
 
             void setup() override;
@@ -35,7 +35,8 @@ namespace FujitsuAC {
             void handleMqttCommand(const char *command, const char *property) override;
 
         private:
-            TFSXW1Controller controller;
+            Stream *_uart = nullptr;
+            TFSXW1Controller *_controller = nullptr;
             uint32_t lastTempReportMillis = -180000;
             bool isPoweringOn = false;
 

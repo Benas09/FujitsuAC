@@ -1,11 +1,10 @@
 /*
+/*
   FujitsuAC - ESP32 libary for controlling FujitsuAC through MQTT
   Copyright (c) 2025 Benas Ragauskas. All rights reserved.
   
   Project home: https://github.com/Benas09/FujitsuAC
 */
-
-#pragma once
 
 #include "TFSXW1Controller.h"
 

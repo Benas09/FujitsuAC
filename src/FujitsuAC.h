@@ -23,7 +23,6 @@
 #include <PubSubClient.h>
 
 #include <Config.h>
-#include <Uart.h>
 #include <IMqttBridge.h>
 
 namespace FujitsuAC {
@@ -37,11 +36,10 @@ namespace FujitsuAC {
 
         private:
             Config _config;
-            int resetButtonPin;
+
+            int _resetButtonPin;
 
             NetworkServer server;
-
-            Uart uart;
             
             WiFiClient espClient;
             PubSubClient _mqttClient;
@@ -49,8 +47,6 @@ namespace FujitsuAC {
             IMqttBridge* bridge = nullptr;
 
             uint32_t fallbackApCreatedAt = 0;
-
-            void initIO();
 
             void clearConfig();
             String getConfigValue(String qs, String key);

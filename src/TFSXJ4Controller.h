@@ -70,6 +70,13 @@ namespace FujitsuAC {
             void loop() override;
 
         private:
+            uint32_t _lastRequestMillis = 0;
+            bool _lastResponseReceived = true;
+            bool _terminated = false;
+
+            void sendRequest();
+            void onFrame(uint8_t buffer[128], int size, bool isValid);
+
             void initRegistryTable() override {
                 static RegistryTable::Register registries[] = {
                     {Address::Initial0, 0x0000},
