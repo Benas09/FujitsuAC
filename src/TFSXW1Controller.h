@@ -349,8 +349,7 @@ namespace FujitsuAC {
             void sendRequest();
             void requestRegistries(Frame frame);
             void sendRegistries();
-            void onFrame(uint8_t buffer[128], int size, bool isValid);
-            void updateRegistries(uint8_t buffer[128], int size);
+            void onFrame(uint8_t buffer[128], int size, bool isValid);            
 
             void initRegistryTable() override {
                 static RegistryTable::Register registries[] = {

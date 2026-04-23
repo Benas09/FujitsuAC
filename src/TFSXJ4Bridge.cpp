@@ -28,6 +28,10 @@ namespace FujitsuAC {
             return;
         }
 
+        this->initializeUart();
+    }
+
+    void TFSXJ4Bridge::initializeUart() {
         if (TFSXJ4Bridge::UartStatus::Start == _uartStatus) {
             _uartStatus = TFSXJ4Bridge::UartStatus::High;
             _uartTimer = millis();
@@ -75,6 +79,6 @@ namespace FujitsuAC {
     }
 
     void TFSXJ4Bridge::onRegisterChange(const RegistryTable::Register *reg) {
-        
+
     }
 }

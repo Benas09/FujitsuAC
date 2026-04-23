@@ -45,6 +45,8 @@ namespace FujitsuAC {
 
             Stream *_uart = nullptr;
             TFSXJ4Controller *_controller = nullptr;
+
+            void initializeUart();
     };
 
 }
