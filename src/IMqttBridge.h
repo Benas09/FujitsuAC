@@ -97,7 +97,7 @@ namespace FujitsuAC {
         private:
             NetworkUpdater* networkUpdater = nullptr;
 
-            uint32_t lastDiagnosticReportMillis = -30000;
+            uint32_t lastDiagnosticReportMillis = -60000;
 
             void createDeviceConfig() {
                 if (0 == this->deviceConfig.length()) {
@@ -252,6 +252,23 @@ namespace FujitsuAC {
                 snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_reset_reason/config", _config.getUniqueId().c_str());
                 this->mqttClient.publish(topic, p.c_str(), true);
 
+                p = "{";
+                p += "\"name\": \"cpu_temp\",";
+                p += "\"icon\": \"mdi:thermometer\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
+                p += "\"payload_available\": \"online\",";
+                p += "\"payload_not_available\": \"offline\",";
+                p += "\"state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/cpu_temp\",";
+                p += "\"device_class\": \"temperature\",";
+                p += "\"entity_category\": \"diagnostic\",";
+                p += "\"unit_of_measurement\": \"°C\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_cpu_temp\",";
+                p += this->deviceConfig;
+                p += "}";
+
+                snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_cpu_temp/config", _config.getUniqueId().c_str());
+                this->mqttClient.publish(topic, p.c_str(), true);
+
                 this->debug("info", "Diagnostic entities registered");
 
                 p = "{";
@@ -343,14 +360,21 @@ namespace FujitsuAC {
             }
             
             void sendDiagnosticData() {
-                if ((millis() - this->lastDiagnosticReportMillis) < 30000) {
+                if ((millis() - this->lastDiagnosticReportMillis) < 60000) {
                     return;
                 }
 
-                char rssi[8];
-                snprintf(rssi, sizeof(rssi), "%d", WiFi.RSSI());
+                char buffer[8];
 
-                this->publishState("wifi_rssi", rssi);
+                snprintf(buffer, sizeof(buffer), "%d", WiFi.RSSI());
+                this->publishState("wifi_rssi", buffer);
+
+                float cpuTemp = temperatureRead();
+                
+                if (!isnan(cpuTemp) && cpuTemp > -20 && cpuTemp < 150) {
+                    snprintf(buffer, sizeof(buffer), "%.2f", cpuTemp);
+                    this->publishState("cpu_temp", buffer);
+                }
 
                 this->lastDiagnosticReportMillis = millis();
             }

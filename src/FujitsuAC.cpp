@@ -9,7 +9,7 @@
 #include "TFSXW1Bridge.h"
 // #include "TFSXJ4Bridge.h"
 
-#define VERSION "1.3.3"
+#define VERSION "1.3.4"
 
 RTC_NOINIT_ATTR bool isFallbackAp;
 
@@ -238,7 +238,15 @@ namespace FujitsuAC {
     }
 
     void FujitsuAC::connectToMqtt() {
+        if (_mqttClient.connected()) {
+            return;
+        }
+
+        uint32_t start = millis();
+
         while (!_mqttClient.connected()) {
+            this->handleResetButton();
+
             if (WiFi.status() != WL_CONNECTED) {
                 ESP.restart();
             }
@@ -269,9 +277,15 @@ namespace FujitsuAC {
                     }
                 }
             } else {
-                this->handleResetButton();
+                _config.toggleWLed(true);
 
-                delay(5000);
+                if (millis() - start > 60000) {
+                    isFallbackAp = true;
+
+                    ESP.restart();
+                }
+
+                delay(1000);
             }
         }
     }
