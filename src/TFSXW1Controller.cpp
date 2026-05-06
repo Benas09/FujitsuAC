@@ -60,12 +60,6 @@ namespace FujitsuAC {
             this->lastResponseReceived 
             && (now - this->lastRequestMillis) >= 400
         ) {
-            if (this->noResponseNotified) {
-                this->noResponseNotified = false;
-
-                this->debug("status", "Running");
-            }
-
             this->lastRequestMillis = now;
 
             switch (this->lastFrameSent) {
@@ -255,7 +249,11 @@ namespace FujitsuAC {
             return;
         }
 
-        this->noResponseNotified = false;
+        if (this->noResponseNotified) {
+            this->noResponseNotified = false;
+
+            this->debug("status", "Running");
+        }
 
         if (FrameType::Init1 == this->lastFrameSent) {
             static const uint8_t expectedResponseAfterRestart[][8] = {
