@@ -28,6 +28,21 @@ namespace FujitsuAC {
             virtual ~IMqttBridge() = default;
 
             virtual void setup() {
+                this->configureMqtt();
+
+                this->networkUpdater = new NetworkUpdater();
+                this->networkUpdater->setDebugCallback([this](const char* name, const char* message) {
+                    this->debug(name, message);
+                });
+
+                this->networkUpdater->setOnVersionReceivedCallback([this](const char* version) {
+                    this->publishState("latest_version", version);
+                });
+
+                this->networkUpdater->setup();
+            }
+
+            void configureMqtt() {
                 char topic[128];
                 snprintf(topic, sizeof(topic), "fujitsu/%s/status", _config.getUniqueId().c_str());
                 this->mqttClient.publish(topic, "online", true);
@@ -49,17 +64,6 @@ namespace FujitsuAC {
 
                 snprintf(topic, sizeof(topic), "fujitsu/%s/#", _config.getUniqueId().c_str());
                 this->mqttClient.subscribe(topic);
-
-                this->networkUpdater = new NetworkUpdater();
-                this->networkUpdater->setDebugCallback([this](const char* name, const char* message) {
-                    this->debug(name, message);
-                });
-
-                this->networkUpdater->setOnVersionReceivedCallback([this](const char* version) {
-                    this->publishState("latest_version", version);
-                });
-
-                this->networkUpdater->setup();
             }
 
             virtual void loop() {
