@@ -276,7 +276,7 @@ namespace FujitsuAC {
                         bridge->setup();
                     }
                 } else {
-                    bridge->configureMqtt();
+                    bridge->setup();
                 }
             } else {
                 _config.toggleWLed(true);
