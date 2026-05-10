@@ -26,6 +26,13 @@
 #include <Uart.h>
 #include <IMqttBridge.h>
 
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+    #define UART_NUM UART_NUM_1
+#else
+    #define UART_NUM UART_NUM_2
+#endif
+
+
 namespace FujitsuAC {
 
     class FujitsuAC {

@@ -15,10 +15,10 @@ RTC_NOINIT_ATTR bool isFallbackAp;
 
 namespace FujitsuAC {
 
-    FujitsuAC::FujitsuAC(int rxPin, int txPin, int ledWPin, int ledRPin, int resetButtonPin): 
+    FujitsuAC::FujitsuAC(int rxPin, int txPin, int ledWPin, int ledRPin, int resetButtonPin):
         _config(VERSION, ledWPin, ledRPin),
         server(80),
-        uart(UART_NUM_2, rxPin, txPin),
+        uart(UART_NUM, rxPin, txPin),
         espClient(),
         _mqttClient(espClient),
         resetButtonPin(resetButtonPin)
