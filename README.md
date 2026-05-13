@@ -25,8 +25,23 @@ Tested aircons list: https://github.com/Benas09/FujitsuAC/discussions/24
 
 # Support
 
-If you want to support this project, you can buy **ready-to-use** dongle.
-Contact: benas.rag@gmail.com
+<p>
+  If you find this project useful, you can support its development here.<br/>
+ 
+  <a href="https://donate.stripe.com/8x23cvdbXdht57Zfym1sQ05">
+    <img src="https://img.shields.io/badge/Support%20Project-Stripe-635BFF?style=for-the-badge&logo=stripe&logoColor=white">
+  </a>
+</p>
+
+<p>
+  Or you can purchase <strong>ready-to-use</strong> dongle.<br/>
+
+  <a href="https://buy.stripe.com/6oU28r6Nz3GT8kbbi61sQ06">
+    <img src="https://img.shields.io/badge/Purchase%20the%20dongle-Stripe-635BFF?style=for-the-badge&logo=stripe&logoColor=white">
+  </a>
+  
+  <i>If you have any questions or want to purchase multiple dongles you can contact me via email benas.rag@gmail.com</i>
+</p>
 
 ![](/images/dongle-usb.jpg)
 ![](/images/dongle1.jpg)
