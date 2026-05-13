@@ -57,15 +57,15 @@ Or you can build it yourself - you will find instructions below :)
   <img src="/images/ha-controls.png" width="45%" />
   <img src="/images/ha-sensors.png" width="45%" />
   <img src="/images/ha-diagnostic.png" width="45%" />
-</p>
-
-<p align="center">
   <img src="/images/ha-climate.png" width="45%" />
 </p>
 
 #### Credentials page
 *This page is available at 192.168.1.1 when connected to the access point created by the dongle, when no config saved yet, or impossible to connect to WiFi*<br/>
-![](/images/web.png)
+
+<p align="center">
+  <img src="/images/web.png" width="45%" />
+</p>
 
 # Building the module
 
@@ -159,10 +159,12 @@ Chip list for prebuilt firmwares:
 * others will ignore update request
 
 # DIY Module (Logic level shifter is not included here yet)
-![](/images/board_front.jpg)
-![](/images/board_back.jpg)
-![](/images/board_case.jpg)
-![](/images/installed.jpg)
+<p align="center">
+  <img src="/images/board_front.jpg" width="45%" />
+  <img src="/images/board_back.jpg" width="45%" />
+  <img src="/images/board_case.jpg" width="45%" />
+  <img src="/images/installed.jpg" width="45%" />
+</p>
 
 # FAQ
 
