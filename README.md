@@ -54,18 +54,14 @@ Or you can build it yourself - you will find instructions below :)
 #### HomeAssistant Integration (MQTT Autodiscovery)
 
 <p align="center">
-  <img src="/images/ha-controls.jpg" width="45%" />
-  <img src="/images/ha-sensors.jpg" width="45%" />
-  <img src="/images/ha-diagnostic.jpg" width="45%" />
+  <img src="/images/ha-controls.png" width="45%" />
+  <img src="/images/ha-sensors.png" width="45%" />
+  <img src="/images/ha-diagnostic.png" width="45%" />
 </p>
 
 <p align="center">
-  <img src="/images/ha-climate.jpg" width="45%" />
+  <img src="/images/ha-climate.png" width="45%" />
 </p>
-
-![](/images/ha1.png)
-![](/images/ha2.png)
-![](/images/ha3.png)
 
 #### Credentials page
 *This page is available at 192.168.1.1 when connected to the access point created by the dongle, when no config saved yet, or impossible to connect to WiFi*<br/>
