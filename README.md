@@ -91,6 +91,33 @@ Or you can build it yourself - you will find instructions below :)
 **Do not connect anything from air conditioner to external device, like your computer. If you touch AC GND with, lets say laptop GND, it will fry your laptop USB port and/or AC mainboard fuse.**
 AC pins are not galvanically isolated and these voltages are not relative to earth GND.
 
+<table>
+  <thead>
+    <tr>
+     <td width="50%">JST Type wiring</td>
+     <td width="50%">USB Type wiring</td>
+    </tr>
+  </thead>
+  <tbody>
+   <tr>
+     <td>
+       Pins from left to right 1 2 3 4
+     </td>
+     <td>
+       Circuit for JST type connector
+     </td>
+   </tr>
+   <tr>
+     <td>
+       <img src="/images/socket.jpg"/>
+     </td>
+     <td>
+       <img src="/images/circuit.png"/>
+     </td>
+   </tr>
+  </tbody>
+</table>
+
 #### JST-type wiring
 ```
  AC Socket       CN3903                 ESP32
@@ -99,12 +126,6 @@ AC pins are not galvanically isolated and these voltages are not relative to ear
 3 (DATA) -----------------------------> RX/16 (AC -> ESP)
 4 (DATA) -----------------------------> TX/17 (AC <- ESP)
 ```
-
-Pins from left to right 1 2 3 4 <br/>
-![](/images/socket.jpg)
-
-Circuit for JST type connector <br/>
-![](/images/circuit.png)
 
 #### USB-type wiring
 ```
