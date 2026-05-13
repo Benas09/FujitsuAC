@@ -43,8 +43,10 @@ Tested aircons list: https://github.com/Benas09/FujitsuAC/discussions/24
   <i>If you have any questions or want to purchase multiple dongles you can contact me via email benas.rag@gmail.com</i>
 </p>
 
-![](/images/dongle-usb.jpg)
-![](/images/dongle1.jpg)
+<p align="center">
+  <img src="/images/faircon-usb.jpg" width="45%" />
+  <img src="/images/faircon-jst.jpg" width="45%" />
+</p>
 
 Or you can build it yourself - you will find instructions below :)
 
