@@ -9,16 +9,23 @@
 #include "TFSXW1Bridge.h"
 // #include "TFSXJ4Bridge.h"
 
-#define VERSION "1.3.6"
+#define VERSION "1.3.7"
 
 RTC_NOINIT_ATTR bool isFallbackAp;
 
 namespace FujitsuAC {
 
-    FujitsuAC::FujitsuAC(int rxPin, int txPin, int ledWPin, int ledRPin, int resetButtonPin): 
+    FujitsuAC::FujitsuAC(
+        uart_port_t uartPort,
+        int rxPin, 
+        int txPin, 
+        int ledWPin, 
+        int ledRPin, 
+        int resetButtonPin
+    ):
         _config(VERSION, ledWPin, ledRPin),
         server(80),
-        uart(UART_NUM_2, rxPin, txPin),
+        uart(uartPort, rxPin, txPin),
         espClient(),
         _mqttClient(espClient),
         resetButtonPin(resetButtonPin)

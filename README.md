@@ -131,6 +131,7 @@ Since 1.1.6 one-click network update is available. The dongle checks for new ver
 Chip list for prebuilt firmwares:
 * ESP32
 * ESP32-S3
+* ESP32-C3
 * others will ignore update request
 
 # DIY Module (Logic level shifter is not included here yet)
