@@ -37,7 +37,14 @@ namespace FujitsuAC {
 
     class FujitsuAC {
     	public:
-            FujitsuAC(int rxPin, int txPin, int ledWPin, int ledRPin, int resetButtonPin);
+            FujitsuAC(
+                uart_port_t uartPort,
+                int rxPin, 
+                int txPin, 
+                int ledWPin, 
+                int ledRPin, 
+                int resetButtonPin
+            );
 
 			void setup();
 	        void loop();

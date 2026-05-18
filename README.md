@@ -1,4 +1,4 @@
-# FujitsuAC
+# FujitsuAC | faircon
 
 Fujitsu AC Wifi controller.
 
@@ -43,20 +43,29 @@ Tested aircons list: https://github.com/Benas09/FujitsuAC/discussions/24
   <i>If you have any questions or want to purchase multiple dongles you can contact me via email benas.rag@gmail.com</i>
 </p>
 
-![](/images/dongle-usb.jpg)
-![](/images/dongle1.jpg)
+<p align="center">
+  <img src="/images/faircon-usb.jpg" width="45%" />
+  <img src="/images/faircon-jst.jpg" width="45%" />
+</p>
 
 Or you can build it yourself - you will find instructions below :)
 
 # Screenshots
 #### HomeAssistant Integration (MQTT Autodiscovery)
-![](/images/ha1.png)
-![](/images/ha2.png)
-![](/images/ha3.png)
+
+<p align="center">
+  <img src="/images/ha-controls.png" width="45%" />
+  <img src="/images/ha-sensors.png" width="45%" />
+  <img src="/images/ha-diagnostic.png" width="45%" />
+  <img src="/images/ha-climate.png" width="45%" />
+</p>
 
 #### Credentials page
 *This page is available at 192.168.1.1 when connected to the access point created by the dongle, when no config saved yet, or impossible to connect to WiFi*<br/>
-![](/images/web.png)
+
+<p align="center">
+  <img src="/images/web.png" width="45%" />
+</p>
 
 # Building the module
 
@@ -82,6 +91,33 @@ Or you can build it yourself - you will find instructions below :)
 **Do not connect anything from air conditioner to external device, like your computer. If you touch AC GND with, lets say laptop GND, it will fry your laptop USB port and/or AC mainboard fuse.**
 AC pins are not galvanically isolated and these voltages are not relative to earth GND.
 
+<table>
+  <thead>
+    <tr>
+     <td width="50%">JST Type wiring</td>
+     <td width="50%">USB Type wiring</td>
+    </tr>
+  </thead>
+  <tbody>
+   <tr>
+     <td>
+       Pins from left to right 1 2 3 4
+     </td>
+     <td>
+       Circuit for JST type connector
+     </td>
+   </tr>
+   <tr>
+     <td>
+       <img src="/images/socket.jpg"/>
+     </td>
+     <td>
+       <img src="/images/circuit.png"/>
+     </td>
+   </tr>
+  </tbody>
+</table>
+
 #### JST-type wiring
 ```
  AC Socket       CN3903                 ESP32
@@ -90,12 +126,6 @@ AC pins are not galvanically isolated and these voltages are not relative to ear
 3 (DATA) -----------------------------> RX/16 (AC -> ESP)
 4 (DATA) -----------------------------> TX/17 (AC <- ESP)
 ```
-
-Pins from left to right 1 2 3 4 <br/>
-![](/images/socket.jpg)
-
-Circuit for JST type connector <br/>
-![](/images/circuit.png)
 
 #### USB-type wiring
 ```
@@ -146,13 +176,16 @@ Since 1.1.6 one-click network update is available. The dongle checks for new ver
 Chip list for prebuilt firmwares:
 * ESP32
 * ESP32-S3
+* ESP32-C3
 * others will ignore update request
 
 # DIY Module (Logic level shifter is not included here yet)
-![](/images/board_front.jpg)
-![](/images/board_back.jpg)
-![](/images/board_case.jpg)
-![](/images/installed.jpg)
+<p align="center">
+  <img src="/images/board_front.jpg" width="45%" />
+  <img src="/images/board_back.jpg" width="45%" />
+  <img src="/images/board_case.jpg" width="45%" />
+  <img src="/images/installed.jpg" width="45%" />
+</p>
 
 # FAQ
 
