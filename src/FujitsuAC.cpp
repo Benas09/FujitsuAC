@@ -9,11 +9,17 @@
 #include "TFSXW1Bridge.h"
 // #include "TFSXJ4Bridge.h"
 
-#define VERSION "1.3.7"
+#define VERSION "1.3.8"
 
 RTC_NOINIT_ATTR bool isFallbackAp;
+RTC_NOINIT_ATTR int fallbackApReason;
 
 namespace FujitsuAC {
+    enum FallbackApReason: int {
+        None = 0,
+        UnableToConnectWiFi = 1,
+        UnableToConnectMqtt = 2,
+    };
 
     FujitsuAC::FujitsuAC(
         uart_port_t uartPort,
@@ -62,6 +68,7 @@ namespace FujitsuAC {
 
             if (isFallbackAp && millis() - fallbackApCreatedAt > 300000) {
                 isFallbackAp = false;
+                fallbackApReason = FallbackApReason::None;
 
                 ESP.restart();
             }
@@ -93,6 +100,7 @@ namespace FujitsuAC {
         _config.clear();
 
         isFallbackAp = false;
+        fallbackApReason = FallbackApReason::None;
 
         delay(1000);
         ESP.restart();
@@ -147,6 +155,7 @@ namespace FujitsuAC {
         _config.setValue("protocol", getConfigValue(content, "protocol"));
 
         isFallbackAp = false;
+        fallbackApReason = FallbackApReason::None;
     }
 
     void FujitsuAC::handleResetButton() {
@@ -162,6 +171,7 @@ namespace FujitsuAC {
     bool FujitsuAC::createAP() {
         if (ESP_RST_POWERON == esp_reset_reason()) {
             isFallbackAp = false;
+            fallbackApReason = FallbackApReason::None;
         }
 
         if (!this->isAPState()) {
@@ -238,6 +248,7 @@ namespace FujitsuAC {
 
             if (millis() - start > 60000) {
                 isFallbackAp = true;
+                fallbackApReason = FallbackApReason::UnableToConnectWiFi;
 
                 ESP.restart();
             }
@@ -290,6 +301,7 @@ namespace FujitsuAC {
 
                 if (millis() - start > 60000) {
                     isFallbackAp = true;
+                    fallbackApReason = FallbackApReason::UnableToConnectMqtt;
 
                     ESP.restart();
                 }
@@ -401,6 +413,27 @@ namespace FujitsuAC {
                             a:hover {
                                 text-decoration: underline;
                             }
+
+                            .alert {
+                                padding: 10px 12px;
+                                margin: 0 auto 16px auto;
+                                border-radius: 4px;
+                                font-size: 13px;
+                                font-weight: 600;
+                                max-width: 420px;
+                            }
+
+                            .alert.error {
+                                background: #fdecea;
+                                color: #b3261e;
+                                border: 1px solid #f5c2c0;
+                            }
+
+                            .alert.success {
+                                background: #e7f7ee;
+                                color: #1e6b3a;
+                                border: 1px solid #bfe8cc;
+                            }
                         </style>
 
                         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -447,7 +480,7 @@ namespace FujitsuAC {
             )rawliteral";
 
             const char *successBody = R"rawliteral(
-                <h3>Config saved successfuly!</h3>
+                <div class="alert success">Config saved successfuly!</div>
             )rawliteral";
 
             const char *contentEnd = R"rawliteral(
@@ -496,6 +529,13 @@ namespace FujitsuAC {
 
                 client.print(contentStart);
                 client.print(versionBody);
+
+                if (FallbackApReason::UnableToConnectWiFi == fallbackApReason) {
+                    client.print("<div class=\"alert error\">Unsuccessful WiFi connection</div>");
+                } else if (FallbackApReason::UnableToConnectMqtt == fallbackApReason) {
+                    client.print("<div class=\"alert error\">Unsuccessful MQTT connection</div>");
+                }
+
                 client.print(formBody);
                 client.print(contentEnd);
 
