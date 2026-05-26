@@ -47,6 +47,7 @@ namespace FujitsuAC {
         _deviceName = _preferences.getString("device-name", "");
         _otaPw = _preferences.getString("ota-pw", "");
         _protocol = _preferences.getString("protocol", "");
+        _ledsOn = _preferences.getBool("leds-on", true);
     }
 
     void Config::clear() {
@@ -76,23 +77,26 @@ namespace FujitsuAC {
     void Config::toggleWLed(bool status) {
         if (_ledWPin > 0) {
             ledcWrite(_ledWPin, status ? 1020 : 1023);
-            _ledWStatus = status;
         }
     }
 
     void Config::toggleRLed(bool status) {
         if (_ledRPin > 0) {
             ledcWrite(_ledRPin, status ? 1020 : 1023);
-            _ledRStatus = status;
         }
     }
 
-    void Config::toggleLeds(bool status) {
+    void Config::setLedsStatus(bool status) {
+        if (_ledsOn != status) {
+            _ledsOn = status;
+            _preferences.putBool("leds-on", status);
+        }
+
         this->toggleWLed(status);
         this->toggleRLed(status);
     }
 
     bool Config::isLedsOn() {
-        return _ledWStatus || _ledRStatus;
+        return _ledsOn;
     }
 }

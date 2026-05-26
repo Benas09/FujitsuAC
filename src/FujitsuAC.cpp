@@ -9,7 +9,7 @@
 #include "TFSXW1Bridge.h"
 // #include "TFSXJ4Bridge.h"
 
-#define VERSION "1.3.8"
+#define VERSION "1.3.9"
 
 RTC_NOINIT_ATTR bool isFallbackAp;
 RTC_NOINIT_ATTR int fallbackApReason;
@@ -259,6 +259,9 @@ namespace FujitsuAC {
         if (_mqttClient.connected()) {
             return;
         }
+
+        //show that Wifi is still connected
+        _config.toggleRLed(true);
 
         uint32_t start = millis();
 

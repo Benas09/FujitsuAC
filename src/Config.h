@@ -31,7 +31,7 @@ namespace FujitsuAC {
     		const char* getVersion() { return _version; }
 
             bool isLedsOn();
-            void toggleLeds(bool status);
+            void setLedsStatus(bool status);
 
     		int getLedWPin() { return _ledWPin; }
     		int getLedRPin() { return _ledRPin; }
@@ -55,9 +55,6 @@ namespace FujitsuAC {
             int _ledWPin;
             int _ledRPin;
 
-            bool _ledWStatus = false;
-            bool _ledRStatus = false;
-            
             String _wifiSsid;
             String _wifiPw;
             String _mqttIp;
@@ -67,6 +64,7 @@ namespace FujitsuAC {
             String _deviceName;
             String _otaPw;
             String _protocol;
+            bool _ledsOn = true;
 
             void generateUniqueId();
     };

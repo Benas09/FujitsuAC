@@ -54,6 +54,8 @@ namespace FujitsuAC {
                 this->sendInitialDiagnosticData();
                 this->sendDiagnosticData();
 
+                _config.setLedsStatus(_config.isLedsOn());
+
                 this->mqttClient.setCallback([this](char* topic, byte* payload, unsigned int length) {
                     char message[length + 1];
                     memcpy(message, payload, length);
@@ -421,7 +423,7 @@ namespace FujitsuAC {
                 }
 
                 if (0 == strcmp(property, "leds")) {
-                    _config.toggleLeds(0 == strcmp(payload, "on"));
+                    _config.setLedsStatus(0 == strcmp(payload, "on"));
                     this->publishState("leds", _config.isLedsOn() ? "on" : "off");
 
                     return;
