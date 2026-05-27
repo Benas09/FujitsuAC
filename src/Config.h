@@ -8,6 +8,7 @@
 #pragma once
 
 #include <Preferences.h>
+#include <WiFi.h>
 
 namespace FujitsuAC {
 
@@ -32,6 +33,12 @@ namespace FujitsuAC {
 
             bool isLedsOn();
             void setLedsStatus(bool status);
+
+            void setWifiSleepEnabled(bool status);
+            bool isWifiSleepEnabled();
+
+            void setLowCpuSpeedEnabled(bool status);
+            bool isLowCpuSpeedEnabled();
 
     		int getLedWPin() { return _ledWPin; }
     		int getLedRPin() { return _ledRPin; }
@@ -64,7 +71,10 @@ namespace FujitsuAC {
             String _deviceName;
             String _otaPw;
             String _protocol;
+            
             bool _ledsOn = true;
+            bool _wifiSleepEnabled = true;
+            bool _lowCpuSpeedEnabled = true;
 
             void generateUniqueId();
     };

@@ -48,6 +48,10 @@ namespace FujitsuAC {
         _otaPw = _preferences.getString("ota-pw", "");
         _protocol = _preferences.getString("protocol", "");
         _ledsOn = _preferences.getBool("leds-on", true);
+        _wifiSleepEnabled = _preferences.getBool("wifi-sleep-enabled", true);
+        _lowCpuSpeedEnabled = _preferences.getBool("low-cpu-speed-enabled", true);
+
+        this->setLowCpuSpeedEnabled(_lowCpuSpeedEnabled);
     }
 
     void Config::clear() {
@@ -98,5 +102,43 @@ namespace FujitsuAC {
 
     bool Config::isLedsOn() {
         return _ledsOn;
+    }
+
+    void Config::setWifiSleepEnabled(bool status) 
+    {
+        if (_wifiSleepEnabled != status) {
+            _wifiSleepEnabled = status;
+            _preferences.putBool("wifi-sleep-enabled", status);
+        }
+
+        WiFi.setSleep(status);
+    }
+
+    bool Config::isWifiSleepEnabled() {
+        return _wifiSleepEnabled;
+    }
+
+    void Config::setLowCpuSpeedEnabled(bool status) 
+    {
+        if (_lowCpuSpeedEnabled != status) {
+            _lowCpuSpeedEnabled = status;
+            _preferences.putBool("low-cpu-speed-enabled", status);
+        }
+
+        uint32_t minFreq = 80;
+        uint32_t maxFreq = 240;
+
+        String chip = ESP.getChipModel();
+
+        if (chip == "ESP32-C3") {
+            minFreq = 40;
+            maxFreq = 160;
+        }
+
+        setCpuFrequencyMhz(status ? minFreq : maxFreq);
+    }
+
+    bool Config::isLowCpuSpeedEnabled() {
+        return _lowCpuSpeedEnabled;
     }
 }

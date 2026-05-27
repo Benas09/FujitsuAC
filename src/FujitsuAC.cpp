@@ -9,7 +9,7 @@
 #include "TFSXW1Bridge.h"
 // #include "TFSXJ4Bridge.h"
 
-#define VERSION "1.3.9"
+#define VERSION "1.3.10"
 
 RTC_NOINIT_ATTR bool isFallbackAp;
 RTC_NOINIT_ATTR int fallbackApReason;
@@ -211,6 +211,8 @@ namespace FujitsuAC {
         WiFi.disconnect(true, true);
         WiFi.setHostname(_config.getDeviceName().c_str());
         WiFi.mode(WIFI_STA);
+
+        _config.setWifiSleepEnabled(_config.isWifiSleepEnabled());
 
         int bestNetwork = -1;
         int bestRSSI = -1000;

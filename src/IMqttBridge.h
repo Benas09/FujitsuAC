@@ -332,6 +332,44 @@ namespace FujitsuAC {
                 }
 
                 p = "{";
+                p += "\"name\": \"wifi_sleep\",";
+                p += "\"icon\": \"mdi:wifi-arrow-down\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_wifi_sleep\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
+                p += "\"payload_available\": \"online\",";
+                p += "\"payload_not_available\": \"offline\",";
+                p += "\"state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/wifi_sleep\",";
+                p += "\"command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/wifi_sleep\",";
+                p += "\"entity_category\": \"config\",";
+                p += "\"payload_on\": \"on\",";
+                p += "\"payload_off\": \"off\",";
+                
+                p += this->deviceConfig;
+                p += "}";
+
+                snprintf(topic, sizeof(topic), "homeassistant/switch/%s_%s/config", _config.getUniqueId().c_str(), "wifi_sleep");
+                this->mqttClient.publish(topic, p.c_str(), true);
+
+                p = "{";
+                p += "\"name\": \"low_cpu_speed\",";
+                p += "\"icon\": \"mdi:speedometer-slow\",";
+                p += "\"unique_id\": \"" + _config.getUniqueId() + "_slow_cpu\",";
+                p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
+                p += "\"payload_available\": \"online\",";
+                p += "\"payload_not_available\": \"offline\",";
+                p += "\"state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/low_cpu_speed\",";
+                p += "\"command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/low_cpu_speed\",";
+                p += "\"entity_category\": \"config\",";
+                p += "\"payload_on\": \"on\",";
+                p += "\"payload_off\": \"off\",";
+                
+                p += this->deviceConfig;
+                p += "}";
+
+                snprintf(topic, sizeof(topic), "homeassistant/switch/%s_%s/config", _config.getUniqueId().c_str(), "low_cpu_speed");
+                this->mqttClient.publish(topic, p.c_str(), true);
+
+                p = "{";
                 p += "\"name\": \"clear_credentials\",";
                 p += "\"icon\": \"mdi:delete-alert\",";
                 p += "\"unique_id\": \"" + _config.getUniqueId() + "_clear_credentials\",";
@@ -359,6 +397,8 @@ namespace FujitsuAC {
                 this->publishState("version", _config.getVersion());
                 this->publishState("protocol", this->getProtocolName());
                 this->publishState("reset_reason", this->getResetReason());
+                this->publishState("wifi_sleep", _config.isWifiSleepEnabled() ? "on" : "off");
+                this->publishState("low_cpu_speed", _config.isLowCpuSpeedEnabled() ? "on" : "off");
 
                 if (_config.getLedRPin() > 0) {
                     this->publishState("leds", _config.isLedsOn() ? "on" : "off");
@@ -425,6 +465,20 @@ namespace FujitsuAC {
                 if (0 == strcmp(property, "leds")) {
                     _config.setLedsStatus(0 == strcmp(payload, "on"));
                     this->publishState("leds", _config.isLedsOn() ? "on" : "off");
+
+                    return;
+                }
+
+                if (0 == strcmp(property, "wifi_sleep")) {
+                    _config.setWifiSleepEnabled(0 == strcmp(payload, "on"));
+                    this->publishState("wifi_sleep", _config.isWifiSleepEnabled() ? "on" : "off");
+
+                    return;
+                }
+
+                if (0 == strcmp(property, "low_cpu_speed")) {
+                    _config.setLowCpuSpeedEnabled(0 == strcmp(payload, "on"));
+                    this->publishState("low_cpu_speed", _config.isLowCpuSpeedEnabled() ? "on" : "off");
 
                     return;
                 }
