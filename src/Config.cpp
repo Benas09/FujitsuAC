@@ -48,8 +48,8 @@ namespace FujitsuAC {
         _otaPw = _preferences.getString("ota-pw", "");
         _protocol = _preferences.getString("protocol", "");
         _ledsOn = _preferences.getBool("leds-on", true);
-        _wifiSleepEnabled = _preferences.getBool("wifi-sleep-enabled", true);
-        _lowCpuSpeedEnabled = _preferences.getBool("low-cpu-speed-enabled", true);
+        _wifiSleepEnabled = _preferences.getBool("wifi-sleep", true);
+        _lowCpuSpeedEnabled = _preferences.getBool("low-cpu-speed", true);
 
         this->setLowCpuSpeedEnabled(_lowCpuSpeedEnabled);
     }
@@ -108,7 +108,7 @@ namespace FujitsuAC {
     {
         if (_wifiSleepEnabled != status) {
             _wifiSleepEnabled = status;
-            _preferences.putBool("wifi-sleep-enabled", status);
+            _preferences.putBool("wifi-sleep", status);
         }
 
         WiFi.setSleep(status);
@@ -122,7 +122,7 @@ namespace FujitsuAC {
     {
         if (_lowCpuSpeedEnabled != status) {
             _lowCpuSpeedEnabled = status;
-            _preferences.putBool("low-cpu-speed-enabled", status);
+            _preferences.putBool("low-cpu-speed", status);
         }
 
         uint32_t minFreq = 80;
