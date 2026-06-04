@@ -131,7 +131,7 @@ namespace FujitsuAC {
         String chip = ESP.getChipModel();
 
         if (chip == "ESP32-C3") {
-            minFreq = 40;
+            minFreq = 80;
             maxFreq = 160;
         }
 
