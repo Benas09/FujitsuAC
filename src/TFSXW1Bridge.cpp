@@ -201,6 +201,8 @@ namespace FujitsuAC {
 
             if (power == TFSXW1Enums::Power::Off) {
                 this->isPoweringOn = false;
+            } else if (!this->controller.isPoweredOn()) {
+                this->isPoweringOn = true;
             }
 
             this->controller.setPower(power);
