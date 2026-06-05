@@ -38,6 +38,11 @@ namespace FujitsuAC {
             TFSXW1Controller controller;
             uint32_t lastTempReportMillis = -180000;
             bool isPoweringOn = false;
+            uint32_t powerOnRetryStartedMillis = 0;
+            static constexpr uint32_t powerOnRetryTimeoutMillis = 60000;
+
+            void startPowerOnRetry();
+            void stopPowerOnRetry();
 
             void registerBaseEntities();
             void registerSwitch(TFSXW1Controller::Address address);

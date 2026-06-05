@@ -58,9 +58,39 @@ namespace FujitsuAC {
         IMqttBridge::loop();
         this->controller.loop();
 
-        if (this->isPoweringOn && !this->controller.isPoweredOn()) {
-            this->controller.setPower(TFSXW1Enums::Power::On);
+        if (!this->isPoweringOn) {
+            return;
         }
+
+        if (this->controller.isPoweredOn()) {
+            this->stopPowerOnRetry();
+
+            return;
+        }
+
+        uint32_t now = millis();
+
+        if ((now - this->powerOnRetryStartedMillis) >= this->powerOnRetryTimeoutMillis) {
+            this->stopPowerOnRetry();
+            this->debug("status", "Power-on timeout");
+            this->debug("warning", "Power-on retry timeout");
+
+            return;
+        }
+
+        this->controller.setPower(TFSXW1Enums::Power::On);
+    }
+
+    void TFSXW1Bridge::startPowerOnRetry() {
+        this->isPoweringOn = true;
+        this->powerOnRetryStartedMillis = millis();
+
+        this->debug("status", "Power-on pending");
+    }
+
+    void TFSXW1Bridge::stopPowerOnRetry() {
+        this->isPoweringOn = false;
+        this->powerOnRetryStartedMillis = 0;
     }
 
     void TFSXW1Bridge::registerBaseEntities() {
@@ -200,9 +230,9 @@ namespace FujitsuAC {
             TFSXW1Enums::Power power = this->stringToEnum(TFSXW1Enums::Power::Off, payload);
 
             if (power == TFSXW1Enums::Power::Off) {
-                this->isPoweringOn = false;
+                this->stopPowerOnRetry();
             } else if (!this->controller.isPoweredOn()) {
-                this->isPoweringOn = true;
+                this->startPowerOnRetry();
             }
 
             this->controller.setPower(power);
@@ -218,7 +248,7 @@ namespace FujitsuAC {
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::Mode))) {
             if (0 == strcmp(payload, "off")) {
-                this->isPoweringOn = false;
+                this->stopPowerOnRetry();
                 this->controller.setPower(TFSXW1Enums::Power::Off);
 
                 return;
@@ -227,7 +257,7 @@ namespace FujitsuAC {
             this->controller.setMode(this->stringToEnum(TFSXW1Enums::Mode::Auto, payload));
 
             if (!this->controller.isPoweredOn()) {
-                this->isPoweringOn = true;
+                this->startPowerOnRetry();
             }
 
             return;
@@ -327,7 +357,7 @@ namespace FujitsuAC {
         if (TFSXW1Controller::Address::Power == reg->address) {
             // Always clear pending auto power-on when any real power state arrives.
             // This keeps IR/manual OFF authoritative and prevents unexpected re-power.
-            this->isPoweringOn = false;
+            this->stopPowerOnRetry();
 
             // Workaround to get shown required mode shown immediately after turn off
             RegistryTable::Register* modeRegister = this->controller.getRegister(TFSXW1Controller::Address::Mode);
