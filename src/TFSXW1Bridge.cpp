@@ -197,7 +197,13 @@ namespace FujitsuAC {
 
     void TFSXW1Bridge::handleMqttCommand(const char *property, const char* payload) {
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::Power))) {
-            this->controller.setPower(this->stringToEnum(TFSXW1Enums::Power::Off, payload));
+            TFSXW1Enums::Power power = this->stringToEnum(TFSXW1Enums::Power::Off, payload);
+
+            if (power == TFSXW1Enums::Power::Off) {
+                this->isPoweringOn = false;
+            }
+
+            this->controller.setPower(power);
 
             return;
         }
@@ -210,6 +216,7 @@ namespace FujitsuAC {
 
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::Mode))) {
             if (0 == strcmp(payload, "off")) {
+                this->isPoweringOn = false;
                 this->controller.setPower(TFSXW1Enums::Power::Off);
 
                 return;
@@ -316,9 +323,9 @@ namespace FujitsuAC {
         this->publishState(reg->address, this->valueToString(reg));
 
         if (TFSXW1Controller::Address::Power == reg->address) {
-            if (static_cast<uint16_t>(TFSXW1Enums::Power::On) == reg->value) {
-                this->isPoweringOn = false;
-            }
+            // Always clear pending auto power-on when any real power state arrives.
+            // This keeps IR/manual OFF authoritative and prevents unexpected re-power.
+            this->isPoweringOn = false;
 
             // Workaround to get shown required mode shown immediately after turn off
             RegistryTable::Register* modeRegister = this->controller.getRegister(TFSXW1Controller::Address::Mode);
