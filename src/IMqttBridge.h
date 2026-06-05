@@ -437,7 +437,7 @@ namespace FujitsuAC {
                 const char *command = com.c_str();
                 const char *property = prop.c_str();
 
-                if (strcmp(command, "set") > 0) {
+                if (0 != strcmp(command, "set")) {
                     return;
                 }
 
