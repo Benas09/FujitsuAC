@@ -155,7 +155,7 @@ USB Pinout from top to bottom <br/>
 *Additional button can be used for credentials reset functionality - uncomment RESET_BUTTON and set to corresponding pin. When you press this button (pull corresponding pin to GND) - controller deletes given credentials, reboots and goes to point*
 
 #### Configuring credentials
-1. When controller boots up, it will create access point *Fujitsu-uniqueId*
+1. When controller boots up, it will create access point *faircon-uniqueId*
 2. Connect to this access point with your computer/mobile phone
 3. Go to 192.168.1.1
 4. Fill in WiFi, MQTT credentials, name your device and click Submit. (Device password will be required for OTA updates)
