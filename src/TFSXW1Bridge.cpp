@@ -72,7 +72,6 @@ namespace FujitsuAC {
 
         if ((now - this->powerOnRetryStartedMillis) >= this->powerOnRetryTimeoutMillis) {
             this->stopPowerOnRetry();
-            this->debug("status", "Power-on timeout");
             this->debug("warning", "Power-on retry timeout");
 
             return;
@@ -85,7 +84,7 @@ namespace FujitsuAC {
         this->isPoweringOn = true;
         this->powerOnRetryStartedMillis = millis();
 
-        this->debug("status", "Power-on pending");
+        this->debug("info", "Power-on pending");
     }
 
     void TFSXW1Bridge::stopPowerOnRetry() {
