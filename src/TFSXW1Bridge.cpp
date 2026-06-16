@@ -38,6 +38,8 @@ namespace FujitsuAC {
 
         this->controller.setup();
 
+        this->registerClimateEntity();
+
         //Send initial registry values after MQTT connection
         size_t registryCount;
         const RegistryTable::Register* registers = this->controller.getAllRegisters(registryCount);
@@ -92,9 +94,7 @@ namespace FujitsuAC {
         this->powerOnRetryStartedMillis = 0;
     }
 
-    void TFSXW1Bridge::registerBaseEntities() {
-        char topic[128];
-
+    void TFSXW1Bridge::registerClimateEntity() {
         String p = "{";
         p += "\"name\": \"climate\",";
         p += "\"unique_id\": \"" + _config.getUniqueId() + "_climate\",";
@@ -122,13 +122,31 @@ namespace FujitsuAC {
         p += "\"temperature_unit\": \"C\",";
         p += "\"modes\": [\"off\", \"auto\", \"cool\", \"dry\", \"fan_only\", \"heat\"],";
         p += "\"fan_modes\": [\"auto\", \"quiet\", \"low\", \"medium\", \"high\"],";
+
+        if (this->controller.isFeatureSupported(TFSXW1Controller::Address::VerticalSwingSupported)) {
+            p += "\"swing_modes\": [\"on\", \"off\"],";
+            p += "\"swing_mode_state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/vertical_swing\",";
+            p += "\"swing_mode_command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/vertical_swing\",";
+        }
+
+        if (this->controller.isFeatureSupported(TFSXW1Controller::Address::HorizontalSwingSupported)) {
+            p += "\"swing_horizontal_modes\": [\"on\", \"off\"],";
+            p += "\"swing_horizontal_mode_state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/horizontal_swing\",";
+            p += "\"swing_horizontal_mode_command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/horizontal_swing\",";
+        }
+
         p += this->deviceConfig;
         p += "}";
 
+        char topic[128];
         snprintf(topic, sizeof(topic), "homeassistant/climate/%s_climate/config", _config.getUniqueId().c_str());
         this->mqttClient.publish(topic, p.c_str(), true);
+    }
 
-        p = "{";
+    void TFSXW1Bridge::registerBaseEntities() {
+        char topic[128];
+
+        String p = "{";
         p += "\"name\": \"actual_temp\",";
         p += "\"availability_topic\": \"fujitsu/" + _config.getUniqueId() + "/status\",";
         p += "\"payload_available\": \"online\",";
@@ -386,6 +404,13 @@ namespace FujitsuAC {
             if (relation.featureAddress == reg->address) {
                 if (this->controller.isFeatureSupported(relation.featureAddress)) {
                     this->registerSwitch(relation.registryAddress);
+
+                    if (
+                        TFSXW1Controller::Address::VerticalSwingSupported == relation.featureAddress
+                        || TFSXW1Controller::Address::HorizontalSwingSupported == relation.featureAddress
+                    ) {
+                        this->registerClimateEntity();
+                    }
                 }
 
                 break;

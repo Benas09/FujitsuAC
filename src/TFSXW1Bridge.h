@@ -45,6 +45,7 @@ namespace FujitsuAC {
             void stopPowerOnRetry();
 
             void registerBaseEntities();
+            void registerClimateEntity();
             void registerSwitch(TFSXW1Controller::Address address);
             void publishState(uint16_t address, const char* value);
 
