@@ -68,6 +68,7 @@ namespace FujitsuAC {
 
             bool isAPState();
             bool createAP();
+            void setupOTA();
             void handleHttp();
 
             void connectToWifi();

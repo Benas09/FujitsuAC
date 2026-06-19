@@ -9,7 +9,7 @@
 #include "TFSXW1Bridge.h"
 // #include "TFSXJ4Bridge.h"
 
-#define VERSION "1.3.14"
+#define VERSION "1.3.15"
 
 RTC_NOINIT_ATTR bool isFallbackAp;
 RTC_NOINIT_ATTR int fallbackApReason;
@@ -44,14 +44,13 @@ namespace FujitsuAC {
         this->handleResetButton();
 
         if (this->createAP()) {
+            this->setupOTA();
+
             return;
         }
 
         this->connectToWifi();
-
-        ArduinoOTA.setHostname(_config.getDeviceName().c_str());
-        ArduinoOTA.setPassword(_config.getOtaPw().c_str());
-        ArduinoOTA.begin();
+        this->setupOTA();
 
         IPAddress ip;
         ip.fromString(_config.getMqttIp());
@@ -60,10 +59,24 @@ namespace FujitsuAC {
         _mqttClient.setBufferSize(2048);
     }
 
+    void FujitsuAC::setupOTA() {
+        String password = _config.getOtaPw();
+
+        if (password.isEmpty()) {
+            password = "faircon";
+        }
+
+        ArduinoOTA.setHostname(_config.getDeviceName().c_str());
+        ArduinoOTA.setPassword(password.c_str());
+        ArduinoOTA.begin();
+    }
+
     void FujitsuAC::loop() {
         this->handleResetButton();
 
         if (this->isAPState()) {
+            ArduinoOTA.handle();
+
             this->handleHttp();
 
             if (isFallbackAp && millis() - fallbackApCreatedAt > 300000) {

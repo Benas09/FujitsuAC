@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.15] - 2026-06-19
+### Added
+- Allow ArduinoOTA updates while running in access point mode
+
 ## [1.3.14] - 2026-06-16
 
 ### Added
