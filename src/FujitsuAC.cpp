@@ -9,7 +9,7 @@
 #include "TFSXW1Bridge.h"
 // #include "TFSXJ4Bridge.h"
 
-#define VERSION "1.3.15"
+#define VERSION "1.3.16"
 
 RTC_NOINIT_ATTR bool isFallbackAp;
 RTC_NOINIT_ATTR int fallbackApReason;
@@ -19,6 +19,7 @@ namespace FujitsuAC {
         None = 0,
         UnableToConnectWiFi = 1,
         UnableToConnectMqtt = 2,
+        ResetReasonPanic = 3,
     };
 
     FujitsuAC::FujitsuAC(
@@ -185,6 +186,9 @@ namespace FujitsuAC {
         if (ESP_RST_POWERON == esp_reset_reason()) {
             isFallbackAp = false;
             fallbackApReason = FallbackApReason::None;
+        } else if (ESP_RST_PANIC == esp_reset_reason()) {
+            isFallbackAp = true;
+            fallbackApReason = FallbackApReason::ResetReasonPanic;
         }
 
         if (!this->isAPState()) {
@@ -552,6 +556,8 @@ namespace FujitsuAC {
                     client.print("<div class=\"alert error\">Unsuccessful WiFi connection</div>");
                 } else if (FallbackApReason::UnableToConnectMqtt == fallbackApReason) {
                     client.print("<div class=\"alert error\">Unsuccessful MQTT connection</div>");
+                } else if (FallbackApReason::ResetReasonPanic == fallbackApReason) {
+                    client.print("<div class=\"alert error\">ESP reset reason panic</div>");
                 }
 
                 client.print(formBody);

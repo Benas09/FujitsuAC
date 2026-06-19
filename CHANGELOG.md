@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.16] - 2026-06-19
+### Added
+- Fallback to the AP when reboot reason is PANIC
+
 ## [1.3.15] - 2026-06-19
 ### Added
 - Allow ArduinoOTA updates while running in access point mode
