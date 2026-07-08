@@ -340,6 +340,7 @@ namespace FujitsuAC {
             const char *contentStart = R"rawliteral(
                 <html>
                     <head>
+                        <meta charset="utf-8">
                         <title>faircon</title>
 
                         <style>
@@ -467,7 +468,7 @@ namespace FujitsuAC {
             const char *versionBody = "<strong>" VERSION "</strong>";
 
             const char *formBody = R"rawliteral(
-                <form name="config" method="post">
+                <form name="config" method="post" accept-charset="UTF-8">
                     <label>Wifi SSID</label>
                     <input type="text" name="wifi-ssid" required>
 
@@ -526,7 +527,7 @@ namespace FujitsuAC {
                             this->parseConfig(body);
 
                             client.println("HTTP/1.1 200 OK");
-                            client.println("Content-type:text/html");
+                            client.println("Content-type: text/html; charset=utf-8");
                             client.println();
                             
                             client.print(contentStart);
@@ -546,7 +547,7 @@ namespace FujitsuAC {
                 }
 
                 client.println("HTTP/1.1 200 OK");
-                client.println("Content-type:text/html");
+                client.println("Content-type: text/html; charset=utf-8");
                 client.println();
 
                 client.print(contentStart);
