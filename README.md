@@ -203,6 +203,19 @@ When building DIY dongle, you have attach LEDS to the correspinding pins (Red - 
 * Only red shining - AP is created
 * Red + White shining - connected to wifi and mqtt
 
+### The dongle won't connect to my WiFi after submitting the config page
+If your WiFi SSID or password contains special characters (for example `é` in `witte-rené`), older firmware saves them incorrectly when submitted through the config page, and the dongle never connects. This is fixed in newer firmware, but if you are stuck on an older version you can send the credentials directly with curl, which avoids the browser encoding problem:
+
+1. Connect to the *faircon-uniqueId* access point
+2. Run this from a terminal, with your own values filled in:
+
+```
+curl 'http://192.168.1.1/' \
+  --data-raw 'wifi-ssid=witte-rené&wifi-pw=WIFI_PASSWORD&mqtt-ip=192.168.1.100&mqtt-port=1883&mqtt-user=MQTT_USER&mqtt-pw=MQTT_PASSWORD&device-name=bedroom_ac&ota-pw=OTA_PASSWORD&protocol=UTY-TFSXW1'
+```
+
+Note: the values are sent as-is, so this won't work if a value itself contains `&`, `=` or `+`.
+
 ### What's AP fallback mode?
 When wifi gets disconnected, the dongle reboots to AP mode for several minutes (credentials are not cleared yet, they just are not shown in AP webpage). If Wifi becomes available when AP is enabled, the dongle reboots after a couple minutes to normal mode and connects to it.
 
