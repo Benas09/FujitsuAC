@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.17] - 2026-07-14
+### Fixed
+- Fixed access point form submition to accept UTF-8 chars.
+
 ## [1.3.16] - 2026-06-19
 ### Added
 - Fallback to the AP when reboot reason is PANIC
