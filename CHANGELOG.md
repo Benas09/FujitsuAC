@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.18] - 2026-07-15
+### Fixed
+- Allow to use MQTT server domain name
+
 ## [1.3.17] - 2026-07-14
 ### Fixed
 - Fixed access point form submition to accept UTF-8 chars.

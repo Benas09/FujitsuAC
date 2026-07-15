@@ -9,7 +9,7 @@
 #include "TFSXW1Bridge.h"
 // #include "TFSXJ4Bridge.h"
 
-#define VERSION "1.3.17"
+#define VERSION "1.3.18"
 
 RTC_NOINIT_ATTR bool isFallbackAp;
 RTC_NOINIT_ATTR int fallbackApReason;
@@ -53,10 +53,7 @@ namespace FujitsuAC {
         this->connectToWifi();
         this->setupOTA();
 
-        IPAddress ip;
-        ip.fromString(_config.getMqttIp());
-
-        _mqttClient.setServer(ip, (uint16_t) _config.getMqttPort().toInt());
+        _mqttClient.setServer(_config.getMqttIp().c_str(), (uint16_t) _config.getMqttPort().toInt());
         _mqttClient.setBufferSize(2048);
     }
 
@@ -475,7 +472,7 @@ namespace FujitsuAC {
                     <label>Wifi password</label>
                     <input type="text" name="wifi-pw" required>
 
-                    <label>MQTT Server IP</label>
+                    <label>MQTT Server IP (or domain name)</label>
                     <input type="text" name="mqtt-ip" value="192.168.1.100" required>
 
                     <label>MQTT Server port</label>

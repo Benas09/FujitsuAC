@@ -45,7 +45,7 @@ namespace FujitsuAC {
 
     		String getWifiSsid() { return _wifiSsid; }
     		String getWifiPw() { return _wifiPw; }
-    		String getMqttIp() { return _mqttIp; }
+    		const String& getMqttIp() { return _mqttIp; }
     		String getMqttPort() { return _mqttPort; }
     		String getMqttUser() { return _mqttUser; }
     		String getMqttPw() { return _mqttPw; }
