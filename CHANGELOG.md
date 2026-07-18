@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.19] - 2026-07-15
+### Added
+- ESP32C6 Support
+
 ## [1.3.18] - 2026-07-15
 ### Fixed
 - Allow to use MQTT server domain name

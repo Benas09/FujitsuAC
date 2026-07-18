@@ -22,6 +22,10 @@ Project home: https://github.com/Benas09/FujitsuAC
     #define RXD2 20
     #define TXD2 21
     #define UART_PORT UART_NUM_1
+#elif CONFIG_IDF_TARGET_ESP32C6
+    #define RXD2 4
+    #define TXD2 5
+    #define UART_PORT UART_NUM_1
 #elif CONFIG_IDF_TARGET_ESP32
     #define LED_W 18
     #define LED_R 19

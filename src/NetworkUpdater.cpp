@@ -149,6 +149,9 @@ namespace FujitsuAC {
 			case CHIP_ESP32C3:
 				chip = "esp32c3";
 				break;
+			case CHIP_ESP32C6:
+				chip = "esp32c6";
+				break;
 			default:
 				chip = ESP.getChipModel();
 				chip.toLowerCase();
