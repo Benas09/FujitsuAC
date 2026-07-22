@@ -9,7 +9,7 @@
 #include "TFSXW1Bridge.h"
 // #include "TFSXJ4Bridge.h"
 
-#define VERSION "1.3.19"
+#define VERSION "1.4.0"
 
 RTC_NOINIT_ATTR bool isFallbackAp;
 RTC_NOINIT_ATTR int fallbackApReason;
@@ -30,18 +30,16 @@ namespace FujitsuAC {
         int ledRPin, 
         int resetButtonPin
     ):
-        _config(VERSION, ledWPin, ledRPin),
+        _config(VERSION, uartPort, rxPin, txPin, ledWPin, ledRPin, resetButtonPin),
         server(80),
-        uart(uartPort, rxPin, txPin),
         espClient(),
-        _mqttClient(espClient),
-        resetButtonPin(resetButtonPin)
+        _mqttClient(espClient)
     {}
 
     void FujitsuAC::setup() {
         _config.load();
+        _config.initIO();
 
-        this->initIO();
         this->handleResetButton();
 
         if (this->createAP()) {
@@ -97,14 +95,6 @@ namespace FujitsuAC {
 
         _mqttClient.loop();
         this->bridge->loop();
-    }
-
-    void FujitsuAC::initIO() {
-        _config.initLeds();
-
-        if (resetButtonPin > 0) {
-            pinMode(resetButtonPin, INPUT_PULLUP);
-        }
     }
 
     void FujitsuAC::clearConfig() {
@@ -170,7 +160,7 @@ namespace FujitsuAC {
     }
 
     void FujitsuAC::handleResetButton() {
-        if (resetButtonPin > 0 && LOW == digitalRead(resetButtonPin)) {
+        if (_config.getResetButtonPin() > 0 && LOW == digitalRead(_config.getResetButtonPin())) {
             this->clearConfig();
         }
     }
@@ -251,6 +241,8 @@ namespace FujitsuAC {
             int channel = WiFi.channel(bestNetwork);
 
             WiFi.begin(_config.getWifiSsid(), _config.getWifiPw(), channel, bestBssid, true);
+        } else {
+            WiFi.begin(_config.getWifiSsid(), _config.getWifiPw());
         }
 
         while (WiFi.status() != WL_CONNECTED) {
@@ -306,10 +298,10 @@ namespace FujitsuAC {
 
                 if (nullptr == bridge) {
                     if (_config.getProtocol() == "UTY-TFSXJ4") {
-                        // bridge = new TFSXJ4Bridge(_config, mqttClient, uart);
+                        // bridge = new TFSXJ4Bridge(_config, mqttClient);
                         // bridge->setup();
                     } else {
-                        bridge = new TFSXW1Bridge(_config, _mqttClient, uart);
+                        bridge = new TFSXW1Bridge(_config, _mqttClient);
                         bridge->setup();
                     }
                 } else {

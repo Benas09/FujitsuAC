@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.4.0] - 2026-07-22
+### Fixed
+- Allow connections to hidden wifi SSID's
+- HIGH - LOW period of UART TX pin after boot to wake up the aircon UART port.
+
 ## [1.3.19] - 2026-07-15
 ### Added
 - ESP32C6 Support

@@ -12,6 +12,7 @@
 #include "esp_system.h"
 #include "Config.h"
 #include "NetworkUpdater.h"
+#include "Uart.h"
 
 namespace FujitsuAC {
 
@@ -93,14 +94,59 @@ namespace FujitsuAC {
             }
 
         protected:
+            Stream *_uart = nullptr;
             Config &_config;
             PubSubClient &mqttClient;
             String deviceConfig;
 
+            enum UartStatus: int {
+                Start = 0,
+                High = 1,
+                Low = 2,
+                Initialized = 3,
+            };
+
+            UartStatus _uartStatus = UartStatus::Start;
+
             virtual const char* getProtocolName() = 0;
             virtual void handleMqttCommand(const char *property, const char *payload) = 0;
+            virtual void initializeController() = 0;
+            
+            void initializeUart() {
+                if (IMqttBridge::UartStatus::Start == _uartStatus) {
+                    _uartStatus = IMqttBridge::UartStatus::High;
+                    _uartTimer = millis();
+
+                    digitalWrite(_config.getTxPin(), HIGH);
+
+                    this->debug("info", "IMqttBridge: UartStatus::High");
+
+                    return;
+                } else if (IMqttBridge::UartStatus::High == _uartStatus) {
+                    if (millis() - _uartTimer >= 8700) {
+                        _uartStatus = IMqttBridge::UartStatus::Low;
+                        _uartTimer = millis();
+
+                        digitalWrite(_config.getTxPin(), LOW);
+
+                        this->debug("info", "IMqttBridge: UartStatus::Low");
+                    }
+
+                    return;
+                } else if (IMqttBridge::UartStatus::Low == _uartStatus) {
+                    if (millis() - _uartTimer >= 11000) {
+                        _uartStatus = IMqttBridge::UartStatus::Initialized;
+                        _uart = new Uart(_config.getUartPort(), _config.getRxPin(), _config.getTxPin());
+
+                        this->debug("info", "IMqttBridge: UartStatus::Initialized");
+                        this->initializeController();
+                    }
+                }
+            }
 
         private:
+            uint32_t _uartTimer = 0;
+
             NetworkUpdater* networkUpdater = nullptr;
 
             uint32_t lastDiagnosticReportMillis = -60000;

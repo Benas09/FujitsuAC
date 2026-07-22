@@ -35,7 +35,7 @@ namespace FujitsuAC {
                 int rxPin, 
                 int txPin, 
                 int ledWPin, 
-                int ledRPin, 
+                int ledRPin,
                 int resetButtonPin
             );
 
@@ -44,20 +44,15 @@ namespace FujitsuAC {
 
         private:
             Config _config;
-            int resetButtonPin;
 
             NetworkServer server;
 
-            Uart uart;
-            
             WiFiClient espClient;
             PubSubClient _mqttClient;
 
             IMqttBridge* bridge = nullptr;
 
             uint32_t fallbackApCreatedAt = 0;
-
-            void initIO();
 
             void clearConfig();
             String getConfigValue(String qs, String key);

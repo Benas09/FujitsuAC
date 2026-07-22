@@ -14,13 +14,22 @@ namespace FujitsuAC {
 
     class Config {
     	public:
-    		Config(const char *version, int ledWPin, int ledRPin);
+    		Config(
+                const char *version, 
+                uart_port_t uartPort,
+                int rxPin, 
+                int txPin, 
+                int ledWPin, 
+                int ledRPin, 
+                int resetButtonPin
+            );
+
     		~Config();
 
             void load();
     		void clear();
     		bool isEmpty();
-            void initLeds();
+            void initIO();
 
             void toggleWLed(bool status);
             void toggleRLed(bool status);
@@ -39,6 +48,11 @@ namespace FujitsuAC {
 
             void setLowCpuSpeedEnabled(bool status);
             bool isLowCpuSpeedEnabled();
+
+            uart_port_t getUartPort() { return _uartPort; }
+            int getRxPin() { return _rxPin; }
+            int getTxPin() { return _txPin; }
+            int getResetButtonPin() { return _resetButtonPin; }
 
     		int getLedWPin() { return _ledWPin; }
     		int getLedRPin() { return _ledRPin; }
@@ -59,8 +73,13 @@ namespace FujitsuAC {
             String _uniqueId;
             const char *_version;
             
+            uart_port_t _uartPort;
+            int _rxPin;
+            int _txPin;
+
             int _ledWPin;
             int _ledRPin;
+            int _resetButtonPin;
 
             String _wifiSsid;
             String _wifiPw;

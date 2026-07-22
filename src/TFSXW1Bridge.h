@@ -18,13 +18,10 @@ namespace FujitsuAC {
         public:
             TFSXW1Bridge(
                 Config &config,
-                PubSubClient &mqttClient,
-                Stream &uart
+                PubSubClient &mqttClient
             );
 
-            void setup() override;
             void loop() override;
-
             void onRegisterChange(const RegistryTable::Register *reg);
 
         protected:
@@ -33,9 +30,10 @@ namespace FujitsuAC {
             }
 
             void handleMqttCommand(const char *command, const char *property) override;
+            void initializeController() override;
 
         private:
-            TFSXW1Controller controller;
+            TFSXW1Controller *_controller = nullptr;
             uint32_t lastTempReportMillis = -180000;
             bool isPoweringOn = false;
             uint32_t powerOnRetryStartedMillis = 0;
