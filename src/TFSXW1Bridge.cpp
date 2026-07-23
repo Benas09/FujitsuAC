@@ -144,6 +144,30 @@ namespace FujitsuAC {
             p += "\"swing_horizontal_mode_command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/horizontal_swing\",";
         }
 
+        bool first = true;
+
+        p += "\"preset_modes\": [";
+
+        if (_controller->isFeatureSupported(TFSXW1Controller::Address::PowerfulSupported)) {
+            if (!first) p += ", ";
+            first = false;
+
+            p += "\"boost\"";
+        }
+
+        if (_controller->isFeatureSupported(TFSXW1Controller::Address::EconomyModeSupported)) {
+            if (!first) p += ", ";
+            first = false;
+
+            p += "\"eco\"";
+        }
+
+        p += "],";
+
+        p += "\"preset_mode_state_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/preset\",";
+        p += "\"preset_mode_command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/preset\",";
+        
+
         p += this->deviceConfig;
         p += "}";
 
@@ -360,6 +384,22 @@ namespace FujitsuAC {
 
             return;
         }
+
+        if (0 == strcmp(property, "preset")) {
+            if (0 == strcmp(payload, "boost")) {
+                _controller->setPowerful(TFSXW1Enums::Powerful::On);
+            } else if (0 == strcmp(payload, "eco")) {
+                _controller->setEconomy(TFSXW1Enums::EconomyMode::On);
+            } else {
+                if (_controller->isPowerfulEnabled()) {
+                    _controller->setPowerful(TFSXW1Enums::Powerful::Off);
+                } else if (_controller->isEconomyEnabled()) {
+                    _controller->setEconomy(TFSXW1Enums::EconomyMode::Off);
+                }
+            }
+
+            return;
+        }
     }
 
     void TFSXW1Bridge::onRegisterChange(const RegistryTable::Register *reg) {
@@ -388,6 +428,20 @@ namespace FujitsuAC {
             // Workaround to get shown required mode shown immediately after turn off
             RegistryTable::Register* modeRegister = _controller->getRegister(TFSXW1Controller::Address::Mode);
             this->publishState(modeRegister->address, this->valueToString(modeRegister));
+
+            return;
+        }
+
+        if (
+            TFSXW1Controller::Address::Powerful == reg->address
+            || TFSXW1Controller::Address::EconomyMode == reg->address
+        ) {
+            IMqttBridge::publishState("preset", _controller->isPowerfulEnabled() 
+                ? "boost"
+                : (_controller->isEconomyEnabled() ? "eco" : "none")
+            );
+
+            return;
         }
 
         struct FeatureRegistryRelation {
@@ -417,6 +471,8 @@ namespace FujitsuAC {
                     if (
                         TFSXW1Controller::Address::VerticalSwingSupported == relation.featureAddress
                         || TFSXW1Controller::Address::HorizontalSwingSupported == relation.featureAddress
+                        || TFSXW1Controller::Address::PowerfulSupported
+                        || TFSXW1Controller::Address::EconomyModeSupported
                     ) {
                         this->registerClimateEntity();
                     }

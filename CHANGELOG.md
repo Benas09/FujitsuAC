@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.1] - 2026-07-23
+### Added
+- Added Eco/Boost to climate presets
+
 ## [1.4.0] - 2026-07-22
 ### Fixed
 - Allow connections to hidden wifi SSID's

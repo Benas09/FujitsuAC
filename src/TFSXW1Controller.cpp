@@ -589,6 +589,12 @@ namespace FujitsuAC {
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(powerful);
     }
 
+    bool TFSXW1Controller::isPowerfulEnabled() {
+        RegistryTable::Register* reg = this->registryTable->getRegister(Address::Powerful);
+
+        return static_cast<uint16_t>(TFSXW1Enums::Powerful::On) == reg->value;
+    }
+
     void TFSXW1Controller::setEconomy(TFSXW1Enums::EconomyMode economy) {
         if (this->frameSendRegistries.size > 0) {
             return;
@@ -609,6 +615,12 @@ namespace FujitsuAC {
         this->frameSendRegistries.size = 1;
         this->frameSendRegistries.registries[0] = Address::EconomyMode;
         this->frameSendRegistries.values[0] = static_cast<uint16_t>(economy);
+    }
+
+    bool TFSXW1Controller::isEconomyEnabled() {
+        RegistryTable::Register* reg = this->registryTable->getRegister(Address::EconomyMode);
+
+        return static_cast<uint16_t>(TFSXW1Enums::EconomyMode::On) == reg->value;
     }
 
     void TFSXW1Controller::setEnergySavingFan(TFSXW1Enums::EnergySavingFan energySavingFan) {

@@ -208,6 +208,8 @@ namespace FujitsuAC {
             bool isPoweredOn();
             bool isFeatureSupported(Address address);
             
+            bool isPowerfulEnabled();
+            bool isEconomyEnabled();
             int getVerticalAirflowDirectionCount();
             int getHorizontalAirflowDirectionCount();
 
