@@ -39,8 +39,6 @@ namespace FujitsuAC {
                 this->networkUpdater->setOnVersionReceivedCallback([this](const char* version) {
                     this->publishState("latest_version", version);
                 });
-
-                this->networkUpdater->setup();
             }
 
             void configureMqtt() {

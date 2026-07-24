@@ -17,8 +17,15 @@
 #include <HTTPUpdate.h>
 
 namespace FujitsuAC {
-	enum VersionCheckerState {
-	    NO_TIME,
+	enum class TimeState {
+	    WAITING_INITIALIZATION,
+	    INITIATED,
+	    SYNCED,
+	    ERROR
+	};
+
+	enum class VersionCheckerState {
+	    WAITING_TIME,
 	    TIME_OBTAINED,
 	    HTTPS_DOWNLOADING,
 	    VERSION_CHECKED,
@@ -29,8 +36,7 @@ namespace FujitsuAC {
     	public:
     		NetworkUpdater();
 
-            void setup();
-	        void loop();
+            void loop();
 	        void updateFirmware(const char *branch);
 	        
 	        void setOnVersionReceivedCallback(std::function<void(const char*)> onVersionReceivedCallback) {
@@ -42,9 +48,13 @@ namespace FujitsuAC {
 	        }
 
         private:
-        	WiFiClientSecure* client = nullptr;
-        	VersionCheckerState versionCheckerState = VersionCheckerState::NO_TIME;
-        	uint32_t lastVersionCheckInitiatedAtMillis = 0;
+        	WiFiClientSecure* _client = nullptr;
+
+        	TimeState _timeState = TimeState::WAITING_INITIALIZATION;
+        	uint32_t _timeCheckInitiatedAtMillis = 0;
+
+        	VersionCheckerState _versionCheckerState = VersionCheckerState::WAITING_TIME;
+        	uint32_t _lastVersionCheckInitiatedAtMillis = 0;
 
         	std::function<void(const char*)> onVersionReceivedCallback;
         	std::function<void(const char* name, const char* message)> debugCallback;
@@ -86,5 +96,6 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
 			void setClock();
 			void requestVersion();
 			void debug(const char* name, const char* message);
+			void debugTime(time_t nowSecs);
     };
 }

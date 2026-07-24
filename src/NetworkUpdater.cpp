@@ -12,100 +12,106 @@ namespace FujitsuAC {
 
 	NetworkUpdater::NetworkUpdater() {}
 
-	void NetworkUpdater::setup() {
-		this->setClock();
-	}
-
 	void NetworkUpdater::loop() {
+		this->setClock();
 		this->requestVersion();
 	}
 
 	void NetworkUpdater::setClock() {
-		this->debug("info", "NetworkUpdater: Updating clock");
+		if (TimeState::WAITING_INITIALIZATION == _timeState) {
+			timeval tv = {0, 0};
+			settimeofday(&tv, nullptr);
+			configTime(0, 0, "pool.ntp.org");
 
-		uint32_t startMillis = millis();
+			_timeCheckInitiatedAtMillis = millis();
+			_timeState = TimeState::INITIATED;
 
-        configTime(0, 0, "pool.ntp.org");
+			this->debug("info", "NetworkUpdater: Updating clock");
 
-		time_t nowSecs = time(nullptr);
-		
-		while (nowSecs < 8 * 3600 * 2) {
-			if ((millis() - startMillis) >= 10000) {
-				sntp_stop();
-
-				this->debug("info", "NetworkUpdater: Terminate updating clock");
-
-		        return;
-		    }
-
-		    this->debug("info", "NetworkUpdater: Waiting for time");
-			delay(500);
-			nowSecs = time(nullptr);
-		}
-
-		this->debug("info", "NetworkUpdater: Clock updated");
-		this->versionCheckerState = VersionCheckerState::TIME_OBTAINED;
-	}
-
-	void NetworkUpdater::requestVersion() {
-		if (VersionCheckerState::NO_TIME == this->versionCheckerState) {
 			return;
 		}
 
-		if (millis() - this->lastVersionCheckInitiatedAtMillis >= 86400000) {
-			// repeat checking
-			this->versionCheckerState = VersionCheckerState::TIME_OBTAINED;
+		if (TimeState::INITIATED == _timeState) {
+			time_t nowSecs = time(nullptr);
+
+			if (nowSecs > 1609459200) {
+				_timeState = TimeState::SYNCED;
+				_versionCheckerState = VersionCheckerState::TIME_OBTAINED;
+
+				this->debugTime(nowSecs);
+				this->debug("info", "NetworkUpdater: Clock updated");
+
+				return;
+			}
+
+			if ((millis() - _timeCheckInitiatedAtMillis) >= 10000) {
+				this->debug("info", "NetworkUpdater: Terminate updating clock");
+				_timeState = TimeState::ERROR;
+
+		        return;
+		    }
+		}
+	}
+
+	void NetworkUpdater::requestVersion() {
+		if (VersionCheckerState::WAITING_TIME == _versionCheckerState) {
+			return;
 		}
 
-		if (VersionCheckerState::TIME_OBTAINED == this->versionCheckerState) {
+		if (millis() - _lastVersionCheckInitiatedAtMillis >= 86400000) {
+			// repeat checking
+			_versionCheckerState = VersionCheckerState::TIME_OBTAINED;
+		}
+
+		if (VersionCheckerState::TIME_OBTAINED == _versionCheckerState) {
 			this->debug("info", "NetworkUpdater: Check last version start");
 
-			this->lastVersionCheckInitiatedAtMillis = millis();
+			_lastVersionCheckInitiatedAtMillis = millis();
 
-			client = new WiFiClientSecure();
-			client->setCACert(rootCACertificate);
+			_client = new WiFiClientSecure();
+			_client->setCACert(rootCACertificate);
 
-			if (!client->connect("raw.githubusercontent.com", 443)) {
-				client->stop();
-			    client = nullptr;
+			if (!_client->connect("raw.githubusercontent.com", 443)) {
+				_client->stop();
+			    _client = nullptr;
 				
 				this->debug("info", "NetworkUpdater: Check last version ERR1");
 
-				this->versionCheckerState = VersionCheckerState::ERROR;
+				_versionCheckerState = VersionCheckerState::ERROR;
 
 			    return;
 			}
 
-			client->print(
+			_client->print(
 			  "GET /Benas09/FujitsuAC/refs/heads/master/library.properties HTTP/1.1\r\n"
 			  "Host: raw.githubusercontent.com\r\n"
 			  "Connection: close\r\n\r\n"
 			);
 
-			if (client->connected()) {
+			if (_client->connected()) {
 				this->debug("info", "NetworkUpdater: Check last version connected");
-				this->versionCheckerState = VersionCheckerState::HTTPS_DOWNLOADING;
+				_versionCheckerState = VersionCheckerState::HTTPS_DOWNLOADING;
 			} else {
-				client->stop();
-			    client = nullptr;
+				_client->stop();
+			    _client = nullptr;
 
 			    this->debug("info", "NetworkUpdater: Check last version ERR2");
-				this->versionCheckerState = VersionCheckerState::ERROR;
+				_versionCheckerState = VersionCheckerState::ERROR;
 			}
 
 			return;
 		}
 
-		if (VersionCheckerState::HTTPS_DOWNLOADING == this->versionCheckerState) {
-			if (client->connected() || client->available()) {
-				if (client->available()) {
-					String line = client->readStringUntil('\n');
+		if (VersionCheckerState::HTTPS_DOWNLOADING == _versionCheckerState) {
+			if (_client->connected() || _client->available()) {
+				if (_client->available()) {
+					String line = _client->readStringUntil('\n');
 
 					if (line.startsWith("version=")) {
-					    client->stop();
-					    client = nullptr;
+					    _client->stop();
+					    _client = nullptr;
 
-					    this->versionCheckerState = VersionCheckerState::VERSION_CHECKED;
+					    _versionCheckerState = VersionCheckerState::VERSION_CHECKED;
 					    this->onVersionReceivedCallback(line.substring(8).c_str());
 					}
 				}
@@ -113,11 +119,11 @@ namespace FujitsuAC {
 				return;
 			}
 
-			client->stop();
-		    client = nullptr;
+			_client->stop();
+		    _client = nullptr;
 
 		    this->debug("info", "NetworkUpdater: Check last version ERR3");
-			this->versionCheckerState = VersionCheckerState::ERROR;
+			_versionCheckerState = VersionCheckerState::ERROR;
 
 			return;
 		}
@@ -194,5 +200,19 @@ namespace FujitsuAC {
 
 	void NetworkUpdater::debug(const char* name, const char* message) {
         this->debugCallback(name, message);
+    }
+
+    void NetworkUpdater::debugTime(time_t nowSecs)
+    {
+    	struct tm timeinfo;
+		localtime_r(&nowSecs, &timeinfo);
+
+    	char timeStr[32];
+		strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S", &timeinfo);
+
+		char msgBuf[128];
+		snprintf(msgBuf, sizeof(msgBuf), "NetworkUpdater: Current time: %s", timeStr);
+
+		this->debug("info", msgBuf);
     }
 }

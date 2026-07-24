@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.2] - 2026-07-24
+### Fixed
+- Prevent checking for new version when there is no internet access
+
 ## [1.4.1] - 2026-07-23
 ### Added
 - Added Eco/Boost to climate presets

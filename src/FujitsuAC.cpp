@@ -9,7 +9,7 @@
 #include "TFSXW1Bridge.h"
 // #include "TFSXJ4Bridge.h"
 
-#define VERSION "1.4.1"
+#define VERSION "1.4.2"
 
 RTC_NOINIT_ATTR bool isFallbackAp;
 RTC_NOINIT_ATTR int fallbackApReason;
