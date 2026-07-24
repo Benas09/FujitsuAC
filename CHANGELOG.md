@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.3] - 2026-07-24
+### Fixed
+- Do not send setpoint temp immediately after controller initialization
+
 ## [1.4.2] - 2026-07-24
 ### Fixed
 - Prevent checking for new version when there is no internet access

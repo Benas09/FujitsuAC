@@ -81,6 +81,7 @@ namespace FujitsuAC {
             if (
                 registers[i].address == TFSXW1Controller::Address::ActualTemp
                 || registers[i].address == TFSXW1Controller::Address::OutdoorTemp
+                || registers[i].address == TFSXW1Controller::Address::SetpointTemp
             ) {
                 continue;
             }
