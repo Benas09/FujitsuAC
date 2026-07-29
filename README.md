@@ -190,22 +190,31 @@ Chip list for prebuilt firmwares:
 
 # FAQ
 
+### Dongle configuration page
+This page is used to setup your dongle. You can access this page by going connecting to access point created by the dongle and going to 192.168.1.1.
+Access page is created in these scenarios:
+1. Credentials are not filled in yet
+2. Unable to connect to WiFi for 60 seconds
+3. Unable to connect to MQTT for 60 seconds
+4. Unhandled error occured and the dongle reboot reason was PANIC
+
+In 1st case AP is active until credentials will be saved, otherwise AP is active for 5 minutes. Then the dongle reboots and starts WiFi connection again.
+All saved credentials are still stored (except 1st case), just they are not shown to prevent exposing them.
+
 ### Does the dongle disables the use of other controllers?
 Product has been tested with IR and wall controller (UTY-RLRY). Functionality of these controllers remains available when using the dongle.
 IR is a one-way channel without feedback where UTY-RLRY is two-way and displays changes made by the dongle.
 
 ### How can I reset the dongle configuration?
-There is a small hole in the enclosure. Click the button through that hole with a toothpick and all credentials will be cleared.
-When building DIY dongle, you have attach a button to the RESET_BUTTON pin to use that feature.
+* <strong>ready-to-use</strong> has a small hole in the enclosure. Click the button through that hole with a toothpick and all credentials will be cleared.
+* When building DIY dongle, you have to attach a button to the RESET_BUTTON pin to use that feature.
+* In HomeAssistant's device configuration page you can click "clear_credentials" button.
 
 ### What do the LED statues mean?
 When building DIY dongle, you have attach LEDS to the correspinding pins (Red - 19, White - 18 for esp32) that feature.
 * Only red blinking - connecting to wifi
 * Only red shining - AP is created
 * Red + White shining - connected to wifi and mqtt
-
-### What's AP fallback mode?
-When wifi gets disconnected, the dongle reboots to AP mode for several minutes (credentials are not cleared yet, they just are not shown in AP webpage). If Wifi becomes available when AP is enabled, the dongle reboots after a couple minutes to normal mode and connects to it.
 
 ### I'm missing some features to control my AC.
 The dongle reads the AC information and only displays available options. When you believe you are missing options, please create an issue and post your logfile.
