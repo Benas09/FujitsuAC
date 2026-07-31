@@ -242,5 +242,13 @@ By manufacturer design, this option will not be available when using a multi-spl
 * Running - handshake successful and communication is running
 * Updating - when updating through network started
 
+## Other Integrations
 
+These community projects are built on top of this library and are maintained independently.
 
+### ESPHome
+- https://github.com/martinhladil/esphome_fujitsu_ac
+- https://github.com/plains203/fujitsuac_esphome
+
+### HomeKit
+- https://github.com/cmcfadden/FujitsuAC-HomeKit
