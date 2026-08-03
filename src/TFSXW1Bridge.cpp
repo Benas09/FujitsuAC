@@ -277,6 +277,10 @@ namespace FujitsuAC {
     }
 
     void TFSXW1Bridge::handleMqttCommand(const char *property, const char* payload) {
+        if (nullptr == _controller) {
+            return;
+        }
+
         if (0 == strcmp(property, this->addressToString(TFSXW1Controller::Address::Power))) {
             TFSXW1Enums::Power power = this->stringToEnum(TFSXW1Enums::Power::Off, payload);
 
@@ -404,6 +408,16 @@ namespace FujitsuAC {
     }
 
     void TFSXW1Bridge::onRegisterChange(const RegistryTable::Register *reg) {
+        if (
+            0xFFFF == reg->value && (
+                reg->address == TFSXW1Controller::Address::ActualTemp
+                || reg->address == TFSXW1Controller::Address::OutdoorTemp
+                || reg->address == TFSXW1Controller::Address::SetpointTemp
+        )) {
+            // do not report setpoint temp on fan mode or while sensors are not reporting valid data yet
+            return;
+        }
+
         if (reg->address == TFSXW1Controller::Address::ActualTemp) {
             uint32_t now = millis();
 
@@ -412,11 +426,6 @@ namespace FujitsuAC {
             }
             
             this->lastTempReportMillis = now;
-        }
-
-        if (reg->address == TFSXW1Controller::Address::SetpointTemp && 0xFFFF == reg->value) {
-            // Fan mode do not return setpoint temp
-            return;
         }
 
         this->publishState(reg->address, this->valueToString(reg));

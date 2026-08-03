@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.4.4] - 2026-08-03
+### Fixed
+- Ignore MQTT commands when controller is not initialized yet
+- Do not report setpoint temp on fan mode or while sensors are not reporting valid data yet
+
 ## [1.4.3] - 2026-07-24
 ### Fixed
 - Do not send setpoint temp immediately after controller initialization
