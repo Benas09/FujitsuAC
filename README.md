@@ -140,6 +140,10 @@ USB Pinout from top to bottom <br/>
 ![](/images/usb_plug.png)
 <br/>
 
+LED's connection (optional, resistors must be choosen according your leds) <br/>
+![](/images/leds-circuit.png)
+<br/>
+
 #### Uploading the code first time
 1. Download Arduino IDE (I used 2.3)
 2. File -> Preferences -> Additional boards manager URLs: http://arduino.esp8266.com/stable/package_esp8266com_index.json
