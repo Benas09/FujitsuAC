@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.8] - 2026-10-15
+### Fixed
+- Fixed init frame comparison bug
+
 ## [1.4.7] - 2026-09-17
 ### Fixed
 - Fixed possible buffer overflow
