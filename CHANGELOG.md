@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.9] - 2026-10-21
+### Added
+- Allow to use minimum heat feature where applicable
+### Fixed
+- Decreased minimal available temp in climate entity
+- Fixed report of wrong airflow values
+
 ## [1.4.8] - 2026-10-15
 ### Fixed
 - Fixed init frame comparison bug
