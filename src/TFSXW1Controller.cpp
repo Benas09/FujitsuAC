@@ -421,10 +421,6 @@ namespace FujitsuAC {
         if (this->frameSendRegistries.size > 0) {
             return;
         }
-        
-        this->debug("warning", "Not tested yet");
-
-        return;
 
         this->frameSendRegistries.size = 1;
         this->frameSendRegistries.registries[0] = Address::MinimumHeat;

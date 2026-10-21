@@ -127,7 +127,7 @@ namespace FujitsuAC {
         p += "\"current_temperature_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/actual_temp\",";
         p += "\"current_humidity_topic\": \"fujitsu/" + _config.getUniqueId() + "/state/humidity\",";
 
-        p += "\"min_temp\": 18,";
+        p += "\"min_temp\": 16,";
         p += "\"max_temp\": 30,";
         p += "\"temp_step\": 0.5,";
         p += "\"temperature_unit\": \"C\",";
