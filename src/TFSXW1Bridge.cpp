@@ -596,8 +596,9 @@ namespace FujitsuAC {
                     case TFSXW1Enums::VerticalAirflow::Position4: return "4";
                     case TFSXW1Enums::VerticalAirflow::Position5: return "5";
                     case TFSXW1Enums::VerticalAirflow::Position6: return "6";
-                    case TFSXW1Enums::VerticalAirflow::Swing: return "1";
-                    default: return "unknown";
+                    // Off (0x0000) and swing (0x0020) have no position. "None" clears the HA select without an "Invalid option" error.
+                    case TFSXW1Enums::VerticalAirflow::Swing: return "None";
+                    default: return "None";
                 }
 
                 break;
@@ -617,8 +618,9 @@ namespace FujitsuAC {
                     case TFSXW1Enums::HorizontalAirflow::Position4: return "4";
                     case TFSXW1Enums::HorizontalAirflow::Position5: return "5";
                     case TFSXW1Enums::HorizontalAirflow::Position6: return "6";
-                    case TFSXW1Enums::HorizontalAirflow::Swing: return "1";
-                    default: return "unknown";
+                    // Off (0x0000) and swing (0x0020) have no position. "None" clears the HA select without an "Invalid option" error.
+                    case TFSXW1Enums::HorizontalAirflow::Swing: return "None";
+                    default: return "None";
                 }
 
                 break;
