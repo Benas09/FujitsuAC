@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.10] - 2026-10-22
+### Added
+- Added password to WiFi AP
+
 ## [1.4.9] - 2026-10-21
 ### Added
 - Allow to use minimum heat feature where applicable

@@ -9,7 +9,7 @@
 #include "TFSXW1Bridge.h"
 // #include "TFSXJ4Bridge.h"
 
-#define VERSION "1.4.9"
+#define VERSION "1.4.10"
 
 RTC_NOINIT_ATTR bool isFallbackAp;
 RTC_NOINIT_ATTR int fallbackApReason;
@@ -59,7 +59,7 @@ namespace FujitsuAC {
         String password = _config.getOtaPw();
 
         if (password.isEmpty()) {
-            password = "faircon";
+            password = DEFAULT_PW;
         }
 
         ArduinoOTA.setHostname(_config.getDeviceName().c_str());
@@ -191,7 +191,13 @@ namespace FujitsuAC {
         char accessPointName[64];
         snprintf(accessPointName, sizeof(accessPointName), "faircon-%s", _config.getUniqueId().c_str());
 
-        if (!WiFi.softAP(accessPointName)) {
+        String password = _config.getOtaPw();
+
+        if (password.length() < 8 || password.length() > 63) {
+            password = DEFAULT_PW;
+        }
+
+        if (!WiFi.softAP(accessPointName, password)) {
             ESP.restart();
         }
 
@@ -479,8 +485,8 @@ namespace FujitsuAC {
                     <label>Device name</label>
                     <input type="text" name="device-name" value="LivingRoomAC" required>
 
-                    <label>Device password</label>
-                    <input type="text" name="ota-pw" value="living_room_ac" required>
+                    <label>Device password (will be used for OTA and WiFi AP)</label>
+                    <input type="text" name="ota-pw" value="living_room_ac" required minlength="8" maxlength="63">
                     
                     <label>Protocol</label>
                     <select name="protocol">

@@ -43,6 +43,8 @@ namespace FujitsuAC {
 	        void loop();
 
         private:
+            static constexpr const char* DEFAULT_PW = "faircon9";
+
             Config _config;
 
             NetworkServer server;

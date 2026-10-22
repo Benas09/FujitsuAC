@@ -159,10 +159,10 @@ LED's connection (optional, resistors must be choosen according your leds) <br/>
 *Additional button can be used for credentials reset functionality - uncomment RESET_BUTTON and set to corresponding pin. When you press this button (pull corresponding pin to GND) - controller deletes given credentials, reboots and goes to point*
 
 #### Configuring credentials
-1. When controller boots up, it will create access point *faircon-uniqueId*
+1. When controller boots up, it will create access point *faircon-uniqueId* (default password is *faircon9*)
 2. Connect to this access point with your computer/mobile phone
 3. Go to 192.168.1.1
-4. Fill in WiFi, MQTT credentials, name your device and click Submit. (Device password will be required for OTA updates)
+4. Fill in WiFi, MQTT credentials, name your device and click Submit. (Device password will be used in OTA updates and WiFi AP)
 5. Dongle will reboot and connect to your wifi network.
 6. If everything is ok, new AC device should appear in HomeAssistant MQTT integration
 
