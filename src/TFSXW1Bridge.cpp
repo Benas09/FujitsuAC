@@ -491,8 +491,8 @@ namespace FujitsuAC {
                     if (
                         TFSXW1Controller::Address::VerticalSwingSupported == relation.featureAddress
                         || TFSXW1Controller::Address::HorizontalSwingSupported == relation.featureAddress
-                        || TFSXW1Controller::Address::PowerfulSupported
-                        || TFSXW1Controller::Address::EconomyModeSupported
+                        || TFSXW1Controller::Address::PowerfulSupported == relation.featureAddress
+                        || TFSXW1Controller::Address::EconomyModeSupported == relation.featureAddress
                     ) {
                         this->registerClimateEntity();
                     }
