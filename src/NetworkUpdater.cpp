@@ -139,9 +139,9 @@ namespace FujitsuAC {
 		_client = nullptr;
 	}
 
-	void NetworkUpdater::updateFirmware(const char *branch) {
+	void NetworkUpdater::updateFirmware(const char *version) {
 		char msg[128];
-		snprintf(msg, sizeof(msg), "NetworkUpdater: Starting OTA update from %s", branch);
+		snprintf(msg, sizeof(msg), "NetworkUpdater: Starting OTA update: %s", version);
 
 		this->debug("info", msg);
 		this->debug("status", "Updating");
@@ -180,7 +180,12 @@ namespace FujitsuAC {
 		this->debug("info", msg);
 
 		char path[128];
-		snprintf(path, sizeof(path), "/Benas09/FujitsuAC/refs/heads/%s/fw/%s.bin", branch, chip);
+
+		if (strcmp(version, "latest") == 0) {
+			snprintf(path, sizeof(path), "/Benas09/FujitsuAC/refs/heads/master/fw/%s.bin", chip);
+		} else {
+			snprintf(path, sizeof(path), "/Benas09/FujitsuAC/refs/%s/fw/%s.bin", version, chip);
+		}
 
 		t_httpUpdate_return ret = httpUpdate.update(networkClient, "raw.githubusercontent.com", 443, path);
 

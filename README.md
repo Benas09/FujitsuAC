@@ -184,6 +184,9 @@ Chip list for prebuilt firmwares:
 * ESP32-C6
 * others will ignore update request
 
+Upgrading to latest version: mosquitto_pub -h 192.168.1.100 -t fujitsu/*uniqueId*/set/update_firmware -m "latest"
+Upgrading\downgrading to exact version: mosquitto_pub -h 192.168.1.100 -t fujitsu/*uniqueId*/set/update_firmware -m "tags/1.4.11"
+
 # DIY Module (Logic level shifter is not included here yet)
 <p align="center">
   <img src="/images/board_front.jpg" width="45%" />

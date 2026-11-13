@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.11] - 2026-11-13
+### Fixed
+- Optimized climate entity registration
+### Added
+- Added ability to choose what firmware version to install
+
 ## [1.4.10] - 2026-10-22
 ### Added
 - Added password to WiFi AP

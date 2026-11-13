@@ -37,7 +37,7 @@ namespace FujitsuAC {
     		NetworkUpdater();
 
             void loop();
-	        void updateFirmware(const char *branch);
+	        void updateFirmware(const char *version);
 	        
 	        void setOnVersionReceivedCallback(std::function<void(const char*)> onVersionReceivedCallback) {
 	        	this->onVersionReceivedCallback = onVersionReceivedCallback;

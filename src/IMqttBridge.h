@@ -346,7 +346,7 @@ namespace FujitsuAC {
                 p += "\"payload_not_available\": \"offline\",";
                 p += "\"command_topic\": \"fujitsu/" + _config.getUniqueId() + "/set/update_firmware\",";
                 p += "\"entity_category\": \"config\",";
-                p += "\"payload_press\": \"master\",";
+                p += "\"payload_press\": \"latest\",";
                 
                 p += this->deviceConfig;
                 p += "}";
