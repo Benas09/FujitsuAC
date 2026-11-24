@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Fetch aircons JSON and update Discussion
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GH_TOKEN: ${{ secrets.GH_COMPATIBILITY_PAT }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
