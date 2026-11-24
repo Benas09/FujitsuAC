@@ -1,0 +1,98 @@
+name: Compatibility list
+
+on:
+  schedule:
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+
+permissions:
+  discussions: write
+  contents: read
+
+jobs:
+  update-discussion:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch aircons JSON and update Discussion
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          REPO_OWNER="${REPO%/*}"
+          REPO_NAME="${REPO#*/}"
+
+          JSON_DATA=$(curl -fsSL "https://www.faircon.lt/aircons/json")
+          echo "$JSON_DATA" | jq -e 'type == "array"' > /dev/null
+
+          BODY_CONTENT=$(node - "$JSON_DATA" << 'EOF'
+          const data = JSON.parse(process.argv[2]);
+          const total = data.length;
+          const compatibleCount = data.filter((x) => x.compatible === true).length;
+          const testedCount = data.filter((x) => x.tested === true).length;
+          const withConnectorCount = data.filter((x) => Boolean(x.connector)).length;
+
+          const updatedAt = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
+
+          const lines = [
+            "## Fujitsu AC Compatibility List",
+            "",
+            `Last updated: \`${updatedAt}\``,
+            "",
+            "| Metric | Count |",
+            "|---|---:|",
+            `| Total models | ${total} |`,
+            `| Compatible | ${compatibleCount} |`,
+            `| Tested | ${testedCount} |`,
+            `| Connector specified | ${withConnectorCount} |`,
+            "",
+            "| Model | Compatible | Tested | Connector |",
+            "|---|:---:|:---:|---|"
+          ];
+
+          for (const item of data) {
+            const model = item.model ?? "-";
+            const compat = item.compatible ? "Yes" : "No";
+            const tested = item.tested ? "Yes" : "No";
+            const connector = item.connector ? `\`${item.connector}\`` : "-";
+            lines.push(`| \`${model}\` | ${compat} | ${tested} | ${connector} |`);
+          }
+
+          process.stdout.write(lines.join("\n"));
+          EOF
+          )
+
+          QUERY_PAYLOAD=$(jq -n \
+            --arg owner "$REPO_OWNER" \
+            --arg name "$REPO_NAME" \
+            --argjson number 24 \
+            '{
+              query: "query($owner: String!, $name: String!, $number: Int!) { repository(owner: $owner, name: $name) { discussion(number: $number) { id } } }",
+              variables: { owner: $owner, name: $name, number: $number }
+            }')
+
+          DISCUSSION_ID=$(curl -fsSL -X POST "https://api.github.com/graphql" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$QUERY_PAYLOAD" \
+            | jq -r '.data.repository.discussion.id // empty')
+
+          if [ -z "$DISCUSSION_ID" ]; then
+            echo "Error: Discussion #24 not found in ${REPO_OWNER}/${REPO_NAME}."
+            exit 1
+          fi
+
+          MUTATION_PAYLOAD=$(jq -n \
+            --arg discussionId "$DISCUSSION_ID" \
+            --arg body "$BODY_CONTENT" \
+            '{
+              query: "mutation($discussionId: ID!, $body: String!) { updateDiscussion(input: { discussionId: $discussionId, body: $body }) { discussion { id url } } }",
+              variables: { discussionId: $discussionId, body: $body }
+            }')
+
+          curl -fsSL -X POST "https://api.github.com/graphql" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$MUTATION_PAYLOAD" \
+            | jq .
