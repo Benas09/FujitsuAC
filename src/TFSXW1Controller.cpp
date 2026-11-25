@@ -111,23 +111,16 @@ namespace FujitsuAC {
                     break;
 
                 case FrameType::FrameA:
-                    if (this->frameSendRegistries.size > 0) {
+                    if (this->sendQueueSize > 0) {
                         this->sendRegistries();
 
                         break;
                     }
                 case FrameType::SendRegistries: {
-                    if (this->frameSendRegistries.size > 0) {
-                        Frame frame = {
-                            FrameType::CheckRegistries,
-                            this->frameSendRegistries.size
-                        };
+                    if (this->frameCheckRegistries.size > 0) {
+                        Frame frame = this->frameCheckRegistries;
 
-                        this->frameSendRegistries.size = 0;
-
-                        for (size_t i = 0; i < frame.size; ++i) {
-                            frame.registries[i] = this->frameSendRegistries.registries[i];
-                        }
+                        this->frameCheckRegistries.size = 0;
 
                         this->requestRegistries(frame);
 
@@ -185,8 +178,56 @@ namespace FujitsuAC {
         uart.write(request, bufferSize);
     }
 
+    void TFSXW1Controller::enqueueRegistries(const FrameSendRegistries &frame) {
+        // A newer command for the same registries replaces the queued one, so
+        // e.g. dragging a temperature slider does not fill the queue.
+        for (size_t i = 0; i < this->sendQueueSize; ++i) {
+            FrameSendRegistries &queued = this->sendQueue[i];
+
+            if (queued.size != frame.size) {
+                continue;
+            }
+
+            bool sameRegistries = true;
+
+            for (size_t j = 0; j < frame.size; ++j) {
+                if (queued.registries[j] != frame.registries[j]) {
+                    sameRegistries = false;
+
+                    break;
+                }
+            }
+
+            if (sameRegistries) {
+                queued = frame;
+
+                return;
+            }
+        }
+
+        if (this->sendQueueSize >= SEND_QUEUE_CAPACITY) {
+            this->debug("warning", "Send queue full, command dropped");
+
+            return;
+        }
+
+        this->sendQueue[this->sendQueueSize++] = frame;
+    }
+
     void TFSXW1Controller::sendRegistries() {
-        FrameSendRegistries frame = this->frameSendRegistries;
+        FrameSendRegistries frame = this->sendQueue[0];
+
+        for (size_t i = 1; i < this->sendQueueSize; ++i) {
+            this->sendQueue[i - 1] = this->sendQueue[i];
+        }
+
+        this->sendQueueSize--;
+
+        this->frameCheckRegistries.size = frame.size;
+
+        for (size_t i = 0; i < frame.size; ++i) {
+            this->frameCheckRegistries.registries[i] = frame.registries[i];
+        }
 
         this->lastFrameSent = frame.type;
         this->lastResponseReceived = false;
@@ -408,30 +449,22 @@ namespace FujitsuAC {
     }
 
     void TFSXW1Controller::setPower(TFSXW1Enums::Power power) {
-        if (this->frameSendRegistries.size > 0) {
-            return;
-        }
+        FrameSendRegistries frame = {FrameType::SendRegistries, 1, {}, {}};
+        frame.registries[0] = Address::Power;
+        frame.values[0] = static_cast<uint16_t>(power);
 
-        this->frameSendRegistries.size = 1;
-        this->frameSendRegistries.registries[0] = Address::Power;
-        this->frameSendRegistries.values[0] = static_cast<uint16_t>(power);
+        this->enqueueRegistries(frame);
     }
 
     void TFSXW1Controller::setMinimumHeat(TFSXW1Enums::MinimumHeat minimumHeat) {
-        if (this->frameSendRegistries.size > 0) {
-            return;
-        }
+        FrameSendRegistries frame = {FrameType::SendRegistries, 1, {}, {}};
+        frame.registries[0] = Address::MinimumHeat;
+        frame.values[0] = static_cast<uint16_t>(minimumHeat);
 
-        this->frameSendRegistries.size = 1;
-        this->frameSendRegistries.registries[0] = Address::MinimumHeat;
-        this->frameSendRegistries.values[0] = static_cast<uint16_t>(minimumHeat);
+        this->enqueueRegistries(frame);
     }
 
     void TFSXW1Controller::setMode(TFSXW1Enums::Mode mode) {
-        if (this->frameSendRegistries.size > 0) {
-            return;
-        }
-
         if (this->isCoilDryEnabled()) {
             this->debug("info", "Coil dry is on");
 
@@ -444,16 +477,14 @@ namespace FujitsuAC {
             return;
         }
 
-        this->frameSendRegistries.size = 1;
-        this->frameSendRegistries.registries[0] = Address::Mode;
-        this->frameSendRegistries.values[0] = static_cast<uint16_t>(mode);
+        FrameSendRegistries frame = {FrameType::SendRegistries, 1, {}, {}};
+        frame.registries[0] = Address::Mode;
+        frame.values[0] = static_cast<uint16_t>(mode);
+
+        this->enqueueRegistries(frame);
     }
 
     void TFSXW1Controller::setFanSpeed(TFSXW1Enums::FanSpeed fanSpeed) {
-        if (this->frameSendRegistries.size > 0) {
-            return;
-        }
-
         if (this->isCoilDryEnabled()) {
             this->debug("info", "Coil dry is on");
 
@@ -466,16 +497,14 @@ namespace FujitsuAC {
             return;
         }
 
-        this->frameSendRegistries.size = 1;
-        this->frameSendRegistries.registries[0] = Address::FanSpeed;
-        this->frameSendRegistries.values[0] = static_cast<uint16_t>(fanSpeed);
+        FrameSendRegistries frame = {FrameType::SendRegistries, 1, {}, {}};
+        frame.registries[0] = Address::FanSpeed;
+        frame.values[0] = static_cast<uint16_t>(fanSpeed);
+
+        this->enqueueRegistries(frame);
     }
 
     void TFSXW1Controller::setVerticalAirflow(TFSXW1Enums::VerticalAirflow verticalAirflow) {
-        if (this->frameSendRegistries.size > 0) {
-            return;
-        }
-
         if (this->isCoilDryEnabled()) {
             this->debug("info", "Coil dry is on");
 
@@ -488,18 +517,16 @@ namespace FujitsuAC {
             return;
         }
 
-        this->frameSendRegistries.size = 2;
-        this->frameSendRegistries.registries[0] = Address::VerticalSwing;
-        this->frameSendRegistries.values[0] = static_cast<uint16_t>(TFSXW1Enums::VerticalSwing::Off);
-        this->frameSendRegistries.registries[1] = Address::VerticalAirflowSetterRegistry;
-        this->frameSendRegistries.values[1] = static_cast<uint16_t>(verticalAirflow);
+        FrameSendRegistries frame = {FrameType::SendRegistries, 2, {}, {}};
+        frame.registries[0] = Address::VerticalSwing;
+        frame.values[0] = static_cast<uint16_t>(TFSXW1Enums::VerticalSwing::Off);
+        frame.registries[1] = Address::VerticalAirflowSetterRegistry;
+        frame.values[1] = static_cast<uint16_t>(verticalAirflow);
+
+        this->enqueueRegistries(frame);
     }
 
     void TFSXW1Controller::setVerticalSwing(TFSXW1Enums::VerticalSwing verticalSwing) {
-        if (this->frameSendRegistries.size > 0) {
-            return;
-        }
-
         if (this->isCoilDryEnabled()) {
             this->debug("info", "Coil dry is on");
 
@@ -512,16 +539,14 @@ namespace FujitsuAC {
             return;
         }
 
-        this->frameSendRegistries.size = 1;
-        this->frameSendRegistries.registries[0] = Address::VerticalSwing;
-        this->frameSendRegistries.values[0] = static_cast<uint16_t>(verticalSwing);
+        FrameSendRegistries frame = {FrameType::SendRegistries, 1, {}, {}};
+        frame.registries[0] = Address::VerticalSwing;
+        frame.values[0] = static_cast<uint16_t>(verticalSwing);
+
+        this->enqueueRegistries(frame);
     }
 
     void TFSXW1Controller::setHorizontalAirflow(TFSXW1Enums::HorizontalAirflow horizontalAirflow) {
-        if (this->frameSendRegistries.size > 0) {
-            return;
-        }
-
         if (this->isCoilDryEnabled()) {
             this->debug("info", "Coil dry is on");
 
@@ -534,18 +559,16 @@ namespace FujitsuAC {
             return;
         }
 
-        this->frameSendRegistries.size = 2;
-        this->frameSendRegistries.registries[0] = Address::HorizontalSwing;
-        this->frameSendRegistries.values[0] = static_cast<uint16_t>(TFSXW1Enums::HorizontalSwing::Off);
-        this->frameSendRegistries.registries[1] = Address::HorizontalAirflowSetterRegistry;
-        this->frameSendRegistries.values[1] = static_cast<uint16_t>(horizontalAirflow);
+        FrameSendRegistries frame = {FrameType::SendRegistries, 2, {}, {}};
+        frame.registries[0] = Address::HorizontalSwing;
+        frame.values[0] = static_cast<uint16_t>(TFSXW1Enums::HorizontalSwing::Off);
+        frame.registries[1] = Address::HorizontalAirflowSetterRegistry;
+        frame.values[1] = static_cast<uint16_t>(horizontalAirflow);
+
+        this->enqueueRegistries(frame);
     }
 
     void TFSXW1Controller::setHorizontalSwing(TFSXW1Enums::HorizontalSwing horizontalSwing) {
-        if (this->frameSendRegistries.size > 0) {
-            return;
-        }
-
         if (this->isCoilDryEnabled()) {
             this->debug("info", "Coil dry is on");
 
@@ -558,16 +581,14 @@ namespace FujitsuAC {
             return;
         }
 
-        this->frameSendRegistries.size = 1;
-        this->frameSendRegistries.registries[0] = Address::HorizontalSwing;
-        this->frameSendRegistries.values[0] = static_cast<uint16_t>(horizontalSwing);
+        FrameSendRegistries frame = {FrameType::SendRegistries, 1, {}, {}};
+        frame.registries[0] = Address::HorizontalSwing;
+        frame.values[0] = static_cast<uint16_t>(horizontalSwing);
+
+        this->enqueueRegistries(frame);
     }
 
     void TFSXW1Controller::setPowerful(TFSXW1Enums::Powerful powerful) {
-        if (this->frameSendRegistries.size > 0) {
-            return;
-        }
-
         if (this->isCoilDryEnabled()) {
             this->debug("info", "Coil dry is on");
 
@@ -580,9 +601,11 @@ namespace FujitsuAC {
             return;
         }
 
-        this->frameSendRegistries.size = 1;
-        this->frameSendRegistries.registries[0] = Address::Powerful;
-        this->frameSendRegistries.values[0] = static_cast<uint16_t>(powerful);
+        FrameSendRegistries frame = {FrameType::SendRegistries, 1, {}, {}};
+        frame.registries[0] = Address::Powerful;
+        frame.values[0] = static_cast<uint16_t>(powerful);
+
+        this->enqueueRegistries(frame);
     }
 
     bool TFSXW1Controller::isPowerfulEnabled() {
@@ -592,10 +615,6 @@ namespace FujitsuAC {
     }
 
     void TFSXW1Controller::setEconomy(TFSXW1Enums::EconomyMode economy) {
-        if (this->frameSendRegistries.size > 0) {
-            return;
-        }
-
         if (this->isCoilDryEnabled()) {
             this->debug("info", "Coil dry is on");
 
@@ -608,9 +627,11 @@ namespace FujitsuAC {
             return;
         }
 
-        this->frameSendRegistries.size = 1;
-        this->frameSendRegistries.registries[0] = Address::EconomyMode;
-        this->frameSendRegistries.values[0] = static_cast<uint16_t>(economy);
+        FrameSendRegistries frame = {FrameType::SendRegistries, 1, {}, {}};
+        frame.registries[0] = Address::EconomyMode;
+        frame.values[0] = static_cast<uint16_t>(economy);
+
+        this->enqueueRegistries(frame);
     }
 
     bool TFSXW1Controller::isEconomyEnabled() {
@@ -620,62 +641,50 @@ namespace FujitsuAC {
     }
 
     void TFSXW1Controller::setEnergySavingFan(TFSXW1Enums::EnergySavingFan energySavingFan) {
-        if (this->frameSendRegistries.size > 0) {
-            return;
-        }
-
         if (this->isMinimumHeatEnabled()) {
             this->debug("info", "Minimum heat is on");
 
             return;
         }
 
-        this->frameSendRegistries.size = 1;
-        this->frameSendRegistries.registries[0] = Address::EnergySavingFan;
-        this->frameSendRegistries.values[0] = static_cast<uint16_t>(energySavingFan);
+        FrameSendRegistries frame = {FrameType::SendRegistries, 1, {}, {}};
+        frame.registries[0] = Address::EnergySavingFan;
+        frame.values[0] = static_cast<uint16_t>(energySavingFan);
+
+        this->enqueueRegistries(frame);
     }
 
     void TFSXW1Controller::setOutdoorUnitLowNoise(TFSXW1Enums::OutdoorUnitLowNoise outdoorUnitLowNoise) {
-        if (this->frameSendRegistries.size > 0) {
-            return;
-        }
+        FrameSendRegistries frame = {FrameType::SendRegistries, 1, {}, {}};
+        frame.registries[0] = Address::OutdoorUnitLowNoise;
+        frame.values[0] = static_cast<uint16_t>(outdoorUnitLowNoise);
 
-        this->frameSendRegistries.size = 1;
-        this->frameSendRegistries.registries[0] = Address::OutdoorUnitLowNoise;
-        this->frameSendRegistries.values[0] = static_cast<uint16_t>(outdoorUnitLowNoise);
+        this->enqueueRegistries(frame);
     }
 
     void TFSXW1Controller::setCoilDry(TFSXW1Enums::CoilDry coilDry) {
-        if (this->frameSendRegistries.size > 0) {
-            return;
-        }
+        FrameSendRegistries frame = {FrameType::SendRegistries, 1, {}, {}};
+        frame.registries[0] = Address::CoilDry;
+        frame.values[0] = static_cast<uint16_t>(coilDry);
 
-        this->frameSendRegistries.size = 1;
-        this->frameSendRegistries.registries[0] = Address::CoilDry;
-        this->frameSendRegistries.values[0] = static_cast<uint16_t>(coilDry);
+        this->enqueueRegistries(frame);
     }
 
     void TFSXW1Controller::setHumanSensor(TFSXW1Enums::HumanSensor humanSensor) {
-        if (this->frameSendRegistries.size > 0) {
-            return;
-        }
-
         if (!this->isFeatureSupported(Address::HumanSensorSupported)) {
             this->debug("warning", "Human sensor is not supported");
 
             return;
         }
 
-        this->frameSendRegistries.size = 1;
-        this->frameSendRegistries.registries[0] = Address::HumanSensor;
-        this->frameSendRegistries.values[0] = static_cast<uint16_t>(humanSensor);
+        FrameSendRegistries frame = {FrameType::SendRegistries, 1, {}, {}};
+        frame.registries[0] = Address::HumanSensor;
+        frame.values[0] = static_cast<uint16_t>(humanSensor);
+
+        this->enqueueRegistries(frame);
     }
 
     void TFSXW1Controller::setTemp(const char *temp) {
-        if (this->frameSendRegistries.size > 0) {
-            return;
-        }
-
         if (this->isCoilDryEnabled()) {
             this->debug("info", "Coil dry is on");
 
@@ -715,8 +724,10 @@ namespace FujitsuAC {
             result = 300;
         };
 
-        this->frameSendRegistries.size = 1;
-        this->frameSendRegistries.registries[0] = Address::SetpointTemp;
-        this->frameSendRegistries.values[0] = static_cast<uint16_t>(result);
+        FrameSendRegistries frame = {FrameType::SendRegistries, 1, {}, {}};
+        frame.registries[0] = Address::SetpointTemp;
+        frame.values[0] = static_cast<uint16_t>(result);
+
+        this->enqueueRegistries(frame);
     }
 }

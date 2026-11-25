@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "TFSXW1Controller.h"
@@ -217,6 +218,122 @@ static void waitsThroughTheRestartReplyToInit1() {
     CHECK(h.saw("Init2 Send"));
 }
 
+// --- command queue ----------------------------------------------------------
+// Replies the unit gives to a registry read (0x03) and to a registry write
+// (0x02): status 0x01, no registries.
+static const std::vector<uint8_t> kReadReply = withChecksum({0x03, 0x00, 0x00, 0x00, 0x01, 0x01});
+static const std::vector<uint8_t> kWriteReply = withChecksum({0x02, 0x00, 0x00, 0x00, 0x01, 0x01});
+
+// Runs the handshake and the three initial reads, so the next request the
+// controller makes is FrameA.
+static void startRunning(Harness &h) {
+    h.tick();
+    h.reply(kInit1Reply);
+    h.tick();
+    h.reply(kInit2Reply);
+
+    for (int i = 0; i < 3; ++i) {
+        h.tick();
+        h.reply(kReadReply);
+    }
+}
+
+// Lets the controller run through `cycles` request slots, answering each one,
+// and returns every registry write it sent as (address, value) pairs.
+static std::vector<std::pair<uint16_t, uint16_t>> runAndCollectWrites(Harness &h, int cycles) {
+    std::vector<std::pair<uint16_t, uint16_t>> writes;
+
+    for (int i = 0; i < cycles; ++i) {
+        std::size_t before = h.uart.sent.size();
+        h.tick();
+
+        if (h.uart.sent.size() == before) {
+            continue;
+        }
+
+        const std::vector<uint8_t> &frame = h.uart.sent.back();
+
+        if (frame[0] == 0x02) {
+            // Write frame: 02 00 00 00 <4 * n> then n (address, value) pairs.
+            for (std::size_t j = 5; j + 4 <= 5u + frame[4]; j += 4) {
+                writes.emplace_back(
+                    static_cast<uint16_t>((frame[j] << 8) | frame[j + 1]),
+                    static_cast<uint16_t>((frame[j + 2] << 8) | frame[j + 3]));
+            }
+            h.reply(kWriteReply);
+        } else {
+            h.reply(kReadReply);
+        }
+    }
+
+    return writes;
+}
+
+static bool wrote(const std::vector<std::pair<uint16_t, uint16_t>> &writes, uint16_t address, uint16_t value) {
+    for (const auto &w : writes) {
+        if (w.first == address && w.second == value) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static const uint16_t kModeAddress = 0x1001;
+static const uint16_t kSetpointAddress = 0x1002;
+static const uint16_t kFanSpeedAddress = 0x1003;
+
+// Home Assistant's climate.set_temperature with an hvac_mode sends the mode and
+// the setpoint a few milliseconds apart. Both must reach the unit
+// (https://github.com/Benas09/FujitsuAC/issues/67).
+static void sendsCommandsGivenBeforeThePreviousOneWasWritten() {
+    std::printf("sendsCommandsGivenBeforeThePreviousOneWasWritten\n");
+    Harness h;
+    startRunning(h);
+
+    h.controller.setMode(FujitsuAC::TFSXW1Enums::Mode::Heat);
+    h.controller.setTemp("21.5");
+
+    auto writes = runAndCollectWrites(h, 20);
+
+    CHECK(wrote(writes, kModeAddress, 0x0004));
+    CHECK(wrote(writes, kSetpointAddress, 215));
+    CHECK(writes.size() == 2);
+    CHECK(writes.size() == 2 && writes[0].first == kModeAddress);
+}
+
+// A command given while the previous write is waiting for its read-back must
+// not be lost either.
+static void sendsACommandGivenRightAfterAWrite() {
+    std::printf("sendsACommandGivenRightAfterAWrite\n");
+    Harness h;
+    startRunning(h);
+
+    h.controller.setMode(FujitsuAC::TFSXW1Enums::Mode::Heat);
+    h.tick();                 // the mode write goes out
+    h.reply(kWriteReply);
+    h.controller.setFanSpeed(FujitsuAC::TFSXW1Enums::FanSpeed::Quiet);
+
+    auto writes = runAndCollectWrites(h, 20);
+
+    CHECK(wrote(writes, kFanSpeedAddress, 0x0002));
+}
+
+// Repeated commands for the same registry collapse into the latest one.
+static void keepsOnlyTheLatestQueuedValueForARegistry() {
+    std::printf("keepsOnlyTheLatestQueuedValueForARegistry\n");
+    Harness h;
+    startRunning(h);
+
+    h.controller.setTemp("20");
+    h.controller.setTemp("21");
+    h.controller.setTemp("22");
+
+    auto writes = runAndCollectWrites(h, 20);
+
+    CHECK(writes.size() == 1);
+    CHECK(wrote(writes, kSetpointAddress, 220));
+}
+
 int main() {
     acceptsTheExpectedInit1Reply();
     acceptsTheExpectedInit2Reply();
@@ -225,6 +342,9 @@ int main() {
     terminatesOnAnInit2ReplyThatSortsBeforeTheExpectedOne();
     terminatesOnAnInit2ReplyThatSortsAfterTheExpectedOne();
     waitsThroughTheRestartReplyToInit1();
+    sendsCommandsGivenBeforeThePreviousOneWasWritten();
+    sendsACommandGivenRightAfterAWrite();
+    keepsOnlyTheLatestQueuedValueForARegistry();
 
     std::printf("\n%d checks, %d failed\n", g_checks, g_failed);
     return g_failed == 0 ? 0 : 1;

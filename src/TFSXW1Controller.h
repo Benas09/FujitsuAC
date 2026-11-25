@@ -343,7 +343,18 @@ namespace FujitsuAC {
                 }
             };
 
-            FrameSendRegistries frameSendRegistries = {FrameType::SendRegistries, 0, {}, {}};
+            // Commands wait here for the next FrameA slot. Each one is written in
+            // its own frame, in the order it was given; a newer command for the
+            // same registries replaces the queued one.
+            static const size_t SEND_QUEUE_CAPACITY = 8;
+            FrameSendRegistries sendQueue[SEND_QUEUE_CAPACITY] = {};
+            size_t sendQueueSize = 0;
+
+            // Registries written by the last SendRegistries frame, read back
+            // right after it.
+            Frame frameCheckRegistries = {FrameType::CheckRegistries, 0, {}};
+
+            void enqueueRegistries(const FrameSendRegistries &frame);
 
             bool isMinimumHeatEnabled();
             bool isCoilDryEnabled();
