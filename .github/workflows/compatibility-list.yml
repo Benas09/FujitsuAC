@@ -1,3 +1,4 @@
+
 name: Compatibility list
 
 on:
@@ -24,10 +25,10 @@ jobs:
           REPO_NAME="${REPO#*/}"
 
           JSON_DATA=$(curl -fsSL "https://www.faircon.lt/aircons/json")
+          echo "$JSON_DATA" | jq -e 'type == "array"' > /dev/null
+
           HASH=$(printf '%s' "$JSON_DATA" | md5sum | cut -d ' ' -f 1)
           export HASH
-          
-          echo "$JSON_DATA" | jq -e 'type == "array"' > /dev/null
 
           BODY_CONTENT=$(node - "$JSON_DATA" << 'EOF'
           const data = JSON.parse(process.argv[2]);
@@ -72,20 +73,37 @@ jobs:
             --arg name "$REPO_NAME" \
             --argjson number 24 \
             '{
-              query: "query($owner: String!, $name: String!, $number: Int!) { repository(owner: $owner, name: $name) { discussion(number: $number) { id } } }",
+              query: "query($owner: String!, $name: String!, $number: Int!) { repository(owner: $owner, name: $name) { discussion(number: $number) { id body } } }",
               variables: { owner: $owner, name: $name, number: $number }
             }')
 
-          DISCUSSION_ID=$(curl -fsSL -X POST "https://api.github.com/graphql" \
+          DISCUSSION_DATA=$(curl -fsSL -X POST "https://api.github.com/graphql" \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "$QUERY_PAYLOAD" \
-            | jq -r '.data.repository.discussion.id // empty')
+            -d "$QUERY_PAYLOAD")
+
+          DISCUSSION_ID=$(echo "$DISCUSSION_DATA" | jq -r '.data.repository.discussion.id // empty')
 
           if [ -z "$DISCUSSION_ID" ]; then
             echo "Error: Discussion #24 not found in ${REPO_OWNER}/${REPO_NAME}."
             exit 1
           fi
+
+          CURRENT_HASH=$(echo "$DISCUSSION_DATA" | jq -r '
+            try (
+              .data.repository.discussion.body
+              | capture("\\| Hash \\| `(?<hash>[0-9a-f]{32})` \\|").hash
+            ) catch ""
+          ')
+
+          if [ "$HASH" = "$CURRENT_HASH" ]; then
+            echo "Compatibility list unchanged. Hash: $HASH"
+            exit 0
+          fi
+
+          echo "Compatibility list changed."
+          echo "Previous hash: ${CURRENT_HASH:-not found}"
+          echo "Current hash: $HASH"
 
           MUTATION_PAYLOAD=$(jq -n \
             --arg discussionId "$DISCUSSION_ID" \
@@ -99,4 +117,4 @@ jobs:
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Content-Type: application/json" \
             -d "$MUTATION_PAYLOAD" \
-            | jq .
+            | jq -e 'if .errors then error(.errors | tostring) else .data.updateDiscussion.discussion end'
