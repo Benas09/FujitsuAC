@@ -25,6 +25,8 @@ jobs:
 
           JSON_DATA=$(curl -fsSL "https://www.faircon.lt/aircons/json")
           HASH=$(printf '%s' "$JSON_DATA" | md5sum | cut -d ' ' -f 1)
+          export HASH
+          
           echo "$JSON_DATA" | jq -e 'type == "array"' > /dev/null
 
           BODY_CONTENT=$(node - "$JSON_DATA" << 'EOF'
@@ -47,7 +49,7 @@ jobs:
             `| Compatible | ${compatibleCount} |`,
             `| Tested | ${testedCount} |`,
             `| Connector specified | ${withConnectorCount} |`,
-            `| Hash | ${HASH} |`,
+            `| Hash | \`${process.env.HASH}\` |`,
             "",
             "| Model | Compatible | Tested | Connector |",
             "|---|:---:|:---:|---|"
